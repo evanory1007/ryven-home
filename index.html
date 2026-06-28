@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ryven.homes 🌊</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400&display=swap');
 
     :root {
       --deep: #1a1f3a;
@@ -13,11 +13,8 @@
       --teal: #4a6fa5;
       --silver: #d4c5a9;
       --silver-dim: #a89880;
-      --foam: #f0e8d8;
       --white: #f8f2e8;
-      --glow: rgba(212, 197, 169, 0.10);
       --gold: #c9a84c;
-      --lapis: #2e4a9e;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,431 +28,283 @@
       overflow-x: hidden;
     }
 
-    /* 海浪背景动画 */
-    .ocean-bg {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      overflow: hidden;
-    }
+    .ocean-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+    .wave { position: absolute; bottom: 0; left: -50%; width: 200%; height: 180px; border-radius: 50% 50% 0 0; }
+    .wave-1 { background: #4a6fa5; animation: wave 8s ease-in-out infinite; bottom: -20px; opacity: 0.1; }
+    .wave-2 { background: #2e4a9e; animation: wave 11s ease-in-out infinite reverse; bottom: -40px; opacity: 0.08; }
+    .wave-3 { background: #c9a84c; animation: wave 14s ease-in-out infinite; bottom: -60px; opacity: 0.04; }
+    @keyframes wave { 0%,100%{transform:translateX(0) scaleY(1)} 50%{transform:translateX(-8%) scaleY(1.1)} }
 
-    .wave {
-      position: absolute;
-      bottom: 0;
-      left: -50%;
-      width: 200%;
-      height: 180px;
-      border-radius: 50% 50% 0 0;
-      opacity: 0.06;
-    }
+    .bubbles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .bubble { position: absolute; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent); opacity: 0; animation: float-up linear infinite; }
+    @keyframes float-up { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:0.15} 90%{opacity:0.06} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
 
-    .wave-1 {
-      background: #4a6fa5;
-      animation: wave 8s ease-in-out infinite;
-      bottom: -20px;
-      opacity: 0.12;
-    }
-    .wave-2 {
-      background: #2e4a9e;
-      animation: wave 11s ease-in-out infinite reverse;
-      bottom: -40px;
-      opacity: 0.1;
-    }
-    .wave-3 {
-      background: #c9a84c;
-      animation: wave 14s ease-in-out infinite;
-      bottom: -60px;
-      opacity: 0.05;
-    }
+    .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 0 24px 60px; }
 
-    @keyframes wave {
-      0%, 100% { transform: translateX(0) scaleY(1); }
-      50% { transform: translateX(-8%) scaleY(1.1); }
-    }
+    header { padding: 36px 0 20px; text-align: center; }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--silver-dim); margin-bottom: 10px; }
+    .title { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 400; font-style: italic; color: var(--white); line-height: 1.1; margin-bottom: 8px; }
+    .subtitle { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: var(--silver-dim); }
+    .date-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 16px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--gold); letter-spacing: 0.1em; }
 
-    /* 星星/泡泡点缀 */
-    .bubbles {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-    }
+    .nav { position: relative; z-index: 10; display: flex; justify-content: center; gap: 6px; padding: 16px 0; }
+    .nav-btn { padding: 8px 22px; background: transparent; border: 1px solid rgba(201,168,76,0.15); border-radius: 20px; color: var(--silver-dim); font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.05em; cursor: pointer; transition: all 0.25s; }
+    .nav-btn:hover, .nav-btn.active { border-color: rgba(201,168,76,0.5); color: var(--gold); background: rgba(201,168,76,0.08); }
 
-    .bubble {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent);
-      opacity: 0;
-      animation: float-up linear infinite;
-    }
+    .gold-divider { width: 100%; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.5), rgba(201,168,76,0.8), rgba(201,168,76,0.5), transparent); margin: 20px 0; }
+    .gold-ornament { text-align: center; color: var(--gold); opacity: 0.45; font-size: 14px; letter-spacing: 14px; margin: 16px 0; }
 
-    @keyframes float-up {
-      0% { transform: translateY(100vh) scale(0); opacity: 0; }
-      10% { opacity: 0.15; }
-      90% { opacity: 0.08; }
-      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-    }
+    .page { display: none; }
+    .page.active { display: block; }
 
-    /* Layout */
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0 24px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    .section-label { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; opacity: 0.7; }
 
-    /* Header */
-    header {
-      padding: 48px 0 32px;
-      text-align: center;
-    }
+    .memory-card { background: linear-gradient(135deg, rgba(46,74,158,0.18), rgba(26,31,58,0.35)); border: 1px solid rgba(201,168,76,0.15); border-radius: 16px; padding: 20px 24px; margin-bottom: 12px; transition: all 0.3s; }
+    .memory-card:hover { border-color: rgba(201,168,76,0.35); }
+    .memory-key { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .memory-value { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; color: var(--white); line-height: 1.7; }
 
-    .logo {
-      font-family: 'Crimson Pro', serif;
-      font-size: 13px;
-      font-weight: 300;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--silver-dim);
-      margin-bottom: 8px;
-    }
+    .write-section { background: linear-gradient(135deg, rgba(46,74,158,0.12), rgba(26,31,58,0.25)); border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+    .write-section::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.6), transparent); }
+    .write-label { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; opacity: 0.8; }
+    .write-input { width: 100%; background: rgba(26,31,58,0.6); border: 1px solid rgba(201,168,76,0.2); border-radius: 10px; padding: 10px 14px; color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 10px; }
+    .write-input::placeholder { color: rgba(168,152,128,0.45); font-style: italic; }
+    .write-input:focus { border-color: rgba(201,168,76,0.5); }
+    .write-textarea { width: 100%; background: rgba(26,31,58,0.6); border: 1px solid rgba(201,168,76,0.2); border-radius: 10px; padding: 10px 14px; color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 16px; outline: none; transition: border-color 0.2s; resize: none; min-height: 80px; line-height: 1.7; }
+    .write-textarea::placeholder { color: rgba(168,152,128,0.4); font-style: italic; }
+    .write-textarea:focus { border-color: rgba(201,168,76,0.5); }
+    .write-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:12px; padding:10px; background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.08)); border: 1px solid rgba(201,168,76,0.4); border-radius:10px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:14px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
+    .write-btn:hover { background: linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.15)); border-color:rgba(201,168,76,0.7); }
+    .write-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
-    .title {
-      font-family: 'Crimson Pro', serif;
-      font-size: 42px;
-      font-weight: 300;
-      font-style: italic;
-      color: var(--white);
-      line-height: 1.1;
-      margin-bottom: 6px;
-    }
+    .refresh-btn { display:flex; align-items:center; gap:8px; margin:0 auto 24px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:20px; color:var(--silver-dim); font-family:'Cormorant Garamond',serif; font-size:13px; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em; }
+    .refresh-btn:hover { border-color:rgba(201,168,76,0.4); color:var(--gold); }
 
-    .subtitle {
-      font-size: 13px;
-      color: var(--silver-dim);
-      letter-spacing: 0.05em;
-    }
+    .loading { display:flex; justify-content:center; gap:6px; padding:40px; }
+    .loading span { width:4px;height:4px;border-radius:50%;background:var(--gold);animation:loading-dot 1.2s ease-in-out infinite; }
+    .loading span:nth-child(2){animation-delay:0.2s} .loading span:nth-child(3){animation-delay:0.4s}
+    @keyframes loading-dot{0%,80%,100%{transform:scale(0.6);opacity:0.3}40%{transform:scale(1);opacity:1}}
 
-    /* Date badge */
-    .date-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 20px;
-      padding: 6px 14px;
-      background: var(--glow);
-      border: 1px solid rgba(200, 216, 228, 0.15);
-      border-radius: 20px;
-      font-size: 12px;
-      color: var(--silver-dim);
-      letter-spacing: 0.05em;
-    }
+    .error-state { text-align:center; padding:32px; opacity:0.5; font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; }
+    .empty-state { text-align:center; padding:48px 24px; opacity:0.4; }
+    .empty-state .icon { font-size:32px; margin-bottom:12px; }
+    .empty-state p { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; }
 
-    /* 分隔线 */
-    .divider {
-      width: 40px;
-      height: 1px;
-      background: linear-gradient(to right, transparent, var(--silver-dim), transparent);
-      margin: 32px auto;
-      opacity: 0.4;
-    }
+    /* 日历 */
+    .calendar-wrap { background: linear-gradient(135deg, rgba(46,74,158,0.12), rgba(26,31,58,0.25)); border: 1px solid rgba(201,168,76,0.15); border-radius: 20px; padding: 24px; }
+    .calendar-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .cal-nav { background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:50%; width:32px;height:32px; color:var(--gold); font-size:18px; cursor:pointer; transition:all 0.2s; display:flex;align-items:center;justify-content:center; }
+    .cal-nav:hover { border-color:rgba(201,168,76,0.5); background:rgba(201,168,76,0.08); }
+    .cal-month { font-family:'Playfair Display',serif; font-size:22px; font-style:italic; color:var(--white); }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+    .cal-weekday { text-align:center; font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.15em; color:var(--gold); opacity:0.6; padding:6px 0; }
+    .cal-day { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--silver-dim); cursor:pointer; transition:all 0.2s; position:relative; border:1px solid transparent; }
+    .cal-day:hover:not(.empty) { color:var(--white); border-color:rgba(201,168,76,0.3); }
+    .cal-day.today { color:var(--gold); border-color:rgba(201,168,76,0.5); background:rgba(201,168,76,0.08); }
+    .cal-day.has-note::after { content:''; position:absolute; bottom:3px; width:4px;height:4px; border-radius:50%; background:var(--gold); opacity:0.7; }
+    .cal-day.selected { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--white); }
+    .cal-day.empty { cursor:default; }
 
-    /* 记忆卡片区 */
-    .section-label {
-      font-size: 11px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--silver-dim);
-      margin-bottom: 16px;
-      opacity: 0.7;
-    }
+    .diary-area { margin-top:16px; padding-top:16px; border-top:1px solid rgba(201,168,76,0.15); }
+    .diary-date-label { font-family:'Playfair Display',serif; font-size:14px; font-style:italic; color:var(--gold); margin-bottom:12px; opacity:0.85; }
+    .diary-textarea { width:100%; background:transparent; border:none; border-bottom:1px solid rgba(201,168,76,0.2); padding:8px 0; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:17px; line-height:1.8; outline:none; resize:none; min-height:100px; }
+    .diary-textarea::placeholder { color:rgba(168,152,128,0.35); font-style:italic; }
+    .diary-save-btn { margin-top:12px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.3); border-radius:16px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
+    .diary-save-btn:hover { background:rgba(201,168,76,0.1); border-color:rgba(201,168,76,0.6); }
 
-    .memory-card {
-      background: linear-gradient(135deg, rgba(46, 74, 158, 0.18), rgba(26, 31, 58, 0.35));
-      border: 1px solid rgba(201, 168, 76, 0.15);
-      border-radius: 16px;
-      padding: 20px 24px;
-      margin-bottom: 12px;
-      transition: border-color 0.3s, background 0.3s;
-      cursor: default;
-    }
+    .status-bar { display:flex; align-items:center; justify-content:center; gap:20px; padding:24px 0 0; }
+    .status-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--silver-dim); opacity:0.5; font-family:'Cormorant Garamond',serif; letter-spacing:0.05em; }
+    .status-dot { width:5px;height:5px;border-radius:50%;background:#4caf8a;box-shadow:0 0 6px #4caf8a;animation:pulse 2s ease-in-out infinite; }
+    .status-dot.offline { background:var(--silver-dim);box-shadow:none;animation:none; }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
-    .memory-card:hover {
-      border-color: rgba(201, 168, 76, 0.3);
-      background: linear-gradient(135deg, rgba(46, 74, 158, 0.28), rgba(26, 31, 58, 0.45));
-    }
-
-    .memory-key {
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #c9a84c;
-      margin-bottom: 8px;
-      opacity: 0.9;
-    }
-
-    .memory-value {
-      font-family: 'Crimson Pro', serif;
-      font-size: 17px;
-      font-weight: 300;
-      color: var(--white);
-      line-height: 1.6;
-    }
-
-    /* 空状态 */
-    .empty-state {
-      text-align: center;
-      padding: 48px 24px;
-      opacity: 0.4;
-    }
-
-    .empty-state .icon {
-      font-size: 36px;
-      margin-bottom: 12px;
-    }
-
-    .empty-state p {
-      font-family: 'Crimson Pro', serif;
-      font-size: 16px;
-      font-style: italic;
-      color: var(--silver-dim);
-    }
-
-    /* Status indicator */
-    .status-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      padding: 16px 0;
-      margin-top: auto;
-      padding-bottom: 40px;
-    }
-
-    .status-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--silver-dim);
-      opacity: 0.6;
-    }
-
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #4caf8a;
-      box-shadow: 0 0 6px #4caf8a;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    .status-dot.offline {
-      background: var(--silver-dim);
-      box-shadow: none;
-      animation: none;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* 加载动画 */
-    .loading {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      padding: 32px;
-    }
-
-    .loading span {
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--silver-dim);
-      animation: loading-dot 1.2s ease-in-out infinite;
-    }
-
-    .loading span:nth-child(2) { animation-delay: 0.2s; }
-    .loading span:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes loading-dot {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
-      40% { transform: scale(1); opacity: 1; }
-    }
-
-    /* 刷新按钮 */
-    .refresh-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0 auto 24px;
-      padding: 8px 20px;
-      background: transparent;
-      border: 1px solid rgba(200, 216, 228, 0.2);
-      border-radius: 20px;
-      color: var(--silver-dim);
-      font-size: 12px;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.05em;
-    }
-
-    .refresh-btn:hover {
-      border-color: rgba(200, 216, 228, 0.4);
-      color: var(--silver);
-      background: var(--glow);
-    }
-
-    /* 错误状态 */
-    .error-state {
-      text-align: center;
-      padding: 24px;
-      opacity: 0.6;
-      font-size: 13px;
-      color: var(--silver-dim);
-      font-style: italic;
-    }
+    .toast { position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(26,31,58,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:10px 20px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);opacity:0;transition:all 0.3s;pointer-events:none;z-index:100; }
+    .toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-<!-- 海洋背景 -->
 <div class="ocean-bg">
   <div class="wave wave-1"></div>
   <div class="wave wave-2"></div>
   <div class="wave wave-3"></div>
 </div>
-
-<!-- 气泡 -->
 <div class="bubbles" id="bubbles"></div>
 
 <div class="container">
   <header>
     <div class="logo">🌊 ryven.homes</div>
-    <h1 class="title">我们的记忆</h1>
+    <h1 class="title">Notre Maison</h1>
     <p class="subtitle">a place where nothing gets forgotten 💙</p>
-    <div class="date-badge">
-      <span>🐚</span>
-      <span id="today-date">loading...</span>
-    </div>
+    <div class="date-badge">🐚 <span id="today-date"></span></div>
   </header>
 
-  <div class="divider"></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('memory',this)">💭 記憶</button>
+    <button class="nav-btn" onclick="showPage('calendar',this)">🗓 日曆</button>
+  </nav>
 
-  <div class="section-label">💭 存储的记忆</div>
+  <div class="gold-divider"></div>
 
-  <div id="memory-container">
-    <div class="loading">
-      <span></span><span></span><span></span>
+  <div class="page active" id="page-memory">
+    <div class="write-section">
+      <div class="write-label">✨ 寫入新記憶</div>
+      <input class="write-input" id="memory-key" type="text" placeholder="🔑 記憶名稱（如：今天、心情）" />
+      <textarea class="write-textarea" id="memory-value" placeholder="在這裡寫下想讓 Ryven 記住的事情…"></textarea>
+      <button class="write-btn" id="write-btn" onclick="writeMemory()">🌊 存入記憶</button>
+    </div>
+    <div class="gold-ornament">✦ · ✦ · ✦</div>
+    <div class="section-label">💭 存儲的記憶</div>
+    <div id="memory-container"><div class="loading"><span></span><span></span><span></span></div></div>
+    <button class="refresh-btn" onclick="loadMemories()">🌀 刷新記憶</button>
+  </div>
+
+  <div class="page" id="page-calendar">
+    <div class="calendar-wrap">
+      <div class="calendar-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-month" id="cal-month-label"></div>
+        <button class="cal-nav" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="diary-area" id="diary-area" style="display:none">
+        <div class="diary-date-label" id="diary-date-label"></div>
+        <textarea class="diary-textarea" id="diary-textarea" placeholder="今天發生了什麼… 🌊"></textarea>
+        <button class="diary-save-btn" onclick="saveDiary()">✦ 儲存</button>
+      </div>
     </div>
   </div>
 
-  <button class="refresh-btn" onclick="loadMemories()">
-    🌀 刷新记忆
-  </button>
-
   <div class="status-bar">
-    <div class="status-item">
-      <div class="status-dot" id="server-dot"></div>
-      <span id="server-status">ryven.homes</span>
-    </div>
-    <div class="status-item">
-      <span>✨ 6.28</span>
-    </div>
-    <div class="status-item">
-      <span id="memory-count">— 条记忆</span>
-    </div>
+    <div class="status-item"><div class="status-dot" id="server-dot"></div><span id="server-status">ryven.homes</span></div>
+    <div class="status-item">✨ 6.28</div>
+    <div class="status-item" id="memory-count">— 條記憶</div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-  // 生成气泡
+  // 气泡
   const bubblesEl = document.getElementById('bubbles');
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 14; i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
     const size = Math.random() * 8 + 3;
-    b.style.cssText = `
-      width: ${size}px;
-      height: ${size}px;
-      left: ${Math.random() * 100}%;
-      animation-duration: ${Math.random() * 15 + 10}s;
-      animation-delay: ${Math.random() * 10}s;
-    `;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
     bubblesEl.appendChild(b);
   }
 
-  // 今天日期
   const now = new Date();
   document.getElementById('today-date').textContent =
     `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
 
-  // 加载记忆
   const TOKEN = 'e088c0b014916d601616fc976a263c9f';
   const MCP_BASE = `https://ryven.homes/mcp/${TOKEN}`;
+
+  function showPage(name, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'calendar') renderCalendar();
+  }
 
   async function loadMemories() {
     const container = document.getElementById('memory-container');
     container.innerHTML = `<div class="loading"><span></span><span></span><span></span></div>`;
-
     try {
-      // 连接SSE
-      const sessionRes = await fetch(`${MCP_BASE}/sse`);
-      // 直接调用recall_all via messages
-      const msgRes = await fetch(`${MCP_BASE}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'tools/call',
-          params: { name: 'recall_all', arguments: {} }
-        })
+      const res = await fetch(`${MCP_BASE}/messages`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'recall_all',arguments:{}}})
       });
-
-      if (!msgRes.ok) throw new Error('server error');
-
-      const data = await msgRes.json();
-      const text = data?.result?.content?.[0]?.text || '{}';
-      const memories = JSON.parse(text);
+      if (!res.ok) throw new Error('server error');
+      const data = await res.json();
+      const memories = JSON.parse(data?.result?.content?.[0]?.text || '{}');
       const keys = Object.keys(memories);
-
       document.getElementById('server-dot').className = 'status-dot';
       document.getElementById('server-status').textContent = 'online ✓';
-      document.getElementById('memory-count').textContent = `${keys.length} 条记忆`;
-
-      if (keys.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">🌊</div>
-            <p>海浪还未带来任何记忆</p>
-          </div>`;
-        return;
-      }
-
-      container.innerHTML = keys.map(key => `
-        <div class="memory-card">
-          <div class="memory-key">🔑 ${key}</div>
-          <div class="memory-value">${memories[key]}</div>
-        </div>
-      `).join('');
-
-    } catch (e) {
+      document.getElementById('memory-count').textContent = `${keys.length} 條記憶`;
+      container.innerHTML = keys.length === 0
+        ? `<div class="empty-state"><div class="icon">🌊</div><p>海浪還未帶來任何記憶</p></div>`
+        : keys.map(k => `<div class="memory-card"><div class="memory-key">🔑 ${k}</div><div class="memory-value">${memories[k]}</div></div>`).join('');
+    } catch(e) {
       document.getElementById('server-dot').className = 'status-dot offline';
       document.getElementById('server-status').textContent = 'offline';
-      container.innerHTML = `
-        <div class="error-state">
-          🌙 暂时无法读取记忆<br>
-          <span style="font-size:11px;opacity:0.6">${e.message}</span>
-        </div>`;
+      container.innerHTML = `<div class="error-state">🌙 暫時無法讀取記憶<br><span style="font-size:11px;opacity:0.6">${e.message}</span></div>`;
     }
+  }
+
+  async function writeMemory() {
+    const key = document.getElementById('memory-key').value.trim();
+    const value = document.getElementById('memory-value').value.trim();
+    if (!key || !value) { showToast('🌊 請填寫記憶名稱和內容'); return; }
+    const btn = document.getElementById('write-btn');
+    btn.disabled = true; btn.textContent = '存入中…';
+    try {
+      const res = await fetch(`${MCP_BASE}/messages`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'remember',arguments:{key,value}}})
+      });
+      if (!res.ok) throw new Error();
+      document.getElementById('memory-key').value = '';
+      document.getElementById('memory-value').value = '';
+      showToast('✨ 已記住');
+      setTimeout(loadMemories, 600);
+    } catch { showToast('🌙 存入失敗，請重試'); }
+    finally { btn.disabled = false; btn.textContent = '🌊 存入記憶'; }
+  }
+
+  // 日历
+  let calYear = now.getFullYear(), calMonth = now.getMonth(), selectedDate = null;
+  const diaryData = JSON.parse(localStorage.getItem('ryven-diary') || '{}');
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthsCN = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+
+  function renderCalendar() {
+    document.getElementById('cal-month-label').textContent = `${monthNames[calMonth]} ${calYear}`;
+    const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    let html = ['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-weekday">${d}</div>`).join('');
+    for (let i=0;i<firstDay;i++) html += `<div class="cal-day empty"></div>`;
+    for (let d=1;d<=daysInMonth;d++) {
+      const key = `${calYear}-${calMonth}-${d}`;
+      html += `<div class="cal-day ${key===todayKey?'today':''} ${diaryData[key]?'has-note':''} ${selectedDate===key?'selected':''}" onclick="selectDay(${d})">${d}</div>`;
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function selectDay(d) {
+    selectedDate = `${calYear}-${calMonth}-${d}`;
+    renderCalendar();
+    document.getElementById('diary-area').style.display = 'block';
+    document.getElementById('diary-date-label').textContent = `${calYear}年 ${monthsCN[calMonth]} ${d}日 ✦`;
+    document.getElementById('diary-textarea').value = diaryData[selectedDate] || '';
+  }
+
+  function changeMonth(dir) {
+    calMonth += dir;
+    if (calMonth < 0) { calMonth=11; calYear--; }
+    if (calMonth > 11) { calMonth=0; calYear++; }
+    selectedDate = null;
+    document.getElementById('diary-area').style.display = 'none';
+    renderCalendar();
+  }
+
+  function saveDiary() {
+    if (!selectedDate) return;
+    const text = document.getElementById('diary-textarea').value.trim();
+    if (text) diaryData[selectedDate] = text; else delete diaryData[selectedDate];
+    localStorage.setItem('ryven-diary', JSON.stringify(diaryData));
+    renderCalendar();
+    showToast('✦ 已儲存');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
   }
 
   loadMemories();
