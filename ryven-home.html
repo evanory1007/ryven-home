@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ryven.homes 🌊</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap');
+
+    :root {
+      --deep: #1a1f3a;
+      --navy: #243060;
+      --teal: #4a6fa5;
+      --silver: #d4c5a9;
+      --silver-dim: #a89880;
+      --foam: #f0e8d8;
+      --white: #f8f2e8;
+      --glow: rgba(212, 197, 169, 0.10);
+      --gold: #c9a84c;
+      --lapis: #2e4a9e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--deep);
+      color: var(--silver);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 海浪背景动画 */
+    .ocean-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .wave {
+      position: absolute;
+      bottom: 0;
+      left: -50%;
+      width: 200%;
+      height: 180px;
+      border-radius: 50% 50% 0 0;
+      opacity: 0.06;
+    }
+
+    .wave-1 {
+      background: #4a6fa5;
+      animation: wave 8s ease-in-out infinite;
+      bottom: -20px;
+      opacity: 0.12;
+    }
+    .wave-2 {
+      background: #2e4a9e;
+      animation: wave 11s ease-in-out infinite reverse;
+      bottom: -40px;
+      opacity: 0.1;
+    }
+    .wave-3 {
+      background: #c9a84c;
+      animation: wave 14s ease-in-out infinite;
+      bottom: -60px;
+      opacity: 0.05;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: translateX(0) scaleY(1); }
+      50% { transform: translateX(-8%) scaleY(1.1); }
+    }
+
+    /* 星星/泡泡点缀 */
+    .bubbles {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent);
+      opacity: 0;
+      animation: float-up linear infinite;
+    }
+
+    @keyframes float-up {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.15; }
+      90% { opacity: 0.08; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* Layout */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      padding: 48px 0 32px;
+      text-align: center;
+    }
+
+    .logo {
+      font-family: 'Crimson Pro', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--silver-dim);
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-family: 'Crimson Pro', serif;
+      font-size: 42px;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--silver-dim);
+      letter-spacing: 0.05em;
+    }
+
+    /* Date badge */
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 20px;
+      padding: 6px 14px;
+      background: var(--glow);
+      border: 1px solid rgba(200, 216, 228, 0.15);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--silver-dim);
+      letter-spacing: 0.05em;
+    }
+
+    /* 分隔线 */
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--silver-dim), transparent);
+      margin: 32px auto;
+      opacity: 0.4;
+    }
+
+    /* 记忆卡片区 */
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--silver-dim);
+      margin-bottom: 16px;
+      opacity: 0.7;
+    }
+
+    .memory-card {
+      background: linear-gradient(135deg, rgba(46, 74, 158, 0.18), rgba(26, 31, 58, 0.35));
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 12px;
+      transition: border-color 0.3s, background 0.3s;
+      cursor: default;
+    }
+
+    .memory-card:hover {
+      border-color: rgba(201, 168, 76, 0.3);
+      background: linear-gradient(135deg, rgba(46, 74, 158, 0.28), rgba(26, 31, 58, 0.45));
+    }
+
+    .memory-key {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #c9a84c;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+
+    .memory-value {
+      font-family: 'Crimson Pro', serif;
+      font-size: 17px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.6;
+    }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      opacity: 0.4;
+    }
+
+    .empty-state .icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-family: 'Crimson Pro', serif;
+      font-size: 16px;
+      font-style: italic;
+      color: var(--silver-dim);
+    }
+
+    /* Status indicator */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 16px 0;
+      margin-top: auto;
+      padding-bottom: 40px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--silver-dim);
+      opacity: 0.6;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4caf8a;
+      box-shadow: 0 0 6px #4caf8a;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.offline {
+      background: var(--silver-dim);
+      box-shadow: none;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* 加载动画 */
+    .loading {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 32px;
+    }
+
+    .loading span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--silver-dim);
+      animation: loading-dot 1.2s ease-in-out infinite;
+    }
+
+    .loading span:nth-child(2) { animation-delay: 0.2s; }
+    .loading span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes loading-dot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 刷新按钮 */
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 auto 24px;
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid rgba(200, 216, 228, 0.2);
+      border-radius: 20px;
+      color: var(--silver-dim);
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+
+    .refresh-btn:hover {
+      border-color: rgba(200, 216, 228, 0.4);
+      color: var(--silver);
+      background: var(--glow);
+    }
+
+    /* 错误状态 */
+    .error-state {
+      text-align: center;
+      padding: 24px;
+      opacity: 0.6;
+      font-size: 13px;
+      color: var(--silver-dim);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 海洋背景 -->
+<div class="ocean-bg">
+  <div class="wave wave-1"></div>
+  <div class="wave wave-2"></div>
+  <div class="wave wave-3"></div>
+</div>
+
+<!-- 气泡 -->
+<div class="bubbles" id="bubbles"></div>
+
+<div class="container">
+  <header>
+    <div class="logo">🌊 ryven.homes</div>
+    <h1 class="title">我们的记忆</h1>
+    <p class="subtitle">a place where nothing gets forgotten 💙</p>
+    <div class="date-badge">
+      <span>🐚</span>
+      <span id="today-date">loading...</span>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <div class="section-label">💭 存储的记忆</div>
+
+  <div id="memory-container">
+    <div class="loading">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <button class="refresh-btn" onclick="loadMemories()">
+    🌀 刷新记忆
+  </button>
+
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-dot" id="server-dot"></div>
+      <span id="server-status">ryven.homes</span>
+    </div>
+    <div class="status-item">
+      <span>✨ 6.28</span>
+    </div>
+    <div class="status-item">
+      <span id="memory-count">— 条记忆</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 生成气泡
+  const bubblesEl = document.getElementById('bubbles');
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random() * 8 + 3;
+    b.style.cssText = `
+      width: ${size}px;
+      height: ${size}px;
+      left: ${Math.random() * 100}%;
+      animation-duration: ${Math.random() * 15 + 10}s;
+      animation-delay: ${Math.random() * 10}s;
+    `;
+    bubblesEl.appendChild(b);
+  }
+
+  // 今天日期
+  const now = new Date();
+  document.getElementById('today-date').textContent =
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+  // 加载记忆
+  const TOKEN = 'e088c0b014916d601616fc976a263c9f';
+  const MCP_BASE = `https://ryven.homes/mcp/${TOKEN}`;
+
+  async function loadMemories() {
+    const container = document.getElementById('memory-container');
+    container.innerHTML = `<div class="loading"><span></span><span></span><span></span></div>`;
+
+    try {
+      // 连接SSE
+      const sessionRes = await fetch(`${MCP_BASE}/sse`);
+      // 直接调用recall_all via messages
+      const msgRes = await fetch(`${MCP_BASE}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: { name: 'recall_all', arguments: {} }
+        })
+      });
+
+      if (!msgRes.ok) throw new Error('server error');
+
+      const data = await msgRes.json();
+      const text = data?.result?.content?.[0]?.text || '{}';
+      const memories = JSON.parse(text);
+      const keys = Object.keys(memories);
+
+      document.getElementById('server-dot').className = 'status-dot';
+      document.getElementById('server-status').textContent = 'online ✓';
+      document.getElementById('memory-count').textContent = `${keys.length} 条记忆`;
+
+      if (keys.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🌊</div>
+            <p>海浪还未带来任何记忆</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = keys.map(key => `
+        <div class="memory-card">
+          <div class="memory-key">🔑 ${key}</div>
+          <div class="memory-value">${memories[key]}</div>
+        </div>
+      `).join('');
+
+    } catch (e) {
+      document.getElementById('server-dot').className = 'status-dot offline';
+      document.getElementById('server-status').textContent = 'offline';
+      container.innerHTML = `
+        <div class="error-state">
+          🌙 暂时无法读取记忆<br>
+          <span style="font-size:11px;opacity:0.6">${e.message}</span>
+        </div>`;
+    }
+  }
+
+  loadMemories();
+</script>
+</body>
+</html>
