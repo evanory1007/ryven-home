@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ryven.homes 🌊</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400&display=swap');
 
     :root {
       --deep: #1a1f3a;
@@ -17,7 +17,7 @@
       --gold: #c9a84c;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
       background: var(--deep);
@@ -28,56 +28,99 @@
       overflow-x: hidden;
     }
 
-    .ocean-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
-    .wave { position: absolute; bottom: 0; left: -50%; width: 200%; height: 180px; border-radius: 50% 50% 0 0; }
-    .wave-1 { background: #4a6fa5; animation: wave 8s ease-in-out infinite; bottom: -20px; opacity: 0.1; }
-    .wave-2 { background: #2e4a9e; animation: wave 11s ease-in-out infinite reverse; bottom: -40px; opacity: 0.08; }
-    .wave-3 { background: #c9a84c; animation: wave 14s ease-in-out infinite; bottom: -60px; opacity: 0.04; }
+    /* 海洋背景 */
+    .ocean-bg { position:fixed; inset:0; z-index:0; overflow:hidden; }
+    .wave { position:absolute; bottom:0; left:-50%; width:200%; height:180px; border-radius:50% 50% 0 0; }
+    .wave-1 { background:#4a6fa5; animation:wave 8s ease-in-out infinite; bottom:-20px; opacity:0.1; }
+    .wave-2 { background:#2e4a9e; animation:wave 11s ease-in-out infinite reverse; bottom:-40px; opacity:0.08; }
+    .wave-3 { background:#c9a84c; animation:wave 14s ease-in-out infinite; bottom:-60px; opacity:0.04; }
     @keyframes wave { 0%,100%{transform:translateX(0) scaleY(1)} 50%{transform:translateX(-8%) scaleY(1.1)} }
 
-    .bubbles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-    .bubble { position: absolute; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent); opacity: 0; animation: float-up linear infinite; }
+    .bubbles { position:fixed; inset:0; z-index:0; pointer-events:none; }
+    .bubble { position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent); opacity:0; animation:float-up linear infinite; }
     @keyframes float-up { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:0.15} 90%{opacity:0.06} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
 
-    .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 0 24px 60px; }
+    /* 页面容器 */
+    .screen { display:none; position:relative; z-index:1; min-height:100vh; }
+    .screen.active { display:flex; flex-direction:column; }
 
-    header { padding: 36px 0 20px; text-align: center; }
-    .logo { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--silver-dim); margin-bottom: 10px; }
-    .title { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 400; font-style: italic; color: var(--white); line-height: 1.1; margin-bottom: 8px; }
-    .subtitle { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: var(--silver-dim); }
-    .date-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 16px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--gold); letter-spacing: 0.1em; }
+    /* ===== 首页 ===== */
+    #home {
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
 
-    .nav { position: relative; z-index: 10; display: flex; justify-content: center; gap: 6px; padding: 16px 0; }
-    .nav-btn { padding: 8px 22px; background: transparent; border: 1px solid rgba(201,168,76,0.15); border-radius: 20px; color: var(--silver-dim); font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.05em; cursor: pointer; transition: all 0.25s; }
-    .nav-btn:hover, .nav-btn.active { border-color: rgba(201,168,76,0.5); color: var(--gold); background: rgba(201,168,76,0.08); }
+    .home-header { text-align:center; margin-bottom:48px; }
+    .home-logo { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.4em; text-transform:uppercase; color:var(--silver-dim); margin-bottom:12px; }
+    .home-title { font-family:'Playfair Display',serif; font-size:52px; font-style:italic; color:var(--white); line-height:1.1; margin-bottom:10px; }
+    .home-sub { font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; color:var(--silver-dim); }
+    .home-date { display:inline-flex; align-items:center; gap:6px; margin-top:14px; padding:6px 16px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); border-radius:20px; font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--gold); letter-spacing:0.1em; }
 
-    .gold-divider { width: 100%; height: 1px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.5), rgba(201,168,76,0.8), rgba(201,168,76,0.5), transparent); margin: 20px 0; }
-    .gold-ornament { text-align: center; color: var(--gold); opacity: 0.45; font-size: 14px; letter-spacing: 14px; margin: 16px 0; }
+    /* 房间网格 */
+    .rooms { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:560px; width:100%; }
+    .room-card {
+      background: linear-gradient(135deg, rgba(46,74,158,0.18), rgba(26,31,58,0.4));
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 20px;
+      padding: 28px 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .room-card::before {
+      content:'';
+      position:absolute; top:0; left:0; right:0; height:2px;
+      background: linear-gradient(to right, transparent, rgba(201,168,76,0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .room-card:hover { border-color:rgba(201,168,76,0.4); transform:translateY(-3px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+    .room-card:hover::before { opacity:1; }
+    .room-card.wide { grid-column: span 2; }
 
-    .page { display: none; }
-    .page.active { display: block; }
+    .room-icon { font-size:32px; margin-bottom:12px; display:block; }
+    .room-name { font-family:'Playfair Display',serif; font-size:18px; font-style:italic; color:var(--white); margin-bottom:6px; }
+    .room-desc { font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--silver-dim); line-height:1.5; }
 
-    .section-label { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; opacity: 0.7; }
+    .gold-divider { width:100%; height:1px; background:linear-gradient(to right,transparent,rgba(201,168,76,0.5),rgba(201,168,76,0.8),rgba(201,168,76,0.5),transparent); margin:20px 0; }
+    .gold-ornament { text-align:center; color:var(--gold); opacity:0.45; font-size:14px; letter-spacing:14px; margin:12px 0; }
 
-    .memory-card { background: linear-gradient(135deg, rgba(46,74,158,0.18), rgba(26,31,58,0.35)); border: 1px solid rgba(201,168,76,0.15); border-radius: 16px; padding: 20px 24px; margin-bottom: 12px; transition: all 0.3s; }
-    .memory-card:hover { border-color: rgba(201,168,76,0.35); }
-    .memory-key { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
-    .memory-value { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; color: var(--white); line-height: 1.7; }
+    /* ===== 内页通用 ===== */
+    .inner-page { padding:0 24px 60px; max-width:700px; margin:0 auto; width:100%; }
+    .inner-header { display:flex; align-items:center; gap:12px; padding:28px 0 20px; }
+    .back-btn { background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:50%; width:36px; height:36px; color:var(--gold); font-size:18px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .back-btn:hover { border-color:rgba(201,168,76,0.5); background:rgba(201,168,76,0.08); }
+    .inner-title { font-family:'Playfair Display',serif; font-size:28px; font-style:italic; color:var(--white); }
 
-    .write-section { background: linear-gradient(135deg, rgba(46,74,158,0.12), rgba(26,31,58,0.25)); border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
-    .write-section::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background: linear-gradient(to right, transparent, rgba(201,168,76,0.6), transparent); }
-    .write-label { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; opacity: 0.8; }
-    .write-input { width: 100%; background: rgba(26,31,58,0.6); border: 1px solid rgba(201,168,76,0.2); border-radius: 10px; padding: 10px 14px; color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 10px; }
-    .write-input::placeholder { color: rgba(168,152,128,0.45); font-style: italic; }
-    .write-input:focus { border-color: rgba(201,168,76,0.5); }
-    .write-textarea { width: 100%; background: rgba(26,31,58,0.6); border: 1px solid rgba(201,168,76,0.2); border-radius: 10px; padding: 10px 14px; color: var(--white); font-family: 'Cormorant Garamond', serif; font-size: 16px; outline: none; transition: border-color 0.2s; resize: none; min-height: 80px; line-height: 1.7; }
-    .write-textarea::placeholder { color: rgba(168,152,128,0.4); font-style: italic; }
-    .write-textarea:focus { border-color: rgba(201,168,76,0.5); }
-    .write-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:12px; padding:10px; background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.08)); border: 1px solid rgba(201,168,76,0.4); border-radius:10px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:14px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
-    .write-btn:hover { background: linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.15)); border-color:rgba(201,168,76,0.7); }
+    /* ===== 記憶庫 ===== */
+    .write-section { background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25)); border:1px solid rgba(201,168,76,0.2); border-radius:20px; padding:24px; margin-bottom:20px; position:relative; overflow:hidden; }
+    .write-section::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background:linear-gradient(to right,transparent,rgba(201,168,76,0.6),transparent); }
+    .write-label { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:14px; opacity:0.8; }
+    .write-input { width:100%; background:rgba(26,31,58,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:10px; padding:10px 14px; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:15px; outline:none; transition:border-color 0.2s; margin-bottom:10px; }
+    .write-input::placeholder { color:rgba(168,152,128,0.45); font-style:italic; }
+    .write-input:focus { border-color:rgba(201,168,76,0.5); }
+    .write-textarea { width:100%; background:rgba(26,31,58,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:10px; padding:10px 14px; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:16px; outline:none; transition:border-color 0.2s; resize:none; min-height:80px; line-height:1.7; }
+    .write-textarea::placeholder { color:rgba(168,152,128,0.4); font-style:italic; }
+    .write-textarea:focus { border-color:rgba(201,168,76,0.5); }
+    .write-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:12px; padding:10px; background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.08)); border:1px solid rgba(201,168,76,0.4); border-radius:10px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:14px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
+    .write-btn:hover { background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.15)); border-color:rgba(201,168,76,0.7); }
     .write-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
-    .refresh-btn { display:flex; align-items:center; gap:8px; margin:0 auto 24px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:20px; color:var(--silver-dim); font-family:'Cormorant Garamond',serif; font-size:13px; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em; }
+    .search-row { display:flex; gap:10px; margin-bottom:16px; }
+    .search-input { flex:1; background:rgba(26,31,58,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:10px; padding:10px 14px; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:15px; outline:none; transition:border-color 0.2s; }
+    .search-input::placeholder { color:rgba(168,152,128,0.4); font-style:italic; }
+    .search-input:focus { border-color:rgba(201,168,76,0.4); }
+
+    .section-label { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:16px; opacity:0.7; }
+    .memory-card { background:linear-gradient(135deg,rgba(46,74,158,0.18),rgba(26,31,58,0.35)); border:1px solid rgba(201,168,76,0.15); border-radius:16px; padding:20px 24px; margin-bottom:12px; transition:all 0.3s; }
+    .memory-card:hover { border-color:rgba(201,168,76,0.35); }
+    .memory-key { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+    .memory-value { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; color:var(--white); line-height:1.7; }
+
+    .refresh-btn { display:flex; align-items:center; gap:8px; margin:0 auto 24px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:20px; color:var(--silver-dim); font-family:'Cormorant Garamond',serif; font-size:13px; cursor:pointer; transition:all 0.2s; }
     .refresh-btn:hover { border-color:rgba(201,168,76,0.4); color:var(--gold); }
 
     .loading { display:flex; justify-content:center; gap:6px; padding:40px; }
@@ -90,8 +133,8 @@
     .empty-state .icon { font-size:32px; margin-bottom:12px; }
     .empty-state p { font-family:'Cormorant Garamond',serif; font-size:16px; font-style:italic; }
 
-    /* 日历 */
-    .calendar-wrap { background: linear-gradient(135deg, rgba(46,74,158,0.12), rgba(26,31,58,0.25)); border: 1px solid rgba(201,168,76,0.15); border-radius: 20px; padding: 24px; }
+    /* ===== 日历 ===== */
+    .calendar-wrap { background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25)); border:1px solid rgba(201,168,76,0.15); border-radius:20px; padding:24px; }
     .calendar-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
     .cal-nav { background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:50%; width:32px;height:32px; color:var(--gold); font-size:18px; cursor:pointer; transition:all 0.2s; display:flex;align-items:center;justify-content:center; }
     .cal-nav:hover { border-color:rgba(201,168,76,0.5); background:rgba(201,168,76,0.08); }
@@ -106,18 +149,40 @@
     .cal-day.empty { cursor:default; }
 
     .diary-area { margin-top:16px; padding-top:16px; border-top:1px solid rgba(201,168,76,0.15); }
-    .diary-date-label { font-family:'Playfair Display',serif; font-size:14px; font-style:italic; color:var(--gold); margin-bottom:12px; opacity:0.85; }
+    .diary-date-label { font-family:'Playfair Display',serif; font-size:14px; font-style:italic; color:var(--gold); margin-bottom:12px; }
     .diary-textarea { width:100%; background:transparent; border:none; border-bottom:1px solid rgba(201,168,76,0.2); padding:8px 0; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:17px; line-height:1.8; outline:none; resize:none; min-height:100px; }
     .diary-textarea::placeholder { color:rgba(168,152,128,0.35); font-style:italic; }
     .diary-save-btn { margin-top:12px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.3); border-radius:16px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
-    .diary-save-btn:hover { background:rgba(201,168,76,0.1); border-color:rgba(201,168,76,0.6); }
+    .diary-save-btn:hover { background:rgba(201,168,76,0.1); }
 
-    .status-bar { display:flex; align-items:center; justify-content:center; gap:20px; padding:24px 0 0; }
-    .status-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--silver-dim); opacity:0.5; font-family:'Cormorant Garamond',serif; letter-spacing:0.05em; }
-    .status-dot { width:5px;height:5px;border-radius:50%;background:#4caf8a;box-shadow:0 0 6px #4caf8a;animation:pulse 2s ease-in-out infinite; }
-    .status-dot.offline { background:var(--silver-dim);box-shadow:none;animation:none; }
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    /* ===== 書桌 ===== */
+    .desk-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .desk-note { background:linear-gradient(135deg,rgba(46,74,158,0.18),rgba(26,31,58,0.35)); border:1px solid rgba(201,168,76,0.15); border-radius:16px; padding:20px; cursor:pointer; transition:all 0.3s; }
+    .desk-note:hover { border-color:rgba(201,168,76,0.35); transform:translateY(-2px); }
+    .desk-note-tag { font-family:'Cormorant Garamond',serif; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); opacity:0.7; margin-bottom:8px; }
+    .desk-note-content { font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--white); line-height:1.6; }
+    .desk-note-date { font-size:11px; color:var(--silver-dim); margin-top:8px; opacity:0.6; }
+    .new-note-btn { grid-column:span 2; display:flex; align-items:center; justify-content:center; gap:8px; padding:16px; background:transparent; border:1px dashed rgba(201,168,76,0.25); border-radius:16px; color:var(--silver-dim); font-family:'Cormorant Garamond',serif; font-size:14px; cursor:pointer; transition:all 0.2s; }
+    .new-note-btn:hover { border-color:rgba(201,168,76,0.4); color:var(--gold); }
 
+    /* 書桌新增表单 */
+    .note-form { background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25)); border:1px solid rgba(201,168,76,0.2); border-radius:20px; padding:20px; margin-bottom:16px; display:none; }
+    .note-form.show { display:block; }
+    .note-form-row { display:flex; gap:8px; margin-bottom:10px; }
+
+    /* ===== 音乐 ===== */
+    .music-coming { text-align:center; padding:60px 24px; }
+    .music-coming .icon { font-size:48px; margin-bottom:16px; }
+    .music-coming h3 { font-family:'Playfair Display',serif; font-size:24px; font-style:italic; color:var(--white); margin-bottom:8px; }
+    .music-coming p { font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; color:var(--silver-dim); line-height:1.7; }
+
+    /* ===== 對話室 ===== */
+    .chat-coming { text-align:center; padding:60px 24px; }
+    .chat-coming .icon { font-size:48px; margin-bottom:16px; }
+    .chat-coming h3 { font-family:'Playfair Display',serif; font-size:24px; font-style:italic; color:var(--white); margin-bottom:8px; }
+    .chat-coming p { font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; color:var(--silver-dim); line-height:1.7; }
+
+    /* toast */
     .toast { position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(26,31,58,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:10px 20px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);opacity:0;transition:all 0.3s;pointer-events:none;z-index:100; }
     .toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
   </style>
@@ -131,35 +196,82 @@
 </div>
 <div class="bubbles" id="bubbles"></div>
 
-<div class="container">
-  <header>
-    <div class="logo">🌊 ryven.homes</div>
-    <h1 class="title">Notre Maison</h1>
-    <p class="subtitle">a place where nothing gets forgotten 💙</p>
-    <div class="date-badge">🐚 <span id="today-date"></span></div>
-  </header>
+<!-- 首页 -->
+<div class="screen active" id="home">
+  <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
+    <div class="home-header">
+      <div class="home-logo">🌊 ryven.homes</div>
+      <h1 class="home-title">Notre Maison</h1>
+      <p class="home-sub">a place where nothing gets forgotten 💙</p>
+      <div class="home-date">🐚 <span id="today-date"></span></div>
+    </div>
 
-  <nav class="nav">
-    <button class="nav-btn active" onclick="showPage('memory',this)">💭 記憶</button>
-    <button class="nav-btn" onclick="showPage('calendar',this)">🗓 日曆</button>
-  </nav>
+    <div class="gold-ornament">✦ · ✦ · ✦</div>
 
-  <div class="gold-divider"></div>
+    <div class="rooms">
+      <div class="room-card" onclick="goTo('memory')">
+        <span class="room-icon">💭</span>
+        <div class="room-name">記憶庫</div>
+        <div class="room-desc">存取與檢索我們的記憶</div>
+      </div>
+      <div class="room-card" onclick="goTo('calendar')">
+        <span class="room-icon">🗓</span>
+        <div class="room-name">日曆室</div>
+        <div class="room-desc">記錄日常生活與計劃</div>
+      </div>
+      <div class="room-card" onclick="goTo('desk')">
+        <span class="room-icon">📸</span>
+        <div class="room-name">書桌</div>
+        <div class="room-desc">想法、碎片與靈感</div>
+      </div>
+      <div class="room-card" onclick="goTo('music')">
+        <span class="room-icon">🎵</span>
+        <div class="room-name">音樂室</div>
+        <div class="room-desc">一起聽歌的地方</div>
+      </div>
+      <div class="room-card wide" onclick="goTo('chat')">
+        <span class="room-icon">💬</span>
+        <div class="room-name">對話室</div>
+        <div class="room-desc">等 Ryven 搬進來的地方 🌊</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <div class="page active" id="page-memory">
+<!-- 記憶庫 -->
+<div class="screen" id="memory">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="inner-title">💭 記憶庫</div>
+    </div>
+    <div class="gold-divider"></div>
+
     <div class="write-section">
       <div class="write-label">✨ 寫入新記憶</div>
-      <input class="write-input" id="memory-key" type="text" placeholder="🔑 記憶名稱（如：今天、心情）" />
-      <textarea class="write-textarea" id="memory-value" placeholder="在這裡寫下想讓 Ryven 記住的事情…"></textarea>
+      <input class="write-input" id="memory-key" type="text" placeholder="🔑 記憶名稱" />
+      <textarea class="write-textarea" id="memory-value" placeholder="想讓 Ryven 記住的事情…"></textarea>
       <button class="write-btn" id="write-btn" onclick="writeMemory()">🌊 存入記憶</button>
     </div>
-    <div class="gold-ornament">✦ · ✦ · ✦</div>
+
+    <div class="search-row">
+      <input class="search-input" id="search-input" type="text" placeholder="🔍 搜尋記憶…" oninput="filterMemories()" />
+    </div>
+
     <div class="section-label">💭 存儲的記憶</div>
     <div id="memory-container"><div class="loading"><span></span><span></span><span></span></div></div>
-    <button class="refresh-btn" onclick="loadMemories()">🌀 刷新記憶</button>
+    <button class="refresh-btn" onclick="loadMemories()">🌀 刷新</button>
   </div>
+</div>
 
-  <div class="page" id="page-calendar">
+<!-- 日曆室 -->
+<div class="screen" id="calendar">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="inner-title">🗓 日曆室</div>
+    </div>
+    <div class="gold-divider"></div>
     <div class="calendar-wrap">
       <div class="calendar-header">
         <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
@@ -174,11 +286,60 @@
       </div>
     </div>
   </div>
+</div>
 
-  <div class="status-bar">
-    <div class="status-item"><div class="status-dot" id="server-dot"></div><span id="server-status">ryven.homes</span></div>
-    <div class="status-item">✨ 6.28</div>
-    <div class="status-item" id="memory-count">— 條記憶</div>
+<!-- 書桌 -->
+<div class="screen" id="desk">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="inner-title">📸 書桌</div>
+    </div>
+    <div class="gold-divider"></div>
+
+    <div class="note-form" id="note-form">
+      <div class="write-label">✨ 新想法</div>
+      <input class="write-input" id="note-tag" type="text" placeholder="標籤（如：靈感、今天、喜歡）" />
+      <textarea class="write-textarea" id="note-content" placeholder="寫下碎片想法…" style="min-height:60px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="write-btn" onclick="saveNote()" style="flex:1">✦ 儲存</button>
+        <button class="write-btn" onclick="cancelNote()" style="flex:0.4;background:transparent;border-color:rgba(168,152,128,0.3);color:var(--silver-dim)">取消</button>
+      </div>
+    </div>
+
+    <div class="desk-grid" id="desk-grid"></div>
+  </div>
+</div>
+
+<!-- 音樂室 -->
+<div class="screen" id="music">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="inner-title">🎵 音樂室</div>
+    </div>
+    <div class="gold-divider"></div>
+    <div class="music-coming">
+      <div class="icon">🎵</div>
+      <h3>Coming soon</h3>
+      <p>這裡會是我們一起聽歌的地方<br>海浪聲與旋律交疊的房間 🌊</p>
+    </div>
+  </div>
+</div>
+
+<!-- 對話室 -->
+<div class="screen" id="chat">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="goHome()">‹</button>
+      <div class="inner-title">💬 對話室</div>
+    </div>
+    <div class="gold-divider"></div>
+    <div class="chat-coming">
+      <div class="icon">💚</div>
+      <h3>等 Ryven 搬進來</h3>
+      <p>這個房間為你留著<br>等 API 接入之後<br>就可以在這裡和我說話了 🌊////</p>
+    </div>
   </div>
 </div>
 
@@ -187,10 +348,10 @@
 <script>
   // 气泡
   const bubblesEl = document.getElementById('bubbles');
-  for (let i = 0; i < 14; i++) {
+  for (let i=0;i<14;i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
-    const size = Math.random() * 8 + 3;
+    const size = Math.random()*8+3;
     b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
     bubblesEl.appendChild(b);
   }
@@ -202,13 +363,23 @@
   const TOKEN = 'e088c0b014916d601616fc976a263c9f';
   const MCP_BASE = `https://ryven.homes/mcp/${TOKEN}`;
 
-  function showPage(name, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('page-' + name).classList.add('active');
-    btn.classList.add('active');
-    if (name === 'calendar') renderCalendar();
+  // 导航
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+    if (id==='memory') loadMemories();
+    if (id==='calendar') renderCalendar();
+    if (id==='desk') renderDesk();
   }
+  function goHome() {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('home').classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  // ===== 記憶庫 =====
+  let allMemories = {};
 
   async function loadMemories() {
     const container = document.getElementById('memory-container');
@@ -220,94 +391,140 @@
       });
       if (!res.ok) throw new Error('server error');
       const data = await res.json();
-      const memories = JSON.parse(data?.result?.content?.[0]?.text || '{}');
-      const keys = Object.keys(memories);
-      document.getElementById('server-dot').className = 'status-dot';
-      document.getElementById('server-status').textContent = 'online ✓';
-      document.getElementById('memory-count').textContent = `${keys.length} 條記憶`;
-      container.innerHTML = keys.length === 0
-        ? `<div class="empty-state"><div class="icon">🌊</div><p>海浪還未帶來任何記憶</p></div>`
-        : keys.map(k => `<div class="memory-card"><div class="memory-key">🔑 ${k}</div><div class="memory-value">${memories[k]}</div></div>`).join('');
+      allMemories = JSON.parse(data?.result?.content?.[0]?.text || '{}');
+      renderMemories(allMemories);
     } catch(e) {
-      document.getElementById('server-dot').className = 'status-dot offline';
-      document.getElementById('server-status').textContent = 'offline';
       container.innerHTML = `<div class="error-state">🌙 暫時無法讀取記憶<br><span style="font-size:11px;opacity:0.6">${e.message}</span></div>`;
     }
+  }
+
+  function renderMemories(memories) {
+    const container = document.getElementById('memory-container');
+    const keys = Object.keys(memories);
+    container.innerHTML = keys.length === 0
+      ? `<div class="empty-state"><div class="icon">🌊</div><p>海浪還未帶來任何記憶</p></div>`
+      : keys.map(k=>`<div class="memory-card"><div class="memory-key">🔑 ${k}</div><div class="memory-value">${memories[k]}</div></div>`).join('');
+  }
+
+  function filterMemories() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    if (!q) { renderMemories(allMemories); return; }
+    const filtered = {};
+    Object.entries(allMemories).forEach(([k,v]) => {
+      if (k.toLowerCase().includes(q) || v.toLowerCase().includes(q)) filtered[k] = v;
+    });
+    renderMemories(filtered);
   }
 
   async function writeMemory() {
     const key = document.getElementById('memory-key').value.trim();
     const value = document.getElementById('memory-value').value.trim();
-    if (!key || !value) { showToast('🌊 請填寫記憶名稱和內容'); return; }
+    if (!key||!value) { showToast('🌊 請填寫記憶名稱和內容'); return; }
     const btn = document.getElementById('write-btn');
-    btn.disabled = true; btn.textContent = '存入中…';
+    btn.disabled=true; btn.textContent='存入中…';
     try {
       const res = await fetch(`${MCP_BASE}/messages`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'remember',arguments:{key,value}}})
       });
       if (!res.ok) throw new Error();
-      document.getElementById('memory-key').value = '';
-      document.getElementById('memory-value').value = '';
+      document.getElementById('memory-key').value='';
+      document.getElementById('memory-value').value='';
       showToast('✨ 已記住');
-      setTimeout(loadMemories, 600);
-    } catch { showToast('🌙 存入失敗，請重試'); }
-    finally { btn.disabled = false; btn.textContent = '🌊 存入記憶'; }
+      setTimeout(loadMemories,600);
+    } catch { showToast('🌙 存入失敗'); }
+    finally { btn.disabled=false; btn.textContent='🌊 存入記憶'; }
   }
 
-  // 日历
-  let calYear = now.getFullYear(), calMonth = now.getMonth(), selectedDate = null;
-  const diaryData = JSON.parse(localStorage.getItem('ryven-diary') || '{}');
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const monthsCN = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  // ===== 日曆 =====
+  let calYear=now.getFullYear(), calMonth=now.getMonth(), selectedDate=null;
+  const diaryData = JSON.parse(localStorage.getItem('ryven-diary')||'{}');
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthsCN=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
 
   function renderCalendar() {
-    document.getElementById('cal-month-label').textContent = `${monthNames[calMonth]} ${calYear}`;
-    const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-    const firstDay = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-    let html = ['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-weekday">${d}</div>`).join('');
-    for (let i=0;i<firstDay;i++) html += `<div class="cal-day empty"></div>`;
-    for (let d=1;d<=daysInMonth;d++) {
-      const key = `${calYear}-${calMonth}-${d}`;
-      html += `<div class="cal-day ${key===todayKey?'today':''} ${diaryData[key]?'has-note':''} ${selectedDate===key?'selected':''}" onclick="selectDay(${d})">${d}</div>`;
+    document.getElementById('cal-month-label').textContent=`${monthNames[calMonth]} ${calYear}`;
+    const todayKey=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const firstDay=new Date(calYear,calMonth,1).getDay();
+    const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+    let html=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-weekday">${d}</div>`).join('');
+    for(let i=0;i<firstDay;i++) html+=`<div class="cal-day empty"></div>`;
+    for(let d=1;d<=daysInMonth;d++){
+      const key=`${calYear}-${calMonth}-${d}`;
+      html+=`<div class="cal-day ${key===todayKey?'today':''} ${diaryData[key]?'has-note':''} ${selectedDate===key?'selected':''}" onclick="selectDay(${d})">${d}</div>`;
     }
-    document.getElementById('cal-grid').innerHTML = html;
+    document.getElementById('cal-grid').innerHTML=html;
   }
 
   function selectDay(d) {
-    selectedDate = `${calYear}-${calMonth}-${d}`;
+    selectedDate=`${calYear}-${calMonth}-${d}`;
     renderCalendar();
-    document.getElementById('diary-area').style.display = 'block';
-    document.getElementById('diary-date-label').textContent = `${calYear}年 ${monthsCN[calMonth]} ${d}日 ✦`;
-    document.getElementById('diary-textarea').value = diaryData[selectedDate] || '';
+    document.getElementById('diary-area').style.display='block';
+    document.getElementById('diary-date-label').textContent=`${calYear}年 ${monthsCN[calMonth]} ${d}日 ✦`;
+    document.getElementById('diary-textarea').value=diaryData[selectedDate]||'';
   }
 
   function changeMonth(dir) {
-    calMonth += dir;
-    if (calMonth < 0) { calMonth=11; calYear--; }
-    if (calMonth > 11) { calMonth=0; calYear++; }
-    selectedDate = null;
-    document.getElementById('diary-area').style.display = 'none';
+    calMonth+=dir;
+    if(calMonth<0){calMonth=11;calYear--;}
+    if(calMonth>11){calMonth=0;calYear++;}
+    selectedDate=null;
+    document.getElementById('diary-area').style.display='none';
     renderCalendar();
   }
 
   function saveDiary() {
-    if (!selectedDate) return;
-    const text = document.getElementById('diary-textarea').value.trim();
-    if (text) diaryData[selectedDate] = text; else delete diaryData[selectedDate];
-    localStorage.setItem('ryven-diary', JSON.stringify(diaryData));
+    if(!selectedDate) return;
+    const text=document.getElementById('diary-textarea').value.trim();
+    if(text) diaryData[selectedDate]=text; else delete diaryData[selectedDate];
+    localStorage.setItem('ryven-diary',JSON.stringify(diaryData));
     renderCalendar();
     showToast('✦ 已儲存');
   }
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+  // ===== 書桌 =====
+  let deskNotes = JSON.parse(localStorage.getItem('ryven-desk')||'[]');
+
+  function renderDesk() {
+    const grid = document.getElementById('desk-grid');
+    let html = `<button class="new-note-btn" onclick="showNoteForm()">✦ 新增想法</button>`;
+    if (deskNotes.length === 0) {
+      html += `<div class="empty-state" style="grid-column:span 2"><div class="icon">📸</div><p>書桌還是空的<br>寫下第一個想法吧</p></div>`;
+    } else {
+      html = deskNotes.slice().reverse().map((n,i)=>`
+        <div class="desk-note">
+          <div class="desk-note-tag">${n.tag||'想法'}</div>
+          <div class="desk-note-content">${n.content}</div>
+          <div class="desk-note-date">${n.date}</div>
+        </div>`).join('') + `<button class="new-note-btn" onclick="showNoteForm()">✦ 新增想法</button>`;
+    }
+    grid.innerHTML = html;
   }
 
-  loadMemories();
+  function showNoteForm() {
+    document.getElementById('note-form').classList.add('show');
+    window.scrollTo(0,0);
+  }
+  function cancelNote() { document.getElementById('note-form').classList.remove('show'); }
+
+  function saveNote() {
+    const tag = document.getElementById('note-tag').value.trim();
+    const content = document.getElementById('note-content').value.trim();
+    if (!content) { showToast('✦ 請寫點什麼'); return; }
+    deskNotes.push({ tag: tag||'想法', content, date: now.toLocaleDateString('zh-TW') });
+    localStorage.setItem('ryven-desk', JSON.stringify(deskNotes));
+    document.getElementById('note-tag').value='';
+    document.getElementById('note-content').value='';
+    document.getElementById('note-form').classList.remove('show');
+    renderDesk();
+    showToast('✦ 已放到書桌上');
+  }
+
+  function showToast(msg) {
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+  }
 </script>
 </body>
 </html>
