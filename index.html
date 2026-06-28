@@ -402,9 +402,21 @@
   function renderMemories(memories) {
     const container = document.getElementById('memory-container');
     const keys = Object.keys(memories);
-    container.innerHTML = keys.length === 0
-      ? `<div class="empty-state"><div class="icon">🌊</div><p>海浪還未帶來任何記憶</p></div>`
-      : keys.map(k=>`<div class="memory-card"><div class="memory-key">🔑 ${k}</div><div class="memory-value">${memories[k]}</div></div>`).join('');
+    if (keys.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">🌊</div><p>海浪還未帶來任何記憶</p></div>`;
+      return;
+    }
+    container.innerHTML = keys.map(k => `
+      <div class="memory-card" id="card-${encodeURIComponent(k)}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div class="memory-key">🔑 ${k}</div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button onclick="editMemory('${k.replace(/'/g,"\\'")}', this)" style="background:transparent;border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:3px 8px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.borderColor='rgba(201,168,76,0.2)'">✏️</button>
+            <button onclick="forgetMemory('${k.replace(/'/g,"\\'")}', this)" style="background:transparent;border:1px solid rgba(168,100,100,0.3);border-radius:8px;padding:3px 8px;color:#c47a7a;font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(168,100,100,0.6)'" onmouseout="this.style.borderColor='rgba(168,100,100,0.3)'">🗑</button>
+          </div>
+        </div>
+        <div class="memory-value" id="val-${encodeURIComponent(k)}">${memories[k]}</div>
+      </div>`).join('');
   }
 
   function filterMemories() {
@@ -415,6 +427,43 @@
       if (k.toLowerCase().includes(q) || v.toLowerCase().includes(q)) filtered[k] = v;
     });
     renderMemories(filtered);
+  }
+
+  async function forgetMemory(key, btn) {
+    if (!confirm(`刪除記憶「${key}」？`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/forget`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({key})
+      });
+      if (!res.ok) throw new Error();
+      showToast('🌊 已遺忘');
+      setTimeout(loadMemories, 400);
+    } catch { showToast('🌙 刪除失敗'); }
+  }
+
+  function editMemory(key, btn) {
+    const valEl = document.getElementById('val-' + encodeURIComponent(key));
+    const current = allMemories[key];
+    valEl.innerHTML = `
+      <textarea style="width:100%;background:rgba(26,31,58,0.8);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:8px 10px;color:var(--white);font-family:'Cormorant Garamond',serif;font-size:16px;outline:none;resize:none;min-height:80px;line-height:1.7;margin-top:8px" id="edit-${encodeURIComponent(key)}">${current}</textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="saveEdit('${key.replace(/'/g,"\\'")}', this)" style="flex:1;padding:6px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:8px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer">✦ 儲存</button>
+        <button onclick="loadMemories()" style="padding:6px 12px;background:transparent;border:1px solid rgba(168,152,128,0.3);border-radius:8px;color:var(--silver-dim);font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer">取消</button>
+      </div>`;
+  }
+
+  async function saveEdit(key, btn) {
+    const val = document.getElementById('edit-' + encodeURIComponent(key)).value.trim();
+    if (!val) return;
+    try {
+      await fetch(`${API_BASE}/remember`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({key, value: val})
+      });
+      showToast('✨ 已更新');
+      setTimeout(loadMemories, 400);
+    } catch { showToast('🌙 更新失敗'); }
   }
 
   async function writeMemory() {
