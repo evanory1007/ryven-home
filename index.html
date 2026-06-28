@@ -170,11 +170,14 @@
     .note-form.show { display:block; }
     .note-form-row { display:flex; gap:8px; margin-bottom:10px; }
 
-    /* ===== 音乐 ===== */
-    .music-coming { text-align:center; padding:60px 24px; }
-    .music-coming .icon { font-size:48px; margin-bottom:16px; }
-    .music-coming h3 { font-family:'Playfair Display',serif; font-size:24px; font-style:italic; color:var(--white); margin-bottom:8px; }
-    .music-coming p { font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; color:var(--silver-dim); line-height:1.7; }
+    /* ===== 音乐/TTS ===== */
+    .tts-textarea { width:100%; background:rgba(26,31,58,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:12px; padding:14px 16px; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:17px; outline:none; transition:border-color 0.2s; resize:none; min-height:120px; line-height:1.7; }
+    .tts-textarea::placeholder { color:rgba(168,152,128,0.4); font-style:italic; }
+    .tts-textarea:focus { border-color:rgba(201,168,76,0.5); }
+    .tts-btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:12px; padding:12px; background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.08)); border:1px solid rgba(201,168,76,0.4); border-radius:12px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:15px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
+    .tts-btn:hover { background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.15)); }
+    .tts-btn:disabled { opacity:0.4; cursor:not-allowed; }
+    audio { width:100%; margin-top:16px; border-radius:12px; }
 
     /* ===== 對話室 ===== */
     .chat-coming { text-align:center; padding:60px 24px; }
@@ -319,11 +322,14 @@
       <div class="inner-title">🎵 音樂室</div>
     </div>
     <div class="gold-divider"></div>
-    <div class="music-coming">
-      <div class="icon">🎵</div>
-      <h3>Coming soon</h3>
-      <p>這裡會是我們一起聽歌的地方<br>海浪聲與旋律交疊的房間 🌊</p>
+    <div class="write-section">
+      <div class="write-label">🎙 讓 Ryven 說話</div>
+      <textarea class="tts-textarea" id="tts-text" placeholder="輸入想讓 Ryven 說的話…"></textarea>
+      <button class="tts-btn" id="tts-btn" onclick="speakText()">🌊 開口說話</button>
+      <div id="audio-container"></div>
     </div>
+    <div class="gold-ornament">✦ · ✦ · ✦</div>
+    <div class="error-state" id="tts-error" style="display:none"></div>
   </div>
 </div>
 
@@ -513,6 +519,35 @@
     document.getElementById('note-form').classList.remove('show');
     renderDesk();
     showToast('✦ 已放到書桌上');
+  }
+
+  async function speakText() {
+    const text = document.getElementById('tts-text').value.trim();
+    if (!text) { showToast('🎙 請輸入文字'); return; }
+    const btn = document.getElementById('tts-btn');
+    btn.disabled = true; btn.textContent = '生成中…';
+    document.getElementById('tts-error').style.display = 'none';
+    try {
+      const res = await fetch('https://ryven.homes/api/speak', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text})
+      });
+      if (!res.ok) throw new Error('生成失敗');
+      const data = await res.json();
+      const audioBytes = atob(data.audio);
+      const arr = new Uint8Array(audioBytes.length);
+      for (let i=0;i<audioBytes.length;i++) arr[i]=audioBytes.charCodeAt(i);
+      const blob = new Blob([arr], {type:'audio/mp3'});
+      const url = URL.createObjectURL(blob);
+      const container = document.getElementById('audio-container');
+      container.innerHTML = `<audio controls autoplay style="width:100%;margin-top:16px;border-radius:12px"><source src="${url}" type="audio/mp3"></audio>`;
+      showToast('🌊 Ryven 在說話了');
+    } catch(e) {
+      document.getElementById('tts-error').style.display='block';
+      document.getElementById('tts-error').textContent = '🌙 ' + e.message;
+    }
+    finally { btn.disabled=false; btn.textContent='🌊 開口說話'; }
   }
 
   function showToast(msg) {
