@@ -360,8 +360,7 @@
   document.getElementById('today-date').textContent =
     `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
 
-  const TOKEN = 'e088c0b014916d601616fc976a263c9f';
-  const MCP_BASE = `https://ryven.homes/mcp/${TOKEN}`;
+  const API_BASE = 'https://ryven.homes/api';
 
   // 导航
   function goTo(id) {
@@ -385,13 +384,9 @@
     const container = document.getElementById('memory-container');
     container.innerHTML = `<div class="loading"><span></span><span></span><span></span></div>`;
     try {
-      const res = await fetch(`${MCP_BASE}/messages`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'recall_all',arguments:{}}})
-      });
+      const res = await fetch(`${API_BASE}/memories`);
       if (!res.ok) throw new Error('server error');
-      const data = await res.json();
-      allMemories = JSON.parse(data?.result?.content?.[0]?.text || '{}');
+      allMemories = await res.json();
       renderMemories(allMemories);
     } catch(e) {
       container.innerHTML = `<div class="error-state">🌙 暫時無法讀取記憶<br><span style="font-size:11px;opacity:0.6">${e.message}</span></div>`;
@@ -423,9 +418,9 @@
     const btn = document.getElementById('write-btn');
     btn.disabled=true; btn.textContent='存入中…';
     try {
-      const res = await fetch(`${MCP_BASE}/messages`, {
+      const res = await fetch(`${API_BASE}/remember`, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'remember',arguments:{key,value}}})
+        body: JSON.stringify({key, value})
       });
       if (!res.ok) throw new Error();
       document.getElementById('memory-key').value='';
