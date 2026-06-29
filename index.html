@@ -1098,11 +1098,11 @@
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
     try {
-      const res = await fetch(`${CHAT_BASE_URL}/v1/messages`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':CHAT_API_KEY,'anthropic-version':'2023-06-01'},
-        body: JSON.stringify({model:CHAT_MODEL, max_tokens:500, system:SYSTEM_PROMPT, messages:chatHistory})
-      });
+     const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
+  method:'POST',
+  headers:{'Content-Type':'application/json','Authorization':'Bearer ryven-nory-6.28','x-api-key':CHAT_API_KEY},
+  body: JSON.stringify({model:CHAT_MODEL, max_tokens:500, system:SYSTEM_PROMPT, messages:chatHistory})
+});
       if (!res.ok) throw new Error('API error ' + res.status);
       const data = await res.json();
       const reply = data.content[0].text;
