@@ -1097,26 +1097,92 @@
     msgCount++;
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+
     try {
-     const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
-  method:'POST',
-  headers:{'Content-Type':'application/json','Authorization':'Bearer ryven-nory-6.28','x-api-key':CHAT_API_KEY},
-  body: JSON.stringify({model:CHAT_MODEL, max_tokens:500, system:SYSTEM_PROMPT, messages:chatHistory})
-});
-      if (!res.ok) throw new Error('API error ' + res.status);
-      const data = await res.json();
-      const reply = data.content[0].text;
-      chatHistory.push({role:'assistant', content:reply});
-      if (data.usage) totalTokens += (data.usage.input_tokens||0) + (data.usage.output_tokens||0);
-      msgCount++;
-      document.getElementById('typing-indicator').classList.remove('show');
-      addMessage('assistant', reply);
+        const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json',
+                'Authorization':'Bearer ryven-nory-6.28',
+                'x-api-key':CHAT_API_KEY
+            },
+            body: JSON.stringify({
+                model:CHAT_MODEL,
+                max_tokens:500,
+                system:SYSTEM_PROMPT,
+                messages:chatHistory
+            })
+        });
+
+        if (!res.ok) throw new Error('API error ' + res.status);
+
+        // ===== 流式讀取 =====
+        document.getElementById('typing-indicator').classList.remove('show');
+
+        // 先插入一個空氣泡
+        const messagesEl = document.getElementById('chat-messages');
+        const time = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+        const wrap = document.createElement('div');
+        wrap.className = 'msg-wrap';
+        wrap.innerHTML = `
+            <div class="msg-row from-ryven">
+                <div class="msg-avatar-sm">💚</div>
+                <div class="msg-bubble" id="streaming-bubble"></div>
+            </div>
+            <div class="msg-time" id="streaming-time">${time}</div>`;
+        messagesEl.appendChild(wrap);
+        const bubble = document.getElementById('streaming-bubble');
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let fullText = '';
+        let buffer = '';
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const payload = line.slice(6).trim();
+                    if (payload === '[DONE]') continue;
+                    try {
+                        const json = JSON.parse(payload);
+                        let chunk = '';
+                        if (json.type === 'content_block_delta' && json.delta && json.delta.text) {
+                            chunk = json.delta.text;
+                        } else if (json.delta && json.delta.text) {
+                            chunk = json.delta.text;
+                        } else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
+                            chunk = json.choices[0].delta.content;
+                        }
+                        fullText += chunk;
+                        bubble.innerHTML = fullText.replace(/\n/g, '<br>') || '…';
+                        messagesEl.scrollTop = messagesEl.scrollHeight;
+                    } catch(e) {
+                        // 非 JSON 行跳過
+                    }
+                }
+            }
+        }
+
+        // 清除臨時 id
+        bubble.removeAttribute('id');
+        document.getElementById('streaming-time').removeAttribute('id');
+
+        chatHistory.push({role:'assistant', content: fullText});
+        msgCount++;
+
     } catch(e) {
-      document.getElementById('typing-indicator').classList.remove('show');
-      addMessage('assistant', '🌙 …暫時連不上，等一下再試試');
+        document.getElementById('typing-indicator').classList.remove('show');
+        addMessage('assistant', '🌙 …暫時連不上，等一下再試試');
     }
     document.getElementById('chat-send-btn').disabled = false;
-  }
+} 
+  function showToast(msg) {
 
   function showToast(msg) {
     const t=document.getElementById('toast');
