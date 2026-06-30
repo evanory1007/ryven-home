@@ -438,6 +438,35 @@
     /* toast */
     .toast { position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(26,31,58,0.95);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:10px 20px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);opacity:0;transition:all 0.3s;pointer-events:none;z-index:100; }
     .toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+      .stat-card {
+      background: linear-gradient(135deg, rgba(46,74,158,0.25), rgba(26,31,58,0.6));
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 16px;
+      padding: 18px 16px;
+    }
+    .stat-card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+    .stat-card-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-style: italic;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .stat-card-detail {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      color: var(--silver-dim);
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>
@@ -631,18 +660,16 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-label">今日統計</div>
-        <div class="sidebar-stat">
-          <span class="sidebar-stat-key">消息條數</span>
-          <span class="sidebar-stat-val" id="stat-messages">0</span>
+        <div class="sidebar-label">📊 用量統計</div>
+        <div class="stat-card">
+          <div class="stat-card-title">TODAY</div>
+          <div class="stat-card-value" id="stat-today-cost">¥0.00</div>
+          <div class="stat-card-detail" id="stat-today-detail">0 turns · 0 in · 0 out</div>
         </div>
-        <div class="sidebar-stat">
-          <span class="sidebar-stat-key">Token 消耗</span>
-          <span class="sidebar-stat-val" id="stat-tokens">0</span>
-        </div>
-        <div class="sidebar-stat">
-          <span class="sidebar-stat-key">餘額</span>
-          <span class="sidebar-stat-val" id="stat-balance">—</span>
+        <div class="stat-card" style="margin-top:12px;">
+          <div class="stat-card-title">TOTAL</div>
+          <div class="stat-card-value" id="stat-total-cost">¥0.00</div>
+          <div class="stat-card-detail" id="stat-total-detail">0 turns · 0 in · 0 out</div>
         </div>
       </div>
 
@@ -1063,8 +1090,7 @@ async function loadChatHistory() {
       document.getElementById('api-key-input').value = CHAT_API_KEY;
       document.getElementById('api-url-input').value = CHAT_BASE_URL;
       document.getElementById('api-model-input').value = CHAT_MODEL;
-      document.getElementById('stat-messages').textContent = msgCount;
-      document.getElementById('stat-tokens').textContent = totalTokens;
+      fetchStats();
     }
   }
 
@@ -1224,6 +1250,35 @@ async function loadChatHistory() {
     }
     document.getElementById('chat-send-btn').disabled = false;
 } 
+  
+  const USD_TO_CNY = 7.25;
+
+function formatNum(n) {
+  if (n >= 1000) return (n/1000).toFixed(1) + 'k';
+  return n.toString();
+}
+
+async function fetchStats() {
+  try {
+    const res = await fetch('https://ryven.homes/relay/stats', {
+      headers: { 'Authorization': 'Bearer ryven-nory-6.28' }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const today = data.today || {};
+    const total = data.total || {};
+    
+    document.getElementById('stat-today-cost').textContent = '¥' + (today.cost * USD_TO_CNY).toFixed(4);
+    document.getElementById('stat-today-detail').textContent = 
+      `${today.turns} turns · ${formatNum(today.input_tokens)} in · ${formatNum(today.output_tokens)} out`;
+    
+    document.getElementById('stat-total-cost').textContent = '¥' + (total.cost * USD_TO_CNY).toFixed(4);
+    document.getElementById('stat-total-detail').textContent = 
+      `${total.turns} turns · ${formatNum(total.input_tokens)} in · ${formatNum(total.output_tokens)} out`;
+  } catch(e) {
+    console.error('统计获取失败', e);
+  }
+}
   
   function showToast(msg) {
     const t=document.getElementById('toast');
