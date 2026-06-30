@@ -705,6 +705,34 @@
     `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
 
   const API_BASE = 'https://ryven.homes/api';
+  // 会话 ID 持久化
+let sessionId = localStorage.getItem('ryven-chat-session');
+if (!sessionId) {
+  sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+  localStorage.setItem('ryven-chat-session', sessionId);
+}
+
+async function loadChatHistory() {
+  try {
+    const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
+      headers: { 'Authorization': 'Bearer ryven-nory-6.28' }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const messages = data.messages || [];
+    if (messages.length > 0) {
+      document.getElementById('chat-messages').innerHTML = '';
+      chatHistory = [];
+      for (const msg of messages) {
+        addMessage(msg.role, msg.content);
+        chatHistory.push(msg);
+        if (msg.role === 'user') msgCount++;
+      }
+    }
+  } catch(e) {
+    console.error('加载历史失败', e);
+  }
+}
 
   // 导航
   function goTo(id) {
@@ -714,6 +742,7 @@
     if (id==='memory') loadMemories();
     if (id==='calendar') renderCalendar();
     if (id==='desk') renderDesk();
+    if (id==='chat') loadChatHistory();
   }
   function goHome() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1175,6 +1204,19 @@
 
         chatHistory.push({role:'assistant', content: fullText});
         msgCount++;
+              // 保存到服务器
+        const toSave = [
+          { role: 'user', content: text },
+          { role: 'assistant', content: fullText }
+        ];
+        fetch(`https://ryven.homes/relay/chat/save`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ryven-nory-6.28'
+          },
+          body: JSON.stringify({ session_id: sessionId, messages: toSave })
+        }).catch(() => {});
 
     } catch(e) {
         document.getElementById('typing-indicator').classList.remove('show');
