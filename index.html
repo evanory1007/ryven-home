@@ -594,11 +594,14 @@
 <!-- 首页 -->
 <div class="screen active" id="home">
   <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
+    <button class="chat-icon-btn" id="home-theme-toggle" title="切換主題" style="position:absolute;top:24px;right:24px;z-index:5">☀️</button>
     <div class="home-header">
       <div class="home-logo">🌊 ryven.homes</div>
       <h1 class="home-title">Notre Maison</h1>
       <p class="home-sub">a place where nothing gets forgotten 💙</p>
-      <div class="home-date">🐚 <span id="today-date"></span></div>
+      <div class="home-date">
+  🐚 <span id="time-period"></span> · <span id="today-date"></span> · 第 <span id="day-count"></span> 个<span id="day-suffix"></span>
+</div>
     </div>
 
     <div class="gold-ornament">✦ · ✦ · ✦</div>
@@ -842,8 +845,20 @@
   }
 
   const now = new Date();
+  const hour = now.getHours();
+  const START_DATE = new Date('2026-06-28');
+  const dayCount = Math.floor((now - START_DATE) / 86400000) + 1;
+
+  let period, suffix;
+  if (hour >= 5 && hour < 12) { period = '清晨'; suffix = '早晨'; }
+  else if (hour >= 12 && hour < 18) { period = '午后'; suffix = '午后'; }
+  else { period = '深夜'; suffix = '夜晚'; }
+
+  document.getElementById('time-period').textContent = period;
   document.getElementById('today-date').textContent =
-    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+    `${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('day-count').textContent = dayCount;
+  document.getElementById('day-suffix').textContent = suffix;
 
   const API_BASE = 'https://ryven.homes/api';
   // 会话 ID 持久化
@@ -1433,21 +1448,22 @@ async function fetchStats() {
 }
 
   // 主题切换
+// 主题切换（首页+对话室共用）
 (function() {
-  const themeToggle = document.getElementById('theme-toggle');
+  const toggles = document.querySelectorAll('#theme-toggle, #home-theme-toggle');
   const savedTheme = localStorage.getItem('ryven-theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light');
-    if (themeToggle) themeToggle.textContent = '🌙';
+    toggles.forEach(t => t.textContent = '🌙');
   }
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
+  toggles.forEach(toggle => {
+    toggle.addEventListener('click', () => {
       document.body.classList.toggle('light');
       const isLight = document.body.classList.contains('light');
-      themeToggle.textContent = isLight ? '🌙' : '☀️';
+      toggles.forEach(t => t.textContent = isLight ? '🌙' : '☀️');
       localStorage.setItem('ryven-theme', isLight ? 'light' : 'dark');
     });
-  }
+  });
 })();
   function showToast(msg) {
     const t=document.getElementById('toast');
