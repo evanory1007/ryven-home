@@ -846,7 +846,7 @@
 
   const now = new Date();
   const hour = now.getHours();
-  const START_DATE = new Date('2026-06-28');
+  const START_DATE = new Date(2026, 5, 28);
   const dayCount = Math.floor((now - START_DATE) / 86400000) + 1;
 
   let period, suffix;
@@ -1470,6 +1470,22 @@ async function fetchStats() {
     t.textContent=msg; t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),2500);
   }
+// 每分钟自动刷新时间感知
+setInterval(() => {
+  const n = new Date();
+  const h = n.getHours();
+  const dc = Math.floor((n - START_DATE) / 86400000) + 1;
+  let p, s;
+  if (h >= 5 && h < 12) { p = '清晨'; s = '早晨'; }
+  else if (h >= 12 && h < 18) { p = '午后'; s = '午后'; }
+  else { p = '深夜'; s = '夜晚'; }
+  const tp = document.getElementById('time-period');
+  const dcEl = document.getElementById('day-count');
+  const dsEl = document.getElementById('day-suffix');
+  if (tp) tp.textContent = p;
+  if (dcEl) dcEl.textContent = dc;
+  if (dsEl) dsEl.textContent = s;
+}, 60000);
 </script>
 </body>
 </html>
