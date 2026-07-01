@@ -16,6 +16,28 @@
       --white: #f8f2e8;
       --gold: #c9a84c;
     }
+    
+    /* ===== 浅海模式 ===== */
+    body.light {
+      --deep: #f0f3f8;
+      --navy: #dce4f0;
+      --teal: #5b8fb9;
+      --silver: #2a3550;
+      --silver-dim: #4a5a7a;
+      --white: #1a2540;
+      --gold: #b8964a;
+    }
+
+    /* 全局颜色过渡 */
+    * {
+      transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+    }
+
+    /* 浅海模式下顶栏和输入栏背景 */
+    body.light .chat-topbar,
+    body.light .chat-inputbar {
+      background: rgba(240,243,248,0.97) !important;
+    }
 
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -726,6 +748,7 @@
       </div>
       <div class="chat-topbar-actions">
         <button class="chat-icon-btn" title="語音通話">📞</button>
+        <button class="chat-icon-btn" id="theme-toggle" title="切換主題">☀️</button>
         <button class="chat-icon-btn" onclick="toggleSidebar()" title="選單">☰</button>
       </div>
     </div>
@@ -1398,7 +1421,24 @@ async function fetchStats() {
     console.error('统计获取失败', e);
   }
 }
-  
+
+  // 主题切换
+(function() {
+  const themeToggle = document.getElementById('theme-toggle');
+  const savedTheme = localStorage.getItem('ryven-theme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light');
+    if (themeToggle) themeToggle.textContent = '🌙';
+  }
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      const isLight = document.body.classList.contains('light');
+      themeToggle.textContent = isLight ? '🌙' : '☀️';
+      localStorage.setItem('ryven-theme', isLight ? 'light' : 'dark');
+    });
+  }
+})();
   function showToast(msg) {
     const t=document.getElementById('toast');
     t.textContent=msg; t.classList.add('show');
