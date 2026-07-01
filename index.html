@@ -467,10 +467,91 @@
       color: var(--silver-dim);
       opacity: 0.7;
     }
+        /* 登录覆盖层 */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--deep);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    .login-overlay.hidden {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+    .login-card {
+      background: linear-gradient(135deg, rgba(46,74,158,0.25), rgba(26,31,58,0.6));
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 360px;
+      width: 90%;
+    }
+    .login-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-style: italic;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .login-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      color: var(--silver-dim);
+      margin-bottom: 24px;
+    }
+    .login-input {
+      width: 100%;
+      background: rgba(26,31,58,0.8);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--white);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: rgba(201,168,76,0.5); }
+    .login-input::placeholder { color: rgba(168,152,128,0.4); font-style: italic; }
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1));
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 10px;
+      color: var(--gold);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .login-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15)); }
+    .login-error {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      color: #c47a7a;
+      margin-top: 10px;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
+<!-- 登录覆盖层 -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-title">ryven.homes 🌊</div>
+    <div class="login-sub">Only for Nory</div>
+    <input class="login-input" id="login-username" type="text" placeholder="你的名字" />
+    <input class="login-input" id="login-password" type="password" placeholder="密碼" />
+    <button class="login-btn" onclick="doLogin()">🌊 進入</button>
+    <div class="login-error" id="login-error">帳號或密碼錯誤</div>
+  </div>
+</div>
 <div class="ocean-bg">
   <div class="wave wave-1"></div>
   <div class="wave wave-2"></div>
@@ -733,16 +814,54 @@
 
   const API_BASE = 'https://ryven.homes/api';
   // 会话 ID 持久化
-let sessionId = localStorage.getItem('ryven-chat-session');
-if (!sessionId) {
-  sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
-  localStorage.setItem('ryven-chat-session', sessionId);
+  // 登录 & 身份管理
+let sessionId = 'nory';
+let authToken = localStorage.getItem('ryven-auth-token');
+let isLoggedIn = !!authToken;
+
+function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) return;
+  
+  fetch('https://ryven.homes/relay/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      authToken = data.token;
+      isLoggedIn = true;
+      localStorage.setItem('ryven-auth-token', authToken);
+      document.getElementById('login-overlay').classList.add('hidden');
+      loadChatHistory();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  })
+  .catch(() => {
+    document.getElementById('login-error').style.display = 'block';
+  });
+}
+
+// 支持回车键提交登录
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('login-overlay') && !document.getElementById('login-overlay').classList.contains('hidden')) {
+    doLogin();
+  }
+});
+
+// 已登录则自动隐藏登录页
+if (isLoggedIn) {
+  document.getElementById('login-overlay').classList.add('hidden');
 }
 
 async function loadChatHistory() {
   try {
     const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
-      headers: { 'Authorization': 'Bearer ryven-nory-6.28' }
+      headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!res.ok) return;
     const data = await res.json();
@@ -1239,7 +1358,7 @@ async function loadChatHistory() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ryven-nory-6.28'
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({ session_id: sessionId, messages: toSave })
         }).catch(() => {});
@@ -1261,7 +1380,7 @@ function formatNum(n) {
 async function fetchStats() {
   try {
     const res = await fetch('https://ryven.homes/relay/stats', {
-      headers: { 'Authorization': 'Bearer ryven-nory-6.28' }
+       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!res.ok) return;
     const data = await res.json();
