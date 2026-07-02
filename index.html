@@ -15,6 +15,7 @@
       --silver-dim: #a89880;
       --white: #f8f2e8;
       --gold: #c9a84c;
+      --sidebar-bg: rgba(20,25,50,0.98);
       --border: rgba(201,168,76,0.15);
       --msg-bg-ryven: linear-gradient(135deg, rgba(46,74,158,0.4), rgba(26,31,58,0.6));
       --msg-bg-me: linear-gradient(135deg, rgba(201,168,76,0.22), rgba(201,168,76,0.12));
@@ -30,7 +31,7 @@
       --silver: #2a3550;
       --silver-dim: #4a5a7a;
       --white: #1a2540;
-      --gold: #b8964a;
+      --sidebar-bg: rgba(240,243,248,0.98);
       --border: rgba(91,143,185,0.25);
       --msg-bg-ryven: linear-gradient(135deg, rgba(91,143,185,0.15), rgba(220,228,240,0.7));
       --msg-bg-me: linear-gradient(135deg, rgba(184,150,74,0.25), rgba(184,150,74,0.12));
@@ -92,7 +93,7 @@
     /* 房间网格 */
     .rooms { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:560px; width:100%; }
     .room-card {
-      background: linear-gradient(135deg, rgba(46,74,158,0.18), rgba(26,31,58,0.4));
+      background: var(--msg-bg-ryven);
       border: 1px solid rgba(201,168,76,0.15);
       border-radius: 20px;
       padding: 28px 20px;
@@ -280,7 +281,7 @@
       top: 0; right: -280px;
       width: 280px;
       height: 100%;
-      background: rgba(20,25,50,0.98);
+      background: var(--sidebar-bg);
       border-left: 1px solid rgba(201,168,76,0.15);
       z-index: 30;
       transition: right 0.3s ease;
