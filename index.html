@@ -852,7 +852,6 @@
       </div>
       <div class="chat-topbar-actions">
         <button class="chat-icon-btn" title="語音通話">📞</button>
-        <button class="chat-icon-btn" id="theme-toggle" title="切換主題">☀️</button>
         <button class="chat-icon-btn" onclick="toggleSidebar()" title="選單">☰</button>
       </div>
     </div>
@@ -1542,7 +1541,7 @@ async function fetchStats() {
   // 主题切换
 // 主题切换（首页+对话室共用）
 (function() {
-  const toggles = document.querySelectorAll('#theme-toggle');
+  const toggles = [];
   const savedTheme = localStorage.getItem('ryven-theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light');
