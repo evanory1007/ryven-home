@@ -595,8 +595,7 @@
 <!-- 首页 -->
 <div class="screen active" id="home">
   <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
-    <button class="chat-icon-btn" id="home-theme-toggle" title="切換主題" style="position:absolute;top:24px;right:24px;z-index:5">☀️</button>
-      <button class="chat-icon-btn" onclick="goTo('settings')" title="設置" style="position:absolute;top:24px;right:64px;z-index:5">⚙️</button>
+    <button class="chat-icon-btn" onclick="goTo('settings')" title="設置" style="position:absolute;top:24px;right:64px;z-index:5">⚙️</button>
     <div class="home-header">
       <div class="home-logo">🌊 ryven.homes</div>
       <h1 class="home-title">Notre Maison</h1>
@@ -1543,7 +1542,7 @@ async function fetchStats() {
   // 主题切换
 // 主题切换（首页+对话室共用）
 (function() {
-  const toggles = document.querySelectorAll('#theme-toggle, #home-theme-toggle');
+  const toggles = document.querySelectorAll('#theme-toggle');
   const savedTheme = localStorage.getItem('ryven-theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light');
