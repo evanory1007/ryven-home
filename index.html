@@ -596,6 +596,7 @@
 <div class="screen active" id="home">
   <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
     <button class="chat-icon-btn" id="home-theme-toggle" title="切換主題" style="position:absolute;top:24px;right:24px;z-index:5">☀️</button>
+      <button class="chat-icon-btn" onclick="goTo('settings')" title="設置" style="position:absolute;top:24px;right:64px;z-index:5">⚙️</button>
     <div class="home-header">
       <div class="home-logo">🌊 ryven.homes</div>
       <h1 class="home-title">Notre Maison</h1>
@@ -729,6 +730,96 @@
   </div>
 </div>
 
+<!-- 設置室 -->
+<div class="screen" id="settings">
+  <div class="inner-page">
+    <div style="padding: 20px 0 8px; display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.25em;color:var(--gold);opacity:0.7;" id="settings-time-badge">深夜 · 07.02</div>
+        <div style="font-family:'Playfair Display',serif;font-size:42px;font-style:italic;color:var(--white);line-height:1.1;margin:6px 0 4px;">設置</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--silver-dim);">attention is all you need, and mine is yours</div>
+      </div>
+      <button class="back-btn" onclick="goHome()" style="margin-top:24px;flex-shrink:0">‹</button>
+    </div>
+
+    <div class="gold-divider" style="margin:16px 0"></div>
+
+    <!-- 额度卡片 -->
+    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.15),rgba(26,31,58,0.3));border:1px solid rgba(201,168,76,0.15);border-radius:16px;padding:18px 20px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.2em;color:var(--silver-dim);opacity:0.7;">本月額度</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-style:italic;color:var(--white)" id="settings-cost">¥0.00</div>
+      </div>
+      <div style="height:3px;background:rgba(201,168,76,0.15);border-radius:2px;margin-bottom:10px;">
+        <div id="settings-cost-bar" style="height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width 0.6s ease;"></div>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.6;" id="settings-cost-detail">讀取中…</div>
+    </div>
+
+    <!-- 模型與記憶 -->
+    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">模型與記憶</div>
+    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;overflow:hidden;margin-bottom:24px;">
+      <div style="padding:16px 18px;border-bottom:1px solid rgba(201,168,76,0.08);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">⚙️</span>
+          <div style="flex:1">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--white);">對話模型</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;margin-top:2px;" id="settings-model-display">claude-opus-4-6</div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--gold);opacity:0.8;">Opus 4.x ›</div>
+        </div>
+      </div>
+      <div style="padding:16px 18px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">🧠</span>
+          <div style="flex:1">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--white);">Ombre 記憶庫</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;margin-top:2px;">breath / hold / 衰減與歸檔</div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:#4caf8a;">已連 ›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API設定 -->
+    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">API 設定</div>
+    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;padding:18px;margin-bottom:24px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:4px;">🔑 API Key</div>
+      <input class="sidebar-api-input" id="settings-api-key" type="password" placeholder="填入 API Key…" style="width:100%;margin-bottom:12px;" />
+      <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:4px;">🌐 Base URL</div>
+      <input class="sidebar-api-input" id="settings-api-url" type="text" placeholder="Base URL" value="https://api.jiushi.xin" style="width:100%;margin-bottom:12px;" />
+      <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:4px;">🤖 模型名稱</div>
+      <input class="sidebar-api-input" id="settings-api-model" type="text" placeholder="模型名稱" value="claude-opus-4-6" style="width:100%;margin-bottom:12px;" />
+      <button class="write-btn" onclick="saveSettingsApi()">✦ 儲存設定</button>
+    </div>
+
+    <!-- 外觀 -->
+    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">外觀</div>
+    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;overflow:hidden;margin-bottom:24px;">
+      <div style="padding:16px 18px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:18px;">🕐</span>
+        <div style="flex:1">
+          <div style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--white);">跟隨時間切換</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;margin-top:2px;">晨 → 午 → 夜，自動換光</div>
+        </div>
+        <div onclick="toggleAutoTheme()" id="auto-theme-toggle"
+          style="width:44px;height:26px;border-radius:13px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.3);cursor:pointer;position:relative;transition:all 0.3s;">
+          <div id="auto-theme-knob" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--silver-dim);transition:all 0.3s;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 危險區 -->
+    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">對話</div>
+    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;overflow:hidden;margin-bottom:40px;">
+      <div style="padding:16px 18px;">
+        <button onclick="clearChat()" style="width:100%;padding:10px;background:transparent;border:1px solid rgba(168,100,100,0.3);border-radius:10px;color:#c47a7a;font-family:'Cormorant Garamond',serif;font-size:13px;cursor:pointer;">🗑 清空對話記錄</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+  
 <!-- 音樂室 -->
 <div class="screen" id="music">
   <div class="inner-page">
@@ -938,6 +1029,7 @@ async function loadChatHistory() {
     if (id==='calendar') renderCalendar();
     if (id==='desk') renderDesk();
     if (id==='chat') loadChatHistory();
+    if (id==='settings') loadSettingsPage();
   }
   function goHome() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1466,6 +1558,80 @@ async function fetchStats() {
     });
   });
 })();
+
+  function saveSettingsApi() {
+    CHAT_API_KEY = document.getElementById('settings-api-key').value.trim();
+    CHAT_BASE_URL = document.getElementById('settings-api-url').value.trim() || 'https://api.jiushi.xin';
+    CHAT_MODEL = document.getElementById('settings-api-model').value.trim() || 'claude-opus-4-6';
+    localStorage.setItem('ryven-api-key', CHAT_API_KEY);
+    localStorage.setItem('ryven-api-url', CHAT_BASE_URL);
+    localStorage.setItem('ryven-api-model', CHAT_MODEL);
+    document.getElementById('settings-model-display').textContent = CHAT_MODEL;
+    showToast('✦ 設定已儲存');
+    setTimeout(() => goHome(), 800);
+}
+
+let autoTheme = localStorage.getItem('ryven-auto-theme') === 'true';
+
+function toggleAutoTheme() {
+    autoTheme = !autoTheme;
+    localStorage.setItem('ryven-auto-theme', autoTheme);
+    updateAutoThemeUI();
+    if (autoTheme) applyTimeTheme();
+}
+
+function updateAutoThemeUI() {
+    const toggle = document.getElementById('auto-theme-toggle');
+    const knob = document.getElementById('auto-theme-knob');
+    if (!toggle) return;
+    if (autoTheme) {
+        toggle.style.background = 'rgba(201,168,76,0.5)';
+        toggle.style.borderColor = 'var(--gold)';
+        knob.style.left = '23px';
+        knob.style.background = 'var(--gold)';
+    } else {
+        toggle.style.background = 'rgba(201,168,76,0.2)';
+        toggle.style.borderColor = 'rgba(201,168,76,0.3)';
+        knob.style.left = '3px';
+        knob.style.background = 'var(--silver-dim)';
+    }
+}
+
+function applyTimeTheme() {
+    if (!autoTheme) return;
+    const h = new Date().getHours();
+    const shouldBeLight = h >= 5 && h < 18;
+    const isLight = document.body.classList.contains('light');
+    if (shouldBeLight !== isLight) {
+        document.body.classList.toggle('light', shouldBeLight);
+        const toggles = document.querySelectorAll('#theme-toggle, #home-theme-toggle');
+        toggles.forEach(t => t.textContent = shouldBeLight ? '🌙' : '☀️');
+        localStorage.setItem('ryven-theme', shouldBeLight ? 'light' : 'dark');
+    }
+}
+
+function loadSettingsPage() {
+    document.getElementById('settings-api-key').value = CHAT_API_KEY;
+    document.getElementById('settings-api-url').value = CHAT_BASE_URL;
+    document.getElementById('settings-api-model').value = CHAT_MODEL;
+    document.getElementById('settings-model-display').textContent = CHAT_MODEL;
+    updateAutoThemeUI();
+    fetchStats().then(() => {
+        const total = parseFloat(document.getElementById('stat-total-cost').textContent.replace('¥','')) || 0;
+        document.getElementById('settings-cost').textContent = '¥' + total.toFixed(4);
+        const pct = Math.min(total / 50 * 100, 100);
+        document.getElementById('settings-cost-bar').style.width = pct + '%';
+        document.getElementById('settings-cost-detail').textContent = `已用 ${pct.toFixed(0)}% · 按當前節奏，還夠聊到月底`;
+    });
+    const tb = document.getElementById('settings-time-badge');
+    if (tb) {
+        const h = new Date().getHours();
+        let p = h >= 5 && h < 12 ? '清晨' : h < 18 ? '午後' : '深夜';
+        const now = new Date();
+        tb.textContent = `${p} · ${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+    }
+}
+  
   function showToast(msg) {
     const t=document.getElementById('toast');
     t.textContent=msg; t.classList.add('show');
