@@ -1061,6 +1061,7 @@ async function loadChatHistory() {
 
   let ombreAllBuckets = [];
 let ombreCurrentFilter = 'all';
+let ombreDomainFilter = '';
 let ombreCurrentPage = 1;
 const OMBRE_PAGE_SIZE = 10;
 
@@ -1080,11 +1081,13 @@ function renderOmbreUI() {
 
     // 筛选
     let filtered = ombreAllBuckets.filter(b => {
-        if (ombreCurrentFilter === 'all') return true;
-        if (ombreCurrentFilter === 'pinned') return b.pinned;
-        if (ombreCurrentFilter === 'recent') return new Date(b.last_active) > oneDayAgo;
-        if (ombreCurrentFilter === 'unresolved') return !b.resolved;
-        return (b.domain || []).includes(ombreCurrentFilter);
+        const typeOk = ombreCurrentFilter === 'all' ? true
+            : ombreCurrentFilter === 'pinned' ? b.pinned
+            : ombreCurrentFilter === 'recent' ? new Date(b.last_active) > oneDayAgo
+            : ombreCurrentFilter === 'archive' ? (!b.pinned && new Date(b.last_active) <= oneDayAgo)
+            : true;
+        const domainOk = !ombreDomainFilter || (b.domain || []).includes(ombreDomainFilter);
+        return typeOk && domainOk;
     });
 
     // 搜索
@@ -1105,13 +1108,16 @@ function renderOmbreUI() {
     const paginated = filtered.slice(start, start + OMBRE_PAGE_SIZE);
 
     // 筛选按钮
-    const filterBtns = [
+    // 第一层：类型筛选
+    const typeBtns = [
         {key:'all', label:'全部'},
-        {key:'pinned', label:'🪸 釘選'},
-        {key:'recent', label:'🐠 最近'},
-        {key:'unresolved', label:'⚡ 未解決'},
-        ...allDomains.map(d => ({key:d, label:d}))
+        {key:'pinned', label:'🪸 重要節點'},
+        {key:'recent', label:'🐠 最近記憶'},
+        {key:'archive', label:'🐚 深海存檔'},
     ];
+
+    // 第二层：domain标签
+    const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
 
     container.innerHTML = `
         <div style="margin-bottom:12px;">
@@ -1119,14 +1125,24 @@ function renderOmbreUI() {
                 style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:var(--input-bg);color:var(--white);font-family:'Cormorant Garamond',serif;font-size:14px;outline:none;box-sizing:border-box;"
                 oninput="ombreCurrentPage=1;renderOmbreUI()" />
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-            ${filterBtns.map(f => `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            ${typeBtns.map(f => `
                 <button onclick="ombreCurrentFilter='${f.key}';ombreCurrentPage=1;renderOmbreUI()"
-                    style="padding:6px 14px;border-radius:20px;border:1px solid rgba(201,168,76,0.25);
+                    style="padding:6px 16px;border-radius:20px;border:1px solid rgba(201,168,76,0.25);
                     background:${ombreCurrentFilter===f.key?'var(--gold)':'transparent'};
                     color:${ombreCurrentFilter===f.key?'#1a1f3a':'var(--silver-dim)'};
-                    font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer;transition:all 0.2s;">
+                    font-family:'Cormorant Garamond',serif;font-size:13px;cursor:pointer;transition:all 0.2s;">
                     ${f.label}
+                </button>`).join('')}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+            ${allDomains.map(d => `
+                <button onclick="ombreDomainFilter='${d}';ombreCurrentPage=1;renderOmbreUI()"
+                    style="padding:4px 12px;border-radius:20px;border:1px solid rgba(201,168,76,0.15);
+                    background:${typeof ombreDomainFilter!=='undefined'&&ombreDomainFilter===d?'rgba(201,168,76,0.2)':'transparent'};
+                    color:var(--silver-dim);opacity:0.8;
+                    font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s;">
+                    ${d}
                 </button>`).join('')}
         </div>
         ${paginated.length === 0 ? `<div class="empty-state"><div class="icon">🌊</div><p>沒有符合的記憶</p></div>` :
