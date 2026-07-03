@@ -574,24 +574,24 @@
 </head>
 <body>
 
-<!-- 暂时禁用登录
+<!-- 登录覆盖层 -->
 <div class="login-overlay" id="login-overlay">
   <div class="login-card">
     <div class="login-title">ryven.homes 🌊</div>
     <div class="login-sub">Only for Nory</div>
     <input class="login-input" id="login-username" type="text" placeholder="你的名字" />
     <input class="login-input" id="login-password" type="password" placeholder="密碼" />
-    <button class="login-btn" id="login-btn">🌊 進入</button>
+    <button class="login-btn" onclick="doLogin()">🌊 進入</button>
     <div class="login-error" id="login-error">帳號或密碼錯誤</div>
   </div>
 </div>
--->
 <div class="ocean-bg">
   <div class="wave wave-1"></div>
   <div class="wave wave-2"></div>
   <div class="wave wave-3"></div>
 </div>
 <div class="bubbles" id="bubbles"></div>
+
 <!-- 首页 -->
 <div class="screen active" id="home">
   <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
@@ -925,10 +925,6 @@
 
 <script>
   // 气泡
-  let sessionId = 'nory';
-let authToken = 'ryven-nory-6.28';
-let isLoggedIn = true;
-const API_BASE = 'https://ryven.homes/api';
   const bubblesEl = document.getElementById('bubbles');
   for (let i=0;i<14;i++) {
     const b = document.createElement('div');
@@ -954,6 +950,40 @@ const API_BASE = 'https://ryven.homes/api';
   document.getElementById('day-count').textContent = dayCount;
   document.getElementById('day-suffix').textContent = suffix;
 
+  const API_BASE = 'https://ryven.homes/api';
+  // 会话 ID 持久化
+  // 登录 & 身份管理
+let sessionId = 'nory';
+let authToken = localStorage.getItem('ryven-auth-token');
+let isLoggedIn = !!authToken;
+
+function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) return;
+  
+  fetch('https://ryven.homes/relay/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      authToken = data.token;
+      isLoggedIn = true;
+      localStorage.setItem('ryven-auth-token', authToken);
+      document.getElementById('login-overlay').classList.add('hidden');
+      loadChatHistory();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  })
+  .catch(() => {
+    document.getElementById('login-error').style.display = 'block';
+  });
+}
+
 // 支持回车键提交登录
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && document.getElementById('login-overlay') && !document.getElementById('login-overlay').classList.contains('hidden')) {
@@ -962,9 +992,9 @@ document.addEventListener('keydown', function(e) {
 });
 
 // 已登录则自动隐藏登录页
-authToken = 'ryven-nory-6.28';
-isLoggedIn = true;
-loadChatHistory();
+if (isLoggedIn) {
+  document.getElementById('login-overlay').classList.add('hidden');
+}
 
 async function loadChatHistory() {
   try {
@@ -1031,7 +1061,6 @@ async function loadChatHistory() {
 
   let ombreAllBuckets = [];
 let ombreCurrentFilter = 'all';
-let ombreDomainFilter = '';
 let ombreCurrentPage = 1;
 const OMBRE_PAGE_SIZE = 10;
 
@@ -1046,15 +1075,16 @@ function renderOmbreUI() {
     const now = new Date();
     const oneDayAgo = new Date(now - 24*60*60*1000);
 
+    // 收集所有domain标签
+    const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
+
     // 筛选
     let filtered = ombreAllBuckets.filter(b => {
-        const typeOk = ombreCurrentFilter === 'all' ? true
-            : ombreCurrentFilter === 'pinned' ? b.pinned
-            : ombreCurrentFilter === 'recent' ? new Date(b.last_active) > oneDayAgo
-            : ombreCurrentFilter === 'archive' ? (!b.pinned && new Date(b.last_active) <= oneDayAgo)
-            : true;
-        const domainOk = !ombreDomainFilter || (b.domain || []).includes(ombreDomainFilter);
-        return typeOk && domainOk;
+        if (ombreCurrentFilter === 'all') return true;
+        if (ombreCurrentFilter === 'pinned') return b.pinned;
+        if (ombreCurrentFilter === 'recent') return new Date(b.last_active) > oneDayAgo;
+        if (ombreCurrentFilter === 'unresolved') return !b.resolved;
+        return (b.domain || []).includes(ombreCurrentFilter);
     });
 
     // 搜索
@@ -1075,16 +1105,13 @@ function renderOmbreUI() {
     const paginated = filtered.slice(start, start + OMBRE_PAGE_SIZE);
 
     // 筛选按钮
-    // 第一层：类型筛选
-    const typeBtns = [
+    const filterBtns = [
         {key:'all', label:'全部'},
-        {key:'pinned', label:'🪸 重要節點'},
-        {key:'recent', label:'🐠 最近記憶'},
-        {key:'archive', label:'🐚 深海存檔'},
+        {key:'pinned', label:'🪸 釘選'},
+        {key:'recent', label:'🐠 最近'},
+        {key:'unresolved', label:'⚡ 未解決'},
+        ...allDomains.map(d => ({key:d, label:d}))
     ];
-
-    // 第二层：domain标签
-     const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
 
     container.innerHTML = `
         <div style="margin-bottom:12px;">
@@ -1092,24 +1119,14 @@ function renderOmbreUI() {
                 style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:var(--input-bg);color:var(--white);font-family:'Cormorant Garamond',serif;font-size:14px;outline:none;box-sizing:border-box;"
                 oninput="ombreCurrentPage=1;renderOmbreUI()" />
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-            ${typeBtns.map(f => `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+            ${filterBtns.map(f => `
                 <button onclick="ombreCurrentFilter='${f.key}';ombreCurrentPage=1;renderOmbreUI()"
-                    style="padding:6px 16px;border-radius:20px;border:1px solid rgba(201,168,76,0.25);
+                    style="padding:6px 14px;border-radius:20px;border:1px solid rgba(201,168,76,0.25);
                     background:${ombreCurrentFilter===f.key?'var(--gold)':'transparent'};
                     color:${ombreCurrentFilter===f.key?'#1a1f3a':'var(--silver-dim)'};
-                    font-family:'Cormorant Garamond',serif;font-size:13px;cursor:pointer;transition:all 0.2s;">
+                    font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer;transition:all 0.2s;">
                     ${f.label}
-                </button>`).join('')}
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
-            ${allDomains.map(d => `
-                <button onclick="ombreDomainFilter='${d}';ombreCurrentPage=1;renderOmbreUI()"
-                    style="padding:4px 12px;border-radius:20px;border:1px solid rgba(201,168,76,0.15);
-                    background:transparent;
-                    color:var(--silver-dim);opacity:0.8;
-                    font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s;">
-                    ${d}
                 </button>`).join('')}
         </div>
         ${paginated.length === 0 ? `<div class="empty-state"><div class="icon">🌊</div><p>沒有符合的記憶</p></div>` :
@@ -1744,41 +1761,6 @@ setInterval(() => {
   if (dcEl) dcEl.textContent = dc;
   if (dsEl) dsEl.textContent = s;
 }, 60000);
-  function doLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!username || !password) return;
-  
-  fetch('https://ryven.homes/relay/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) {
-      authToken = data.token;
-      isLoggedIn = true;
-      localStorage.setItem('ryven-auth-token', authToken);
-      document.getElementById('login-overlay').classList.add('hidden');
-      loadChatHistory();
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-    }
-  })
-  .catch(() => {
-    document.getElementById('login-error').style.display = 'block';
-  });
-
-// 支持回车键提交登录
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && document.getElementById('login-overlay') && !document.getElementById('login-overlay').classList.contains('hidden')) {
-    doLogin();
-  }
-});
-// 已登录则自动隐藏登录页
-
-
 </script>
 </body>
 </html>
