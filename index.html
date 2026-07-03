@@ -1059,36 +1059,105 @@ async function loadChatHistory() {
     }
 }
 
-  function renderOmbreMemories(buckets) {
-    const container = document.getElementById('memory-container');
-    if (!Array.isArray(buckets) || buckets.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="icon">🌊</div><p>深海還很安靜</p></div>`;
-        return;
-    }
+  let ombreAllBuckets = [];
+let ombreCurrentFilter = 'all';
+let ombreCurrentPage = 1;
+const OMBRE_PAGE_SIZE = 10;
 
+function renderOmbreMemories(buckets) {
+    ombreAllBuckets = buckets;
+    ombreCurrentPage = 1;
+    renderOmbreUI();
+}
+
+function renderOmbreUI() {
+    const container = document.getElementById('memory-container');
     const now = new Date();
     const oneDayAgo = new Date(now - 24*60*60*1000);
 
+    // 收集所有domain标签
+    const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
+
+    // 筛选
+    let filtered = ombreAllBuckets.filter(b => {
+        if (ombreCurrentFilter === 'all') return true;
+        if (ombreCurrentFilter === 'pinned') return b.pinned;
+        if (ombreCurrentFilter === 'recent') return new Date(b.last_active) > oneDayAgo;
+        if (ombreCurrentFilter === 'unresolved') return !b.resolved;
+        return (b.domain || []).includes(ombreCurrentFilter);
+    });
+
+    // 搜索
+    const searchVal = document.getElementById('ombre-search')?.value?.trim().toLowerCase() || '';
+    if (searchVal) {
+        filtered = filtered.filter(b =>
+            b.name.toLowerCase().includes(searchVal) ||
+            (b.content_preview || '').toLowerCase().includes(searchVal) ||
+            (b.tags || []).some(t => t.toLowerCase().includes(searchVal))
+        );
+    }
+
+    // 分页
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / OMBRE_PAGE_SIZE));
+    ombreCurrentPage = Math.min(ombreCurrentPage, totalPages);
+    const start = (ombreCurrentPage - 1) * OMBRE_PAGE_SIZE;
+    const paginated = filtered.slice(start, start + OMBRE_PAGE_SIZE);
+
+    // 筛选按钮
+    const filterBtns = [
+        {key:'all', label:'全部'},
+        {key:'pinned', label:'🪸 釘選'},
+        {key:'recent', label:'🐠 最近'},
+        {key:'unresolved', label:'⚡ 未解決'},
+        ...allDomains.map(d => ({key:d, label:d}))
+    ];
+
     container.innerHTML = `
-        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-            <span style="font-size:12px;color:var(--gold);opacity:0.8;">🪸 重要節點</span>
-            <span style="font-size:12px;color:var(--silver-dim);opacity:0.7;">🐠 最近記憶</span>
-            <span style="font-size:12px;color:var(--silver-dim);opacity:0.7;">🐚 深海存檔</span>
+        <div style="margin-bottom:12px;">
+            <input id="ombre-search" type="text" placeholder="🔍 搜尋記憶…"
+                style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:var(--input-bg);color:var(--white);font-family:'Cormorant Garamond',serif;font-size:14px;outline:none;box-sizing:border-box;"
+                oninput="ombreCurrentPage=1;renderOmbreUI()" />
         </div>
-        ${buckets.map(b => {
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+            ${filterBtns.map(f => `
+                <button onclick="ombreCurrentFilter='${f.key}';ombreCurrentPage=1;renderOmbreUI()"
+                    style="padding:6px 14px;border-radius:20px;border:1px solid rgba(201,168,76,0.25);
+                    background:${ombreCurrentFilter===f.key?'var(--gold)':'transparent'};
+                    color:${ombreCurrentFilter===f.key?'#1a1f3a':'var(--silver-dim)'};
+                    font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer;transition:all 0.2s;">
+                    ${f.label}
+                </button>`).join('')}
+        </div>
+        ${paginated.length === 0 ? `<div class="empty-state"><div class="icon">🌊</div><p>沒有符合的記憶</p></div>` :
+        paginated.map(b => {
             const isRecent = new Date(b.last_active) > oneDayAgo;
             const icon = b.pinned ? '🪸' : isRecent ? '🐠' : '🐚';
             const tags = (b.tags || []).slice(0,3).join(' · ');
             return `
             <div class="memory-card" style="margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                    <span style="font-size:20px;">${icon}</span>
-                    <div style="font-size:11px;color:var(--gold);opacity:0.7;letter-spacing:0.1em;">${b.name}</div>
+                    <span style="font-size:18px;">${icon}</span>
+                    <div style="font-size:11px;color:var(--gold);opacity:0.8;flex:1;">${b.name}</div>
                 </div>
                 ${tags ? `<div style="font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:6px;">${tags}</div>` : ''}
-                <div style="font-size:14px;color:var(--white);line-height:1.7;opacity:0.85;">${b.content_preview || ''}...</div>
+                <div style="font-size:14px;color:var(--white);line-height:1.7;opacity:0.85;">${b.content_preview || ''}…</div>
             </div>`;
         }).join('')}
+        ${totalPages > 1 ? `
+        <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:16px;">
+            <button onclick="if(ombreCurrentPage>1){ombreCurrentPage--;renderOmbreUI()}"
+                style="padding:6px 16px;border-radius:12px;border:1px solid rgba(201,168,76,0.25);background:transparent;color:var(--silver-dim);font-family:'Cormorant Garamond',serif;cursor:pointer;">
+                ‹
+            </button>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);">
+                ${ombreCurrentPage} / ${totalPages}
+            </span>
+            <button onclick="if(ombreCurrentPage<${totalPages}){ombreCurrentPage++;renderOmbreUI()}"
+                style="padding:6px 16px;border-radius:12px;border:1px solid rgba(201,168,76,0.25);background:transparent;color:var(--silver-dim);font-family:'Cormorant Garamond',serif;cursor:pointer;">
+                ›
+            </button>
+        </div>` : ''}
     `;
 }
   
