@@ -1059,50 +1059,36 @@ async function loadChatHistory() {
     }
 }
 
-  function renderOmbreMemories(result) {
+  function renderOmbreMemories(buckets) {
     const container = document.getElementById('memory-container');
-    
-    // 解析Ombre返回的文本内容
-    const raw = typeof result === 'string' ? result : JSON.stringify(result);
-    const buckets = [];
-    
-    // 按桶分割
-    const bucketBlocks = raw.split(/\[bucket_id:[^\]]+\]/);
-    const bucketIds = [...raw.matchAll(/\[bucket_id:([^\]]+)\]/g)].map(m => m[1]);
-    
-    bucketBlocks.forEach((block, i) => {
-        if (!block.trim()) return;
-        const isPinned = block.includes('📌') || block.includes('pinned');
-        const isRecent = block.includes('V0\.[7-9]') || /last_active.*202[6-9]/.test(block);
-        const lines = block.trim().split('\n').filter(l => l.trim());
-        const content = lines.join(' ').substring(0, 120);
-        
-        let type = '🐚';
-        if (isPinned) type = '🪸';
-        else if (i < 5) type = '🐠';
-        
-        buckets.push({ id: bucketIds[i-1] || i, type, content, raw: block });
-    });
-
-    if (buckets.length === 0) {
-        container.innerHTML = `<div class="empty-state"><div class="icon">🌊</div><p>深海還很安靜，還沒有記憶</p></div>`;
+    if (!Array.isArray(buckets) || buckets.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🌊</div><p>深海還很安靜</p></div>`;
         return;
     }
 
+    const now = new Date();
+    const oneDayAgo = new Date(now - 24*60*60*1000);
+
     container.innerHTML = `
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-            <span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--gold);opacity:0.7;">🪸 重要節點</span>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;">🐠 最近記憶</span>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;">🐚 深海存檔</span>
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--gold);opacity:0.8;">🪸 重要節點</span>
+            <span style="font-size:12px;color:var(--silver-dim);opacity:0.7;">🐠 最近記憶</span>
+            <span style="font-size:12px;color:var(--silver-dim);opacity:0.7;">🐚 深海存檔</span>
         </div>
-        ${buckets.map(b => `
-        <div class="memory-card" style="margin-bottom:10px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                <span style="font-size:18px;">${b.type}</span>
-                <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.15em;color:var(--gold);opacity:0.6;text-transform:uppercase;">記憶桶 ${b.id ? b.id.substring(0,8) : ''}</div>
-            </div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--white);line-height:1.7;opacity:0.9;">${b.content}…</div>
-        </div>`).join('')}
+        ${buckets.map(b => {
+            const isRecent = new Date(b.last_active) > oneDayAgo;
+            const icon = b.pinned ? '🪸' : isRecent ? '🐠' : '🐚';
+            const tags = (b.tags || []).slice(0,3).join(' · ');
+            return `
+            <div class="memory-card" style="margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <span style="font-size:20px;">${icon}</span>
+                    <div style="font-size:11px;color:var(--gold);opacity:0.7;letter-spacing:0.1em;">${b.name}</div>
+                </div>
+                ${tags ? `<div style="font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:6px;">${tags}</div>` : ''}
+                <div style="font-size:14px;color:var(--white);line-height:1.7;opacity:0.85;">${b.content_preview || ''}...</div>
+            </div>`;
+        }).join('')}
     `;
 }
   
