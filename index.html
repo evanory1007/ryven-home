@@ -581,7 +581,7 @@
     <div class="login-sub">Only for Nory</div>
     <input class="login-input" id="login-username" type="text" placeholder="你的名字" />
     <input class="login-input" id="login-password" type="password" placeholder="密碼" />
-    <button class="login-btn" onclick="doLogin()">🌊 進入</button>
+    <button class="login-btn" id="login-btn">🌊 進入</button>
     <div class="login-error" id="login-error">帳號或密碼錯誤</div>
   </div>
 </div>
@@ -950,12 +950,6 @@
   document.getElementById('day-count').textContent = dayCount;
   document.getElementById('day-suffix').textContent = suffix;
 
-  const API_BASE = 'https://ryven.homes/api';
-  // 会话 ID 持久化
-  // 登录 & 身份管理
-let sessionId = 'nory';
-let authToken = localStorage.getItem('ryven-auth-token');
-let isLoggedIn = !!authToken;
 
       loadChatHistory();
     } else {
@@ -1793,6 +1787,7 @@ document.addEventListener('keydown', function(e) {
 if (isLoggedIn) {
   document.getElementById('login-overlay').classList.add('hidden');
 }
+  document.getElementById('login-btn').addEventListener('click', doLogin);
 </script>
 </body>
 </html>
