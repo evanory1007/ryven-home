@@ -957,23 +957,6 @@ let sessionId = 'nory';
 let authToken = localStorage.getItem('ryven-auth-token');
 let isLoggedIn = !!authToken;
 
-function doLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!username || !password) return;
-  
-  fetch('https://ryven.homes/relay/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) {
-      authToken = data.token;
-      isLoggedIn = true;
-      localStorage.setItem('ryven-auth-token', authToken);
-      document.getElementById('login-overlay').classList.add('hidden');
       loadChatHistory();
     } else {
       document.getElementById('login-error').style.display = 'block';
@@ -1774,6 +1757,42 @@ setInterval(() => {
   if (dcEl) dcEl.textContent = dc;
   if (dsEl) dsEl.textContent = s;
 }, 60000);
+  function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) return;
+  
+  fetch('https://ryven.homes/relay/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      authToken = data.token;
+      isLoggedIn = true;
+      localStorage.setItem('ryven-auth-token', authToken);
+      document.getElementById('login-overlay').classList.add('hidden');
+      loadChatHistory();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  })
+  .catch(() => {
+    document.getElementById('login-error').style.display = 'block';
+  });
+}
+// 支持回车键提交登录
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('login-overlay') && !document.getElementById('login-overlay').classList.contains('hidden')) {
+    doLogin();
+  }
+});
+// 已登录则自动隐藏登录页
+if (isLoggedIn) {
+  document.getElementById('login-overlay').classList.add('hidden');
+}
 </script>
 </body>
 </html>
