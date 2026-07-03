@@ -1080,7 +1080,7 @@ function renderOmbreUI() {
     ];
 
     // 第二层：domain标签
-     = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
+     const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
 
     container.innerHTML = `
         <div style="margin-bottom:12px;">
