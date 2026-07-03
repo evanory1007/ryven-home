@@ -574,7 +574,7 @@
 </head>
 <body>
 
-<!-- 登录覆盖层 -->
+<!-- 暂时禁用登录
 <div class="login-overlay" id="login-overlay">
   <div class="login-card">
     <div class="login-title">ryven.homes 🌊</div>
@@ -585,13 +585,13 @@
     <div class="login-error" id="login-error">帳號或密碼錯誤</div>
   </div>
 </div>
+-->
 <div class="ocean-bg">
   <div class="wave wave-1"></div>
   <div class="wave wave-2"></div>
   <div class="wave wave-3"></div>
 </div>
 <div class="bubbles" id="bubbles"></div>
-
 <!-- 首页 -->
 <div class="screen active" id="home">
   <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
@@ -958,9 +958,9 @@ document.addEventListener('keydown', function(e) {
 });
 
 // 已登录则自动隐藏登录页
-if (isLoggedIn) {
-  document.getElementById('login-overlay').classList.add('hidden');
-}
+authToken = 'ryven-nory-6.28';
+isLoggedIn = true;
+loadChatHistory();
 
 async function loadChatHistory() {
   try {
