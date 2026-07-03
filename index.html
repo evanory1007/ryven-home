@@ -950,12 +950,6 @@
   document.getElementById('day-count').textContent = dayCount;
   document.getElementById('day-suffix').textContent = suffix;
 
-
-      loadChatHistory();
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-    }
-  })
   .catch(() => {
     document.getElementById('login-error').style.display = 'block';
   });
