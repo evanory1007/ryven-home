@@ -1076,9 +1076,6 @@ function renderOmbreUI() {
     const now = new Date();
     const oneDayAgo = new Date(now - 24*60*60*1000);
 
-    // 收集所有domain标签
-    const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
-
     // 筛选
     let filtered = ombreAllBuckets.filter(b => {
         const typeOk = ombreCurrentFilter === 'all' ? true
@@ -1117,7 +1114,7 @@ function renderOmbreUI() {
     ];
 
     // 第二层：domain标签
-    const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
+     = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
 
     container.innerHTML = `
         <div style="margin-bottom:12px;">
