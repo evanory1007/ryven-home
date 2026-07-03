@@ -1136,7 +1136,7 @@ function renderOmbreUI() {
             ${allDomains.map(d => `
                 <button onclick="ombreDomainFilter='${d}';ombreCurrentPage=1;renderOmbreUI()"
                     style="padding:4px 12px;border-radius:20px;border:1px solid rgba(201,168,76,0.15);
-                    background:${typeof ombreDomainFilter!=='undefined'&&ombreDomainFilter===d?'rgba(201,168,76,0.2)':'transparent'};
+                    background:transparent;
                     color:var(--silver-dim);opacity:0.8;
                     font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s;">
                     ${d}
