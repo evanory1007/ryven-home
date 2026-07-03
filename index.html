@@ -950,11 +950,6 @@
   document.getElementById('day-count').textContent = dayCount;
   document.getElementById('day-suffix').textContent = suffix;
 
-  .catch(() => {
-    document.getElementById('login-error').style.display = 'block';
-  });
-}
-
 // 支持回车键提交登录
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && document.getElementById('login-overlay') && !document.getElementById('login-overlay').classList.contains('hidden')) {
