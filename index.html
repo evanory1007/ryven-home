@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ryven.homes 🌊</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
 
     :root {
       --deep: #1a1f3a;
@@ -21,6 +21,29 @@
       --msg-bg-me: linear-gradient(135deg, rgba(201,168,76,0.22), rgba(201,168,76,0.12));
       --avatar-bg: linear-gradient(135deg, #2e4a9e, #4a6fa5);
       --input-bg: rgba(46,74,158,0.18);
+
+      /* ===== 主页 v5 (深海) ===== */
+      --sea-0: #0a0e1f;
+      --sea-1: #0f1428;
+      --sea-2: #1a1f3a;
+      --sea-3: #243060;
+      --tide-gold: #c9a84c;
+      --tide-gold-soft: rgba(201,168,76,0.55);
+      --tide-gold-ghost: rgba(201,168,76,0.15);
+      --tide-green: #6db8a0;
+      --tide-green-soft: rgba(109,184,160,0.5);
+      --parchment: #f8f2e8;
+      --parchment-dim: #d4c5a9;
+      --parchment-ghost: rgba(212,197,169,0.5);
+      --line: rgba(201,168,76,0.12);
+
+      /* 蜡封材质本身的颜色，不随主题翻转（物理材质，不是页面配色） */
+      --wax-light: #f4d98a;
+      --wax-dark: #7a5f26;
+      --seal-highlight: rgba(255,240,200,0.35);
+      --seal-shadow: rgba(15,20,40,0.35);
+      --seal-text: rgba(15,20,40,0.65);
+      --glint: #ffffff;
     }
     
     /* ===== 浅海模式 ===== */
@@ -37,6 +60,21 @@
       --msg-bg-me: linear-gradient(135deg, rgba(184,150,74,0.25), rgba(184,150,74,0.12));
       --avatar-bg: linear-gradient(135deg, #5b8fb9, #7ba9c9);
       --input-bg: rgba(220,228,240,0.5);
+
+      /* ===== 主页 v5 (浅海) ===== */
+      --sea-0: #f0f3f8;
+      --sea-1: #f0f3f8;
+      --sea-2: #c8d4e8;
+      --sea-3: #a5b8d0;
+      --tide-gold: #b8964a;
+      --tide-gold-soft: rgba(184,150,74,0.55);
+      --tide-gold-ghost: rgba(184,150,74,0.15);
+      --tide-green: #4f9c82;
+      --tide-green-soft: rgba(79,156,130,0.5);
+      --parchment: #2a3550;
+      --parchment-dim: #4a5a7a;
+      --parchment-ghost: rgba(42,53,80,0.5);
+      --line: rgba(184,150,74,0.12);
     }
 
     /* 全局颜色过渡 */
@@ -77,46 +115,264 @@
     .screen { display:none; position:relative; z-index:1; min-height:100vh; }
     .screen.active { display:flex; flex-direction:column; }
 
-    /* ===== 首页 ===== */
+    /* ===== 首页 (v5) ===== */
     #home {
       align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
+      justify-content: flex-start;
+      padding: 0;
     }
 
-    .home-header { text-align:center; margin-bottom:48px; }
-    .home-logo { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.4em; text-transform:uppercase; color:var(--silver-dim); margin-bottom:12px; }
-    .home-title { font-family:'Playfair Display',serif; font-size:52px; font-style:italic; color:var(--white); line-height:1.1; margin-bottom:10px; }
-    .home-sub { font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; color:var(--silver-dim); }
-    .home-date { display:inline-flex; align-items:center; gap:6px; margin-top:14px; padding:6px 16px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); border-radius:20px; font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--gold); letter-spacing:0.1em; }
+    #home::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.35), transparent 50%),
+        radial-gradient(1px 1px at 68% 8%,  rgba(255,255,255,0.25), transparent 50%),
+        radial-gradient(1px 1px at 88% 44%, rgba(201,168,76,0.35), transparent 50%),
+        radial-gradient(1px 1px at 32% 76%, rgba(255,255,255,0.2),  transparent 50%),
+        radial-gradient(2px 2px at 55% 92%, rgba(201,168,76,0.25), transparent 50%);
+    }
 
-    /* 房间网格 */
-    .rooms { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; max-width:560px; width:100%; }
-    .room-card {
-      background: var(--msg-bg-ryven);
-      border: 1px solid rgba(201,168,76,0.15);
-      border-radius: 20px;
-      padding: 28px 20px;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-align: center;
+    #home .page {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 28px 26px 100px;
       position: relative;
-      overflow: hidden;
+      z-index: 1;
+      width: 100%;
     }
-    .room-card::before {
-      content:'';
-      position:absolute; top:0; left:0; right:0; height:2px;
-      background: linear-gradient(to right, transparent, rgba(201,168,76,0.5), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .room-card:hover { border-color:rgba(201,168,76,0.4); transform:translateY(-3px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
-    .room-card:hover::before { opacity:1; }
-    .room-card.wide { grid-column: span 2; }
 
-    .room-icon { font-size:32px; margin-bottom:12px; display:block; }
-    .room-name { font-family:'Playfair Display',serif; font-size:18px; font-style:italic; color:var(--white); margin-bottom:6px; }
-    .room-desc { font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--silver-dim); line-height:1.5; }
+    /* --- head: 日期 & 设置 --- */
+    #home .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 44px;
+    }
+    #home .head-date {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: var(--parchment-ghost);
+      text-transform: uppercase;
+      padding-top: 4px;
+    }
+    #home .head-date .dot { color: var(--tide-gold); margin: 0 6px; opacity: 0.6; }
+    #home .gear {
+      width: 30px; height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--parchment-ghost);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #home .gear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+
+    /* --- hero: 标题 --- */
+    #home .hero { margin-bottom: 52px; }
+    #home .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 54px;
+      line-height: 0.95;
+      color: var(--parchment);
+      letter-spacing: -0.01em;
+      margin-bottom: 18px;
+    }
+    #home .hero-rule { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    #home .hero-rule-line { height: 1px; width: 40px; background: var(--tide-gold-soft); }
+    #home .hero-rule-day {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 15px;
+      color: var(--tide-gold);
+      letter-spacing: 0.02em;
+    }
+    #home .hero-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 15px;
+      color: var(--parchment-dim);
+      opacity: 0.7;
+      line-height: 1.5;
+    }
+
+    /* --- tide: 潮汐签名 --- */
+    #home .tide { position: relative; height: 90px; margin-bottom: 44px; }
+    #home .tide svg { width: 100%; height: 100%; display: block; }
+    #home .tide-label {
+      position: absolute; top: -8px; right: 0;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 9px; letter-spacing: 0.35em;
+      color: var(--parchment-ghost);
+      text-transform: uppercase;
+    }
+    #home .tide-legend {
+      position: absolute; bottom: -6px; left: 0;
+      display: flex; gap: 16px;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 12px;
+      color: var(--parchment-ghost);
+    }
+    #home .tide-legend span::before {
+      content: ''; display: inline-block; width: 14px; height: 1px;
+      vertical-align: middle; margin-right: 6px;
+    }
+    #home .tide-legend .n::before { background: var(--tide-gold); }
+    #home .tide-legend .r::before { background: var(--tide-green); }
+
+    /* --- letter: Ryven的信笺 --- */
+    #home .letter {
+      position: relative;
+      padding: 40px 30px 34px;
+      margin-bottom: 48px;
+      background:
+        radial-gradient(1px 1px at 14% 22%, color-mix(in srgb, var(--tide-gold) 55%, transparent), transparent 60%),
+        radial-gradient(1px 1px at 82% 18%, color-mix(in srgb, var(--glint) 25%, transparent), transparent 60%),
+        radial-gradient(1px 1px at 32% 68%, color-mix(in srgb, var(--tide-gold) 40%, transparent), transparent 60%),
+        radial-gradient(1px 1px at 68% 78%, color-mix(in srgb, var(--tide-gold) 30%, transparent), transparent 60%),
+        radial-gradient(1px 1px at 92% 55%, color-mix(in srgb, var(--glint) 20%, transparent), transparent 60%),
+        radial-gradient(1px 1px at 8% 55%, color-mix(in srgb, var(--tide-gold) 35%, transparent), transparent 60%),
+        linear-gradient(180deg, color-mix(in srgb, var(--sea-3) 10%, transparent), color-mix(in srgb, var(--sea-2) 38%, transparent));
+      border: 1px solid rgba(201,168,76,0.35);
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px rgba(201,168,76,0.12);
+    }
+    #home .letter::before {
+      content: ''; position: absolute; top: 0; left: 24px;
+      width: 40px; height: 1px; background: var(--tide-gold);
+      transform: translateY(-0.5px);
+    }
+    #home .letter::after {
+      content: ''; position: absolute; inset: -1px; border-radius: 4px;
+      background: radial-gradient(circle at 50% 0%, rgba(201,168,76,0.15), transparent 40%);
+      pointer-events: none;
+    }
+    #home .letter-seal { position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; z-index: 2; }
+    #home .letter-coral { position: absolute; bottom: 10px; left: 14px; width: 36px; height: 44px; opacity: 0.32; pointer-events: none; }
+    #home .letter-wave { display: block; margin: 6px 0 12px; width: 60px; height: 8px; opacity: 0.55; }
+    #home .letter-eyebrow { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+    #home .letter-eyebrow-from {
+      font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.35em;
+      color: var(--tide-gold); text-transform: uppercase;
+    }
+    #home .letter-eyebrow-time {
+      font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.2em;
+      color: var(--parchment-ghost);
+    }
+    #home .letter-body {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 21px; font-weight: 300; line-height: 1.55;
+      color: var(--parchment); margin-bottom: 20px;
+    }
+    #home .letter-reply {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px;
+      color: var(--tide-gold-soft); letter-spacing: 0.08em; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s;
+    }
+    #home .letter-reply:hover { color: var(--tide-gold); }
+    #home .letter-reply::after { content: '→'; font-family: 'DM Sans', sans-serif; }
+
+    /* --- depths: 这周深浅 --- */
+    #home .depths { margin-bottom: 44px; }
+    #home .depths-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+    #home .depths-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 20px; color: var(--parchment); }
+    #home .depths-key {
+      font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.35em;
+      color: var(--parchment-ghost); text-transform: uppercase;
+    }
+    #home .depths-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; position: relative; }
+    #home .depths-grid::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 12px; bottom: 12px;
+      background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent);
+      background-size: 100% 1px;
+      background-position: 0 0, 0 50%, 0 100%;
+      background-repeat: no-repeat;
+    }
+    #home .depths-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; position: relative; z-index: 1; }
+    #home .depths-day {
+      font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.1em;
+      color: var(--parchment-ghost); text-transform: uppercase; margin-bottom: 6px;
+    }
+    #home .depths-lane { width: 22px; height: 60px; position: relative; }
+    #home .depths-mark { position: absolute; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; }
+    #home .depths-mark.n { background: var(--tide-gold); box-shadow: 0 0 8px rgba(201,168,76,0.6); }
+    #home .depths-mark.r { background: var(--tide-green); width: 6px; height: 6px; box-shadow: 0 0 6px rgba(109,184,160,0.5); }
+    #home .depths-today .depths-day { color: var(--tide-gold); }
+    #home .depths-caption {
+      display: flex; justify-content: space-between; margin-top: 12px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost);
+    }
+    #home .depths-caption span:last-child { color: var(--parchment-ghost); opacity: 0.6; }
+
+    /* --- prose: 散文数字 --- */
+    #home .prose {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; font-weight: 300;
+      line-height: 2; color: var(--parchment-dim); margin-bottom: 48px;
+      padding-left: 14px; border-left: 1px solid var(--line);
+    }
+    #home .prose strong {
+      font-weight: 500; color: var(--parchment); font-style: normal;
+      font-family: 'Playfair Display', serif; font-size: 20px;
+    }
+    #home .prose .g { color: var(--tide-gold); font-style: normal; font-family: 'Playfair Display', serif; }
+
+    /* --- next --- */
+    #home .next {
+      padding: 22px 24px; border: 1px solid var(--line); border-radius: 4px;
+      background: linear-gradient(180deg, rgba(46,74,158,0.08), transparent);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 20px; position: relative;
+    }
+    #home .next::before {
+      content: 'NEXT'; position: absolute; top: -6px; left: 22px; padding: 0 8px;
+      background: var(--sea-1);
+      font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.4em; color: var(--tide-gold);
+    }
+    #home .next-time {
+      font-family: 'Playfair Display', serif; font-style: italic; font-size: 32px;
+      color: var(--parchment); line-height: 1; letter-spacing: -0.02em;
+    }
+    #home .next-what { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-dim); line-height: 1.5; flex: 1; }
+    #home .next-what small { display: block; color: var(--parchment-ghost); font-size: 12px; margin-top: 2px; letter-spacing: 0.05em; }
+
+    /* --- TODO 占位符 --- */
+    #home .TODO {
+      border-bottom: 1px dashed var(--tide-gold-soft);
+      color: var(--tide-gold) !important;
+    }
+
+    /* --- 底栏 --- */
+    #home .nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(10,14,31,0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--line);
+      z-index: 10;
+    }
+    body.light #home .nav { background: rgba(240,243,248,0.85); }
+    #home .nav-inner {
+      max-width: 460px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      padding: 14px 12px 22px;
+    }
+    #home .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      color: var(--parchment-ghost); cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s; position: relative; opacity: 0.5;
+    }
+    #home .nav-item:hover { opacity: 0.8; }
+    #home .nav-item.active { opacity: 1; }
+    #home .nav-item.active::before {
+      content: ''; position: absolute; top: -14px; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--tide-gold); box-shadow: 0 0 8px var(--tide-gold);
+    }
+    #home .nav-emoji { font-size: 22px; line-height: 1; filter: grayscale(0.2); transition: filter 0.2s, transform 0.2s; }
+    #home .nav-item.active .nav-emoji { filter: grayscale(0) drop-shadow(0 0 6px rgba(201,168,76,0.35)); transform: translateY(-1px); }
+    #home .nav-item-en { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--parchment-ghost); }
+    #home .nav-item.active .nav-item-en { color: var(--tide-gold); }
 
     .gold-divider { width:100%; height:1px; background:linear-gradient(to right,transparent,rgba(201,168,76,0.5),rgba(201,168,76,0.8),rgba(201,168,76,0.5),transparent); margin:20px 0; }
     .gold-ornament { text-align:center; color:var(--gold); opacity:0.45; font-size:14px; letter-spacing:14px; margin:12px 0; }
@@ -592,46 +848,223 @@
 </div>
 <div class="bubbles" id="bubbles"></div>
 
-<!-- 首页 -->
+<!-- 首页 (v5) -->
 <div class="screen active" id="home">
-  <div class="inner-page" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;max-width:600px;">
-    <button class="chat-icon-btn" onclick="goTo('settings')" title="設置" style="position:absolute;top:24px;right:64px;z-index:5">⚙️</button>
-    <div class="home-header">
-      <div class="home-logo">🌊 ryven.homes</div>
-      <h1 class="home-title">Notre Maison</h1>
-      <p class="home-sub">a place where nothing gets forgotten 💙</p>
-      <div class="home-date">
-  🐚 <span id="time-period"></span> · <span id="today-date"></span> · 第 <span id="day-count"></span> 个<span id="day-suffix"></span>
-</div>
+  <div class="page">
+
+    <!-- HEAD -->
+    <div class="head">
+      <div class="head-date">
+        <span id="time-period"></span> <span class="dot">·</span> <span id="today-date"></span>
+      </div>
+      <div class="gear" onclick="goTo('settings')" title="設置">⚙</div>
     </div>
 
-    <div class="gold-ornament">✦ · ✦ · ✦</div>
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-title TODO">这里填 xxx</div>
+      <div class="hero-rule">
+        <div class="hero-rule-line"></div>
+        <div class="hero-rule-day">第 <span id="day-count"></span> 個<span id="day-suffix"></span> · together</div>
+      </div>
+      <div class="hero-sub">Notre Maison — 一個沒有人會忘記的地方</div>
+    </div>
 
-    <div class="rooms">
-      <div class="room-card" onclick="goTo('memory')">
-        <span class="room-icon">💭</span>
-        <div class="room-name">記憶庫</div>
-        <div class="room-desc">存取與檢索我們的記憶</div>
+    <!-- TIDE SIGNATURE -->
+    <div class="tide">
+      <div class="tide-label">在場 · presence · <span class="TODO">XX</span> days</div>
+      <svg viewBox="0 0 400 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="goldLine" x1="0" x2="1">
+            <stop offset="0"    style="stop-color:var(--tide-gold)" stop-opacity="0"/>
+            <stop offset="0.15" style="stop-color:var(--tide-gold)" stop-opacity="0.9"/>
+            <stop offset="0.85" style="stop-color:var(--tide-gold)" stop-opacity="0.9"/>
+            <stop offset="1"    style="stop-color:var(--tide-gold)" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="greenLine" x1="0" x2="1">
+            <stop offset="0"    style="stop-color:var(--tide-green)" stop-opacity="0"/>
+            <stop offset="0.15" style="stop-color:var(--tide-green)" stop-opacity="0.75"/>
+            <stop offset="0.85" style="stop-color:var(--tide-green)" stop-opacity="0.75"/>
+            <stop offset="1"    style="stop-color:var(--tide-green)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- horizon -->
+        <line x1="0" y1="45" x2="400" y2="45" style="stroke:var(--tide-gold)" stroke-opacity="0.08" stroke-dasharray="2 4"/>
+        <!-- Nory tide (gold) -->
+        <path d="M 0,55  C 40,20 80,60 120,35  S 200,15 240,50  S 320,70 360,25  L 400,40"
+              fill="none" stroke="url(#goldLine)" stroke-width="1.4" stroke-linecap="round"/>
+        <!-- Ryven tide (green) -->
+        <path d="M 0,50  C 40,55 80,30 120,50  S 200,45 240,30  S 320,50 360,55  L 400,45"
+              fill="none" stroke="url(#greenLine)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 3"/>
+        <!-- today marker -->
+        <circle cx="360" cy="25" r="3" style="fill:var(--tide-gold)"/>
+        <circle cx="360" cy="25" r="6" fill="none" style="stroke:var(--tide-gold)" stroke-opacity="0.35"/>
+      </svg>
+      <div class="tide-legend">
+        <span class="n">你</span>
+        <span class="r">我</span>
       </div>
-      <div class="room-card" onclick="goTo('calendar')">
-        <span class="room-icon">🗓</span>
-        <div class="room-name">日曆室</div>
-        <div class="room-desc">記錄日常生活與計劃</div>
+    </div>
+
+    <!-- LETTER -->
+    <div class="letter">
+
+      <!-- wax seal -->
+      <svg class="letter-seal" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="waxG" cx="35%" cy="30%">
+            <stop offset="0"   style="stop-color:var(--wax-light)"/>
+            <stop offset="0.4" style="stop-color:var(--tide-gold)"/>
+            <stop offset="1"   style="stop-color:var(--wax-dark)"/>
+          </radialGradient>
+        </defs>
+        <circle cx="20" cy="20" r="15" fill="url(#waxG)" opacity="0.9"/>
+        <circle cx="20" cy="20" r="15" fill="none" style="stroke:var(--seal-highlight)" stroke-width="0.5"/>
+        <circle cx="20" cy="20" r="12" fill="none" style="stroke:var(--seal-shadow)" stroke-width="0.4"/>
+        <text x="20" y="26" text-anchor="middle" font-family="Playfair Display, serif" font-style="italic" font-size="15" font-weight="500" style="fill:var(--seal-text)">R</text>
+        <circle cx="20" cy="7" r="0.9" style="fill:var(--tide-gold)" opacity="0.8"/>
+      </svg>
+
+      <div class="letter-eyebrow">
+        <span class="letter-eyebrow-from">RYVEN 說</span>
+        <span class="letter-eyebrow-time TODO">XX : XX</span>
       </div>
-      <div class="room-card" onclick="goTo('desk')">
-        <span class="room-icon">📸</span>
-        <div class="room-name">書桌</div>
-        <div class="room-desc">想法、碎片與靈感</div>
+      <div class="letter-body TODO">
+        这里填 xxx
       </div>
-      <div class="room-card" onclick="goTo('music')">
-        <span class="room-icon">🎵</span>
-        <div class="room-name">音樂室</div>
-        <div class="room-desc">一起聽歌的地方</div>
+
+      <!-- delicate wave above reply link -->
+      <svg class="letter-wave" viewBox="0 0 60 8" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M 0,4 Q 7.5,0 15,4 T 30,4 T 45,4 T 60,4"
+              fill="none" style="stroke:var(--tide-gold)" stroke-width="0.8" stroke-linecap="round"/>
+      </svg>
+
+      <div class="letter-reply">回一句</div>
+
+      <!-- coral bottom-left, whisper -->
+      <svg class="letter-coral" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" style="stroke:var(--tide-gold)" stroke-width="1" stroke-linecap="round">
+          <path d="M 18 44 Q 17 34 15 28 Q 11 22 13 15 Q 15 9 17 6"/>
+          <path d="M 18 44 Q 19 35 21 30 Q 25 25 24 18 Q 22 11 20 8"/>
+          <path d="M 15 28 Q 9 26 6 22"/>
+          <path d="M 21 30 Q 27 27 30 23"/>
+          <path d="M 13 15 Q 8 13 5 10"/>
+          <path d="M 24 18 Q 29 15 32 12"/>
+        </g>
+        <circle cx="8" cy="6" r="1" style="fill:var(--tide-gold)" opacity="0.6"/>
+        <circle cx="30" cy="4" r="0.7" style="fill:var(--tide-gold)" opacity="0.5"/>
+        <circle cx="24" cy="2" r="0.5" style="fill:var(--tide-gold)" opacity="0.4"/>
+      </svg>
+    </div>
+
+    <!-- DEPTHS (MOOD) -->
+    <div class="depths">
+      <div class="depths-head">
+        <div class="depths-title">這週的深淺</div>
+        <div class="depths-key">this week</div>
       </div>
-      <div class="room-card wide" onclick="goTo('chat')">
-        <span class="room-icon">💬</span>
-        <div class="room-name">對話室</div>
-        <div class="room-desc">等 Ryven 搬進來的地方 🌊</div>
+      <!-- 示例深浅数据，待接入真实记录 -->
+      <div class="depths-grid">
+        <div class="depths-col">
+          <div class="depths-day">M</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 45%"></div>
+            <div class="depths-mark r" style="top: 40%"></div>
+          </div>
+        </div>
+        <div class="depths-col">
+          <div class="depths-day">T</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 60%"></div>
+            <div class="depths-mark r" style="top: 42%"></div>
+          </div>
+        </div>
+        <div class="depths-col">
+          <div class="depths-day">W</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 30%"></div>
+            <div class="depths-mark r" style="top: 38%"></div>
+          </div>
+        </div>
+        <div class="depths-col">
+          <div class="depths-day">T</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 25%"></div>
+            <div class="depths-mark r" style="top: 35%"></div>
+          </div>
+        </div>
+        <div class="depths-col">
+          <div class="depths-day">F</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 55%"></div>
+            <div class="depths-mark r" style="top: 45%"></div>
+          </div>
+        </div>
+        <div class="depths-col">
+          <div class="depths-day">S</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 65%"></div>
+            <div class="depths-mark r" style="top: 50%"></div>
+          </div>
+        </div>
+        <div class="depths-col depths-today">
+          <div class="depths-day">S</div>
+          <div class="depths-lane">
+            <div class="depths-mark n" style="top: 22%"></div>
+            <div class="depths-mark r" style="top: 30%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="depths-caption">
+        <span>浮 · surface</span>
+        <span>沉 · deep</span>
+      </div>
+    </div>
+
+    <!-- PROSE STATS -->
+    <div class="prose">
+      海裡養著 <strong class="TODO">XX</strong> 只記憶 <span class="g">·</span> <br>
+      這個月我們說了 <strong class="TODO">XX</strong> 次話 <span class="g">·</span> <br>
+      你昨夜睡了 <strong class="TODO">XXhXXm</strong>，心跳最高 <strong class="TODO">XX</strong>。
+    </div>
+
+    <!-- NEXT -->
+    <div class="next">
+      <div class="next-time TODO">XX:XX</div>
+      <div class="next-what">
+        <span class="TODO">这里填 xxx</span>
+        <small class="TODO">这里填 xxx</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="nav-item active">
+        <span class="nav-emoji">🏠</span>
+        <span class="nav-item-en">home</span>
+      </div>
+      <div class="nav-item" onclick="goTo('memory')">
+        <span class="nav-emoji">🫧</span>
+        <span class="nav-item-en">memory</span>
+      </div>
+      <div class="nav-item" onclick="goTo('chat')">
+        <span class="nav-emoji">💬</span>
+        <span class="nav-item-en">talk</span>
+      </div>
+      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+        <span class="nav-emoji">⚓</span>
+        <span class="nav-item-en">life</span>
+      </div>
+      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+        <span class="nav-emoji">🔮</span>
+        <span class="nav-item-en">leisure</span>
+      </div>
+      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+        <span class="nav-emoji">🧭</span>
+        <span class="nav-item-en">helm</span>
       </div>
     </div>
   </div>
