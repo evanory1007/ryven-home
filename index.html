@@ -3107,6 +3107,7 @@ function renderOmbreUI() {
         const decoder = new TextDecoder('utf-8');
         let fullText = '';
         let buffer = '';
+        let sseEventType = 'message'; // 默认类型
 
         while (true) {
             const { value, done } = await reader.read();
@@ -3116,9 +3117,41 @@ function renderOmbreUI() {
             buffer = lines.pop();
 
             for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const payload = line.slice(6).trim();
-                    if (payload === '[DONE]') continue;
+                if (line.startsWith('event:')) {
+                    sseEventType = line.slice(6).trim();
+                    continue;
+                }
+                if (line === '') {
+                    sseEventType = 'message'; // 空行是SSE消息边界，事件类型重置回默认
+                    continue;
+                }
+                if (line.startsWith('data:')) {
+                    const payload = line.slice(5).trim();
+                    if (payload === '[DONE]') { sseEventType = 'message'; continue; }
+
+                    if (sseEventType === 'memories') {
+                        console.log('memories event received', payload);
+                        // 检索到的记忆：把刚插入的思考框展开内容换成真实检索结果
+                        // relay 实际发的是纯字符串数组 ["...", "..."]，不是 {content:...} 对象，
+                        // 之前按对象取 .content/.snippet 会全部取到 undefined，导致展开内容一直是空的、没被替换掉
+                        try {
+                            const memories = JSON.parse(payload);
+                            if (Array.isArray(memories) && memories.length > 0) {
+                                const thinkContent = memories
+                                    .map(m => typeof m === 'string' ? m : (m && (m.content || m.snippet)) || '')
+                                    .filter(Boolean)
+                                    .join('　·　');
+                                const expands = messagesEl.querySelectorAll('.think-expand');
+                                const latestExpand = expands[expands.length - 1];
+                                if (latestExpand && thinkContent) latestExpand.innerHTML = `<p>${thinkContent}</p>`;
+                            }
+                        } catch(e) {
+                            console.log('memories event parse failed', e);
+                        }
+                        sseEventType = 'message';
+                        continue;
+                    }
+
                     try {
                         const json = JSON.parse(payload);
                         let chunk = '';
