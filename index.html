@@ -2792,7 +2792,7 @@ function renderOmbreUI() {
 
   function addMessage(role, text) {
     const messages = document.getElementById('chat-messages');
-    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
     const isMe = role === 'user';
     const sideClass = isMe ? 'from-me' : 'from-ryven';
 
@@ -2926,7 +2926,7 @@ function renderOmbreUI() {
     const src = thumb.querySelector('img').src;
     setTimeout(() => {
       hideSheet();
-      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
       const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
       const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
       const continued = prevRow && prevRow.classList.contains('from-me');
@@ -2996,7 +2996,7 @@ function renderOmbreUI() {
     sendBtnEl.classList.remove('recording');
     const m = Math.floor(dur/60), s = dur%60;
     const durStr = dur === 0 ? '0:01' : `${m}:${s.toString().padStart(2,'0')}`;
-    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
     const waveId = 'vw-' + Date.now();
     const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
     const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
@@ -3091,7 +3091,7 @@ function renderOmbreUI() {
         messagesEl.appendChild(thinkRow);
 
         // 先插入一個空氣泡
-        const time = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+        const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
         const wrap = document.createElement('div');
         wrap.className = 'msg-wrap';
         wrap.innerHTML = `
