@@ -2071,19 +2071,6 @@
     <!-- 消息列表 -->
     <div class="chat-messages" id="chat-messages">
       <div class="api-notice" id="api-notice">💙 在右上角選單填入 API Key 後 Ryven 就能回話了</div>
-
-      <!-- ═══ 思考框 (demo，等 relay 接 reasoning 数据再改成默认隐藏) ═══ -->
-      <div class="think-inline" id="think-block">
-        <div class="think-pill" onclick="toggleThink()">
-          <span class="think-star">✦</span>
-          <span class="think-label">thinking</span>
-          <span class="think-star">✦</span>
-        </div>
-        <div class="think-expand" id="think-expand">
-          <p>你說的這件事……<strong>我記得</strong>。讓我想想怎麼接住它。</p>
-          <p>海裡有些東西沉得很深，但不是忘了——是在等一個合適的潮水把它帶上來。</p>
-        </div>
-      </div>
     </div>
 
     <!-- 打字指示器 -->
@@ -2293,17 +2280,13 @@ async function loadChatHistory() {
     const data = await res.json();
     const messages = data.messages || [];
     if (messages.length > 0) {
-      const chatMessagesContainer = document.getElementById('chat-messages');
-      const thinkBlockEl = document.getElementById('think-block');
-      chatMessagesContainer.innerHTML = '';
+      document.getElementById('chat-messages').innerHTML = '';
       chatHistory = [];
       for (const msg of messages) {
         addMessage(msg.role, msg.content);
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
       }
-      // innerHTML='' 会把思考框demo一起清掉，重新挂回去（不影响真实历史消息的加载）
-      if (thinkBlockEl) chatMessagesContainer.appendChild(thinkBlockEl);
     }
   } catch(e) {
     console.error('加载历史失败', e);
@@ -2801,8 +2784,9 @@ function renderOmbreUI() {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
 
-  function toggleThink() {
-    const el = document.getElementById('think-expand');
+  function toggleThink(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
     el.style.display = el.style.display === 'block' ? 'none' : 'block';
   }
 
@@ -2811,6 +2795,25 @@ function renderOmbreUI() {
     const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
     const isMe = role === 'user';
     const sideClass = isMe ? 'from-me' : 'from-ryven';
+
+    // 每条Ryven回复上方跟一行折叠的思考标签（demo，等relay接真实reasoning数据）
+    if (role === 'ryven' || role === 'assistant') {
+      const thinkId = 'think-' + Date.now();
+      const thinkRow = document.createElement('div');
+      thinkRow.className = 'think-inline';
+      thinkRow.innerHTML = `
+        <div class="think-pill" onclick="toggleThink('${thinkId}')">
+          <span class="think-star">✧</span>
+          <span class="think-label">thinking</span>
+          <span class="think-star">✧</span>
+        </div>
+        <div class="think-expand" id="${thinkId}">
+          <p>你說的這件事……<strong>我記得</strong>。讓我想想怎麼接住它。</p>
+          <p>海裡有些東西沉得很深，但不是忘了——是在等一個合適的潮水把它帶上來。</p>
+        </div>
+      `;
+      messages.appendChild(thinkRow);
+    }
 
     // 连续同一发送者：视觉更紧凑
     const wraps = messages.querySelectorAll('.msg-wrap');
@@ -3068,8 +3071,26 @@ function renderOmbreUI() {
         // ===== 流式讀取 =====
         document.getElementById('typing-indicator').classList.remove('show');
 
-        // 先插入一個空氣泡
         const messagesEl = document.getElementById('chat-messages');
+
+        // 思考行（跟 addMessage() 里同款逻辑）
+        const streamThinkId = 'think-' + Date.now();
+        const thinkRow = document.createElement('div');
+        thinkRow.className = 'think-inline';
+        thinkRow.innerHTML = `
+        <div class="think-pill" onclick="toggleThink('${streamThinkId}')">
+          <span class="think-star">✧</span>
+          <span class="think-label">thinking</span>
+          <span class="think-star">✧</span>
+        </div>
+        <div class="think-expand" id="${streamThinkId}">
+          <p>你說的這件事……<strong>我記得</strong>。讓我想想怎麼接住它。</p>
+          <p>海裡有些東西沉得很深，但不是忘了——是在等一個合適的潮水把它帶上來。</p>
+        </div>
+      `;
+        messagesEl.appendChild(thinkRow);
+
+        // 先插入一個空氣泡
         const time = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
         const wrap = document.createElement('div');
         wrap.className = 'msg-wrap';
