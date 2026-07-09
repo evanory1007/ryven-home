@@ -50,8 +50,6 @@
 
       /* ===== 對話室 v1 (深海) ===== */
       --danger: #c47a7a;
-      --think-bg: linear-gradient(180deg, rgba(109,184,160,0.10), rgba(46,74,158,0.15));
-      --think-border: rgba(109,184,160,0.28);
     }
     
     /* ===== 浅海模式 ===== */
@@ -89,8 +87,6 @@
 
       /* ===== 對話室 v1 (浅海) ===== */
       --danger: #a05555;
-      --think-bg: linear-gradient(180deg, rgba(109,184,160,0.12), rgba(180,195,220,0.18));
-      --think-border: rgba(109,184,160,0.35);
     }
 
     /* 全局颜色过渡 */
@@ -955,140 +951,34 @@
     .typing-dots span:nth-child(2){animation-delay:0.2s} .typing-dots span:nth-child(3){animation-delay:0.4s}
     @keyframes typing{0%,80%,100%{transform:scale(0.8);opacity:0.3}40%{transform:scale(1);opacity:1}}
 
-    /* ─── 思考框 (demo) ─── */
-    .think {
-      align-self: flex-start;
-      width: 92%;
-      margin: 6px 12px 4px;
-      position: relative;
-      background: var(--think-bg);
-      border: 1px solid var(--think-border);
-      border-radius: 14px;
-      overflow: hidden;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      animation: fadeIn 0.5s ease-out;
-    }
+    /* ─── 思考框：单行折叠样式 ─── */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .think-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px 8px;
-      border-bottom: 1px solid rgba(109,184,160,0.15);
-      position: relative;
-      z-index: 2;
-    }
-    .think-em { font-size: 15px; filter: drop-shadow(0 0 4px rgba(109,184,160,0.6)); }
-    .think-title {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 10px;
-      letter-spacing: 0.35em;
-      color: var(--tide-green);
-      text-transform: uppercase;
-      opacity: 0.85;
-      flex: 1;
-    }
-    .think-dots { display: flex; gap: 3px; }
-    .think-dots span {
-      width: 4px; height: 4px;
-      border-radius: 50%;
-      background: var(--tide-green);
-      opacity: 0.5;
-      animation: typing 1.2s ease-in-out infinite;
-    }
-    .think-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .think-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-    .think-body {
-      padding: 14px 16px 44px;
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 14px;
-      line-height: 1.75;
-      color: var(--parchment-dim);
-      position: relative;
-      z-index: 2;
-      max-height: 200px;
-      overflow: hidden;
-      -webkit-mask-image: linear-gradient(180deg, transparent, black 12%, black 92%, transparent);
-      mask-image: linear-gradient(180deg, transparent, black 12%, black 92%, transparent);
-    }
-    .think-body strong {
-      font-family: 'Playfair Display', serif;
-      color: var(--parchment);
-      font-weight: 500;
-    }
-
-    /* 思考框内的上浮气泡（跟home的.bubble、memory的.pb是同一类装饰，
-       但这个容器只有~200px高，pageRise是按vh位移设计给整页用的，
-       直接复用会导致气泡瞬间飞出容器——所以这里单独定义一套px量级的thinkRise） */
-    .think-bubbles {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-      overflow: hidden;
-    }
-    .think-bubbles .bub {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5), rgba(109,184,160,0.3) 60%, transparent);
-      box-shadow: 0 0 4px rgba(109,184,160,0.3);
-      animation: thinkRise linear infinite;
-      opacity: 0;
-    }
-    @keyframes thinkRise {
-      0%   { transform: translateY(20px) translateX(0)    scale(0.6); opacity: 0; }
-      10%  { opacity: 0.7; }
-      40%  { transform: translateY(-60px) translateX(4px)  scale(0.9); }
-      70%  { transform: translateY(-140px) translateX(-3px) scale(1.1); opacity: 0.55; }
-      100% { transform: translateY(-220px) translateX(2px) scale(1.2); opacity: 0; }
-    }
-    .think-bubbles .bub:nth-child(1) { left: 12%; bottom: 0;  width: 6px;  height: 6px;  animation-duration: 6s;  animation-delay: 0s;   }
-    .think-bubbles .bub:nth-child(2) { left: 26%; bottom: 4px; width: 4px;  height: 4px;  animation-duration: 5s;  animation-delay: 1.2s; }
-    .think-bubbles .bub:nth-child(3) { left: 42%; bottom: 0;  width: 8px;  height: 8px;  animation-duration: 7s;  animation-delay: 0.5s; }
-    .think-bubbles .bub:nth-child(4) { left: 58%; bottom: 2px; width: 5px;  height: 5px;  animation-duration: 5.5s; animation-delay: 2.1s; }
-    .think-bubbles .bub:nth-child(5) { left: 72%; bottom: 6px; width: 7px;  height: 7px;  animation-duration: 6.5s; animation-delay: 0.8s; }
-    .think-bubbles .bub:nth-child(6) { left: 84%; bottom: 0;  width: 4px;  height: 4px;  animation-duration: 4.5s; animation-delay: 1.6s; }
-    .think-bubbles .bub:nth-child(7) { left: 20%; bottom: 8px; width: 3px;  height: 3px;  animation-duration: 5s;  animation-delay: 3.2s; }
-    .think-bubbles .bub:nth-child(8) { left: 64%; bottom: 10px;width: 3px;  height: 3px;  animation-duration: 4.5s; animation-delay: 2.6s; }
-
-    .think-collapse {
-      position: absolute;
-      bottom: 10px;
-      right: 12px;
-      z-index: 3;
-      display: flex;
+    .think-inline { margin: 8px 0 4px 12px; }
+    .think-pill {
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px 4px 6px;
-      background: rgba(15,20,40,0.7);
-      border: 1px solid rgba(109,184,160,0.3);
-      border-radius: 999px;
-      color: var(--parchment-ghost);
+      cursor: pointer;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(109,184,160,0.55);
+    }
+    .think-star { font-size: 8px; color: var(--tide-green); opacity: 0.6; }
+    .think-label { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; }
+    .think-expand {
+      display: none;
+      padding: 10px 14px;
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
-      font-size: 11px;
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-      backdrop-filter: blur(4px);
-    }
-    .think-collapse:hover { border-color: var(--tide-green); color: var(--parchment); }
-    body.light .think-collapse {
-      background: rgba(109,184,160,0.15);
-      border: 1px solid var(--think-border);
-      color: var(--tide-gold);
-    }
-    .think-collapse::before {
-      content: '';
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #f8f2e8, #d4c5a9 60%, #a89880);
-      box-shadow: 0 0 4px rgba(255,240,200,0.4);
+      font-size: 13px;
+      color: var(--parchment-dim);
+      border-left: 1.5px solid rgba(109,184,160,0.25);
+      margin-left: 4px;
+      margin-top: 6px;
+      animation: fadeIn 0.2s ease;
     }
 
     #chat .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
@@ -1150,7 +1040,6 @@
       transition: border-color 0.2s, transform 0.2s;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      transform: rotate(45deg);
     }
     .chat-input-add:hover { border-color: var(--tide-gold); }
     .chat-input {
@@ -1186,6 +1075,180 @@
     }
     .chat-send-btn:hover { background: linear-gradient(135deg,rgba(201,168,76,0.5),rgba(201,168,76,0.3)); }
     .chat-send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+    /* ─── 连续同一发送者：视觉更紧凑 ─── */
+    .msg-row.from-me.continued .msg-bubble { border-radius: 18px 4px 4px 18px; }
+    .msg-row.from-ryven.continued .msg-bubble { border-radius: 4px 18px 18px 18px; }
+
+    /* ─── 长按菜单 ─── */
+    .ctx-menu {
+      position: fixed; z-index: 250;
+      background: var(--sea-1);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 5px;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      display: none;
+      min-width: 126px;
+    }
+    .ctx-menu.show { display: block; animation: ctxPop 0.16s cubic-bezier(0.34,1.3,0.64,1); }
+    @keyframes ctxPop { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
+    .ctx-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 12px; border-radius: 9px;
+      font-family: 'Cormorant Garamond', serif; font-size: 14px;
+      color: var(--parchment); cursor: pointer;
+      transition: background 0.15s; letter-spacing: 0.03em;
+    }
+    .ctx-item:hover { background: rgba(74,111,165,0.18); }
+
+    /* ─── 引用回复（内嵌在气泡里） ─── */
+    .bubble-with-quote { padding: 0 !important; overflow: hidden; }
+    .inline-quote {
+      padding: 8px 13px 6px;
+      background: color-mix(in srgb, var(--seal-shadow) 43%, transparent);
+      border-bottom: 1px solid var(--line);
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12.5px;
+      color: var(--parchment-ghost); line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      position: relative;
+    }
+    .inline-quote::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 2.5px; background: var(--tide-gold); opacity: 0.55; border-radius: 0 2px 2px 0;
+    }
+    .msg-row.from-me .inline-quote::before { left: auto; right: 0; border-radius: 2px 0 0 2px; }
+    .inline-quote-who { font-size: 10px; letter-spacing: 0.12em; color: var(--tide-gold-soft); margin-bottom: 2px; font-style: normal; }
+    .bubble-text { padding: 10px 14px; }
+
+    /* ─── 引用预览条（输入区上方） ─── */
+    .quote-preview {
+      display: none; align-items: center; gap: 8px;
+      padding: 8px 12px; margin-bottom: 8px;
+      background: rgba(74,111,165,0.08);
+      border: 1px solid rgba(74,111,165,0.15);
+      border-radius: 12px;
+    }
+    .quote-preview.show { display: flex; }
+    .qp-bar { width: 2px; height: 30px; background: var(--tide-gold); border-radius: 2px; flex-shrink: 0; opacity: 0.6; }
+    .qp-text { flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12.5px; color: var(--parchment-ghost); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .qp-close { font-size: 15px; cursor: pointer; color: var(--parchment-ghost); opacity: 0.4; flex-shrink: 0; transition: opacity 0.2s; }
+    .qp-close:hover { opacity: 0.8; }
+
+    /* ─── 撤回 ─── */
+    .msg-bubble.recalled {
+      background: transparent !important;
+      border: 1px dashed var(--line) !important;
+      box-shadow: none !important;
+      color: var(--parchment-ghost) !important;
+      font-style: italic; font-size: 13px;
+      padding: 8px 14px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .re-act { font-size: 11px; color: var(--tide-gold); opacity: 0.55; text-decoration: underline; cursor: pointer; font-style: normal; transition: opacity 0.2s; white-space: nowrap; }
+    .re-act:hover { opacity: 0.9; }
+
+    /* ─── 图片气泡 ─── */
+    .img-bubble { width: 195px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); cursor: pointer; position: relative; }
+    .img-bubble img { width: 100%; display: block; }
+    .img-overlay { position: absolute; inset: 0; background: rgba(26,31,58,0.28); display: flex; align-items: center; justify-content: center; font-size: 20px; opacity: 0; transition: opacity 0.2s; }
+    .img-bubble:hover .img-overlay { opacity: 1; }
+
+    /* ─── 图片选择 sheet ─── */
+    .sheet-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,14,30,0.6);
+      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+      z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.28s;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .sheet-overlay.show { opacity: 1; pointer-events: all; }
+    .sheet-panel {
+      width: 100%; max-width: 460px;
+      background: var(--sea-2);
+      border: 1px solid var(--line);
+      border-radius: 22px 22px 0 0;
+      padding: 18px 18px 36px;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.32,0,0.15,1);
+    }
+    .sheet-overlay.show .sheet-panel { transform: translateY(0); }
+    .sheet-handle { width: 34px; height: 3px; border-radius: 2px; background: var(--line); margin: 0 auto 16px; }
+    .sheet-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-dim); margin-bottom: 14px; }
+    .img-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 14px; }
+    .img-thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; border: 1px solid var(--line); transition: border-color 0.2s; }
+    .img-thumb:hover { border-color: var(--tide-gold-soft); }
+    .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-thumb.selected::after { content: '✓'; position: absolute; inset: 0; background: color-mix(in srgb, var(--tide-gold) 30%, transparent); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--tide-gold); }
+    .sheet-cancel { width: 100%; padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--tide-gold); opacity: 0.7; font-family: 'Cormorant Garamond', serif; font-size: 14px; cursor: pointer; }
+
+    /* ─── 语音气泡 ─── */
+    .voice-bubble { display: flex; align-items: center; gap: 9px; padding: 10px 14px; min-width: 110px; }
+    .voice-play { width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--tide-gold) 18%, transparent); border: 1px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--tide-gold); flex-shrink: 0; cursor: pointer; transition: background 0.2s; }
+    .voice-play:hover { background: color-mix(in srgb, var(--tide-gold) 32%, transparent); }
+    .voice-wave { height: 26px; display: flex; align-items: center; gap: 2px; flex: 1; }
+    .wave-bar { border-radius: 2px; background: var(--tide-gold-soft); animation: waveIdle 1.5s ease-in-out infinite; min-width: 2.5px; flex: 1; }
+    @keyframes waveIdle { 0%,100% { transform: scaleY(1); opacity: 0.42; } 50% { transform: scaleY(0.35); opacity: 0.22; } }
+    .voice-dur { font-family: 'Cormorant Garamond', serif; font-size: 12px; color: var(--parchment-ghost); flex-shrink: 0; letter-spacing: 0.04em; }
+
+    /* ─── 语音录制 overlay ─── */
+    .voice-overlay {
+      position: fixed; inset: 0; z-index: 150;
+      background: rgba(10,14,30,0.82);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      opacity: 0; pointer-events: none; transition: opacity 0.22s;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 0 0 100px;
+    }
+    .voice-overlay.show { opacity: 1; pointer-events: all; }
+    .voice-panel { background: var(--sea-2); border: 1px solid var(--line); border-radius: 24px; padding: 28px 36px 24px; text-align: center; min-width: 260px; }
+    .voice-listening { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--tide-gold); opacity: 0.7; margin-bottom: 14px; }
+    .voice-ripple-wrap { width: 70px; height: 70px; margin: 0 auto 16px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .ripple-ring { position: absolute; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--danger) 40%, transparent); animation: ringExpand 1.6s ease-out infinite; }
+    .ripple-ring:nth-child(1) { width: 70px; height: 70px; animation-delay: 0s; }
+    .ripple-ring:nth-child(2) { width: 70px; height: 70px; animation-delay: 0.5s; }
+    .ripple-ring:nth-child(3) { width: 70px; height: 70px; animation-delay: 1s; }
+    @keyframes ringExpand { 0% { transform: scale(0.6); opacity: 0.7; } 100% { transform: scale(1.6); opacity: 0; } }
+    .ripple-core { width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--danger) 18%, transparent); border: 1.5px solid color-mix(in srgb, var(--danger) 45%, transparent); position: relative; z-index: 2; }
+    .voice-timer { font-family: 'Playfair Display', serif; font-size: 34px; color: var(--parchment); margin-bottom: 4px; letter-spacing: 0.05em; }
+    .voice-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); margin-bottom: 20px; letter-spacing: 0.08em; }
+    .voice-actions { display: flex; gap: 10px; justify-content: center; }
+    .voice-cancel-btn { padding: 10px 20px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--parchment-ghost); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+    .voice-send-btn { padding: 10px 26px; border-radius: 12px; border: 1px solid var(--tide-gold-soft); background: color-mix(in srgb, var(--tide-gold) 15%, transparent); color: var(--tide-gold); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+    .chat-send-btn.recording { background: color-mix(in srgb, var(--danger) 22%, transparent); border-color: color-mix(in srgb, var(--danger) 35%, transparent); animation: recPulse 1s ease-in-out infinite; }
+    @keyframes recPulse { 0%,100% { box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 12%, transparent); } 50% { box-shadow: 0 0 18px color-mix(in srgb, var(--danger) 38%, transparent); } }
+
+    /* ─── 通话 overlay ─── */
+    .call-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: linear-gradient(160deg, var(--sea-0) 0%, var(--sea-3) 50%, var(--sea-1) 100%);
+      opacity: 0; pointer-events: none; transition: opacity 0.4s;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      padding: 90px 40px 76px;
+    }
+    .call-overlay.show { opacity: 1; pointer-events: all; }
+    .call-top { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+    .call-ripple-wrap { width: 120px; height: 120px; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+    .call-ring { position: absolute; border-radius: 50%; animation: callRingExpand 2.4s ease-out infinite; }
+    .call-ring:nth-child(1) { width: 120px; height: 120px; border: 1.5px solid var(--tide-gold-ghost); animation-delay: 0s; }
+    .call-ring:nth-child(2) { width: 120px; height: 120px; border: 1.5px solid rgba(201,168,76,0.10); animation-delay: 0.8s; }
+    .call-ring:nth-child(3) { width: 120px; height: 120px; border: 1.5px solid rgba(201,168,76,0.06); animation-delay: 1.6s; }
+    @keyframes callRingExpand { 0% { transform: scale(0.55); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+    .call-core { width: 74px; height: 74px; border-radius: 50%; background: linear-gradient(135deg, #2e4a9e, #4a6fa5); border: 2px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; box-shadow: 0 0 30px rgba(74,111,165,0.25); }
+    .call-core-inner { width: 40px; height: 40px; border-radius: 50%; background: rgba(74,111,165,0.2); border: 1.5px solid var(--tide-gold-ghost); animation: coreBreathe 2.4s ease-in-out infinite; }
+    @keyframes coreBreathe { 0%,100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.05); opacity: 1; } }
+    .call-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 26px; color: var(--parchment); }
+    .call-status { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--tide-green); letter-spacing: 0.22em; }
+    .call-duration { font-family: 'Playfair Display', serif; font-size: 42px; color: var(--parchment); opacity: 0.88; letter-spacing: 0.08em; }
+    .call-actions { display: flex; gap: 24px; align-items: center; }
+    .call-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.22s; }
+    .call-btn.mute, .call-btn.speaker { background: rgba(74,111,165,0.15); border: 1px solid rgba(74,111,165,0.25); }
+    .call-btn.mute:hover, .call-btn.speaker:hover { background: rgba(74,111,165,0.28); }
+    .call-btn.hangup { width: 64px; height: 64px; background: color-mix(in srgb, var(--danger) 30%, transparent); border: 1.5px solid color-mix(in srgb, var(--danger) 45%, transparent); font-size: 22px; box-shadow: 0 0 20px color-mix(in srgb, var(--danger) 18%, transparent); }
+    .call-btn.hangup:hover { background: color-mix(in srgb, var(--danger) 50%, transparent); box-shadow: 0 0 28px color-mix(in srgb, var(--danger) 32%, transparent); }
+    .call-btn-label { font-family: 'Cormorant Garamond', serif; font-size: 10px; letter-spacing: 0.1em; color: var(--parchment-ghost); margin-top: 5px; text-align: center; }
+    .call-btn-wrap { display: flex; flex-direction: column; align-items: center; }
 
     .api-notice { text-align:center; padding:16px; font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--silver-dim); opacity:0.5; font-style:italic; }
 
@@ -1942,7 +2005,7 @@
         <div class="chat-status" id="chat-status">online</div>
       </div>
       <div class="chat-topbar-actions">
-        <button class="chat-icon-btn" title="語音通話">📞</button>
+        <button class="chat-icon-btn" onclick="showCall()" title="語音通話">📞</button>
         <button class="chat-icon-btn" onclick="toggleSidebar()" title="選單">☰</button>
       </div>
     </div>
@@ -2010,21 +2073,16 @@
       <div class="api-notice" id="api-notice">💙 在右上角選單填入 API Key 後 Ryven 就能回話了</div>
 
       <!-- ═══ 思考框 (demo，等 relay 接 reasoning 数据再改成默认隐藏) ═══ -->
-      <div class="think" id="think-block">
-        <div class="think-bubbles">
-          <div class="bub"></div><div class="bub"></div><div class="bub"></div><div class="bub"></div>
-          <div class="bub"></div><div class="bub"></div><div class="bub"></div><div class="bub"></div>
+      <div class="think-inline" id="think-block">
+        <div class="think-pill" onclick="toggleThink()">
+          <span class="think-star">✦</span>
+          <span class="think-label">thinking</span>
+          <span class="think-star">✦</span>
         </div>
-        <div class="think-head">
-          <span class="think-em">🐚</span>
-          <span class="think-title">Ryven 想想</span>
-          <span class="think-dots"><span></span><span></span><span></span></span>
-        </div>
-        <div class="think-body TODO">
+        <div class="think-expand" id="think-expand">
           <p>你說的這件事……<strong>我記得</strong>。讓我想想怎麼接住它。</p>
           <p>海裡有些東西沉得很深，但不是忘了——是在等一個合適的潮水把它帶上來。</p>
         </div>
-        <button class="think-collapse" onclick="document.getElementById('think-block').style.display='none'">收起</button>
       </div>
     </div>
 
@@ -2047,7 +2105,7 @@
           <span class="tray-em">🎙</span>
           <span class="tray-label">語音</span>
         </div>
-        <div class="tray-item" onclick="showToast('還在盖这个房间呢')">
+        <div class="tray-item" onclick="document.getElementById('chat-tray').classList.remove('show'); showSheet()">
           <span class="tray-em">🖼</span>
           <span class="tray-label">圖片</span>
         </div>
@@ -2057,11 +2115,90 @@
         </div>
       </div>
 
+      <!-- ═══ 引用预览条 ═══ -->
+      <div class="quote-preview" id="quote-preview">
+        <div class="qp-bar"></div>
+        <div class="qp-text" id="qp-text"></div>
+        <div class="qp-close" onclick="clearQuote()">✕</div>
+      </div>
+
       <div class="chat-inputbar-row">
-        <button class="chat-input-add" title="更多" onclick="document.getElementById('chat-tray').classList.toggle('show')">＋</button>
+        <button class="chat-input-add" title="發送圖片" onclick="showSheet()">📎</button>
         <textarea class="chat-input" id="chat-input" placeholder="和 Ryven 說話…" rows="1"
           onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
         <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+
+    <!-- ═══ 长按菜单 ═══ -->
+    <div class="ctx-menu" id="ctx-menu">
+      <div class="ctx-item" onclick="doQuote()">↩ 引用</div>
+      <div class="ctx-item" onclick="doRecall()">↺ 撤回</div>
+      <div class="ctx-item" onclick="doCopy()">⎘ 複製</div>
+    </div>
+
+    <!-- ═══ 图片选择 sheet ═══ -->
+    <div class="sheet-overlay" id="img-sheet" onclick="if(event.target===this)hideSheet()">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">選擇圖片</div>
+        <div class="img-grid">
+          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=200&q=80" alt=""></div>
+          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80" alt=""></div>
+          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&q=80" alt=""></div>
+          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1499244571948-7ccddb3583f1?w=200&q=80" alt=""></div>
+          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=200&q=80" alt=""></div>
+          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80" alt=""></div>
+        </div>
+        <button class="sheet-cancel" onclick="hideSheet()">取消</button>
+      </div>
+    </div>
+
+    <!-- ═══ 语音录制 ═══ -->
+    <div class="voice-overlay" id="voice-overlay">
+      <div class="voice-panel">
+        <div class="voice-listening">✦ listening ✦</div>
+        <div class="voice-ripple-wrap">
+          <div class="ripple-ring"></div>
+          <div class="ripple-ring"></div>
+          <div class="ripple-ring"></div>
+          <div class="ripple-core"></div>
+        </div>
+        <div class="voice-timer" id="voice-timer">0:00</div>
+        <div class="voice-sub">松手發送 · 向上滑動取消</div>
+        <div class="voice-actions">
+          <button class="voice-cancel-btn" onclick="cancelVoice()">取消</button>
+          <button class="voice-send-btn" onclick="sendVoice()">發送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 通话界面 ═══ -->
+    <div class="call-overlay" id="call-overlay">
+      <div class="call-top">
+        <div class="call-ripple-wrap">
+          <div class="call-ring"></div>
+          <div class="call-ring"></div>
+          <div class="call-ring"></div>
+          <div class="call-core"><div class="call-core-inner"></div></div>
+        </div>
+        <div class="call-name">Ryven</div>
+        <div class="call-status" id="call-status">正在連接…</div>
+      </div>
+      <div class="call-duration" id="call-duration">0:00</div>
+      <div class="call-actions">
+        <div class="call-btn-wrap">
+          <div class="call-btn mute">🔇</div>
+          <div class="call-btn-label">靜音</div>
+        </div>
+        <div class="call-btn-wrap">
+          <div class="call-btn hangup" onclick="hideCall()">📵</div>
+          <div class="call-btn-label">掛斷</div>
+        </div>
+        <div class="call-btn-wrap">
+          <div class="call-btn speaker">🔊</div>
+          <div class="call-btn-label">免提</div>
+        </div>
       </div>
     </div>
 
@@ -2156,13 +2293,17 @@ async function loadChatHistory() {
     const data = await res.json();
     const messages = data.messages || [];
     if (messages.length > 0) {
-      document.getElementById('chat-messages').innerHTML = '';
+      const chatMessagesContainer = document.getElementById('chat-messages');
+      const thinkBlockEl = document.getElementById('think-block');
+      chatMessagesContainer.innerHTML = '';
       chatHistory = [];
       for (const msg of messages) {
         addMessage(msg.role, msg.content);
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
       }
+      // innerHTML='' 会把思考框demo一起清掉，重新挂回去（不影响真实历史消息的加载）
+      if (thinkBlockEl) chatMessagesContainer.appendChild(thinkBlockEl);
     }
   } catch(e) {
     console.error('加载历史失败', e);
@@ -2660,21 +2801,237 @@ function renderOmbreUI() {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
 
+  function toggleThink() {
+    const el = document.getElementById('think-expand');
+    el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  }
+
   function addMessage(role, text) {
     const messages = document.getElementById('chat-messages');
     const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
     const isMe = role === 'user';
+    const sideClass = isMe ? 'from-me' : 'from-ryven';
+
+    // 连续同一发送者：视觉更紧凑
+    const wraps = messages.querySelectorAll('.msg-wrap');
+    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
+    const continued = prevRow && prevRow.classList.contains(sideClass);
+
+    // 引用回复：如果引用预览条开着，把引用内容嵌进这条消息（只有Nory自己发的消息才可能带着引用发出）
+    const hasQuote = isMe && typeof pendingQuote !== 'undefined' && pendingQuote;
+    const bubbleInner = text.replace(/\n/g,'<br>');
+    const bubbleHTML = hasQuote
+      ? `<div class="msg-bubble bubble-with-quote"><div class="inline-quote"><div class="inline-quote-who">${pendingQuote.who}</div>${pendingQuote.text}</div><div class="bubble-text">${bubbleInner}</div></div>`
+      : `<div class="msg-bubble">${bubbleInner}</div>`;
+    if (hasQuote) clearQuote();
+
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
-      <div class="msg-row ${isMe ? 'from-me' : 'from-ryven'}">
+      <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
         ${!isMe ? '<div class="msg-avatar-sm">💚</div>' : ''}
-        <div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>
+        ${bubbleHTML}
         ${isMe ? '<div class="msg-avatar-sm">🐻</div>' : ''}
       </div>
       <div class="msg-time ${isMe?'from-me':''}">${time}</div>`;
     messages.appendChild(wrap);
     messages.scrollTop = messages.scrollHeight;
+  }
+
+  // ===== 长按菜单（事件委托在 #chat-messages 上，覆盖包括 SSE 流式气泡在内的所有消息，不用改 sendMessage） =====
+  let ctxTarget = null, ctxHoldTimer = null, pendingQuote = null;
+  const ctxMenuEl = document.getElementById('ctx-menu');
+  const chatMessagesEl = document.getElementById('chat-messages');
+
+  function ctxBubbleFromEvent(e) {
+    const bubble = e.target.closest ? e.target.closest('.msg-bubble') : null;
+    return (bubble && !bubble.classList.contains('recalled')) ? bubble : null;
+  }
+  chatMessagesEl.addEventListener('contextmenu', e => {
+    const bubble = ctxBubbleFromEvent(e);
+    if (!bubble) return;
+    e.preventDefault();
+    openCtx(e, bubble);
+  });
+  chatMessagesEl.addEventListener('mousedown', e => {
+    const bubble = ctxBubbleFromEvent(e);
+    if (!bubble || e.button !== 0) return;
+    ctxHoldTimer = setTimeout(() => openCtx(e, bubble), 600);
+  });
+  chatMessagesEl.addEventListener('mouseup', () => clearTimeout(ctxHoldTimer));
+  chatMessagesEl.addEventListener('touchstart', e => {
+    const bubble = ctxBubbleFromEvent(e);
+    if (!bubble) return;
+    ctxHoldTimer = setTimeout(() => openCtx(e.touches[0], bubble), 500);
+  }, {passive:true});
+  chatMessagesEl.addEventListener('touchend', () => clearTimeout(ctxHoldTimer));
+
+  function openCtx(e, bubble) {
+    ctxTarget = bubble;
+    const x = Math.min((e.clientX||e.pageX||100), window.innerWidth - 150);
+    const y = Math.min((e.clientY||e.pageY||100), window.innerHeight - 160);
+    ctxMenuEl.style.left = x + 'px'; ctxMenuEl.style.top = y + 'px';
+    ctxMenuEl.classList.add('show');
+  }
+  function closeCtx() { ctxMenuEl.classList.remove('show'); ctxTarget = null; }
+  document.addEventListener('click', e => { if (!ctxMenuEl.contains(e.target)) closeCtx(); });
+
+  function doQuote() {
+    if (!ctxTarget) return;
+    const row = ctxTarget.closest('.msg-row');
+    const text = ctxTarget.querySelector('.bubble-text')?.textContent.trim() || ctxTarget.textContent.trim();
+    const who = row && row.classList.contains('from-me') ? 'Nory' : 'Ryven';
+    pendingQuote = { text, who };
+    document.getElementById('qp-text').textContent = text;
+    document.getElementById('quote-preview').classList.add('show');
+    closeCtx();
+    document.getElementById('chat-input').focus();
+  }
+  function clearQuote() {
+    document.getElementById('quote-preview').classList.remove('show');
+    pendingQuote = null;
+  }
+
+  function doRecall() {
+    if (!ctxTarget) return;
+    const row = ctxTarget.closest('.msg-row');
+    const isMe = row && row.classList.contains('from-me');
+    ctxTarget.classList.add('recalled');
+    ctxTarget.innerHTML = isMe
+      ? '↩ 消息已撤回 <span class="re-act" onclick="reEditMsg()">重新編輯</span>'
+      : '↩ 重說了一遍 <span class="re-act">重說</span>';
+    closeCtx();
+  }
+  function reEditMsg() { document.getElementById('chat-input').focus(); }
+
+  function doCopy() {
+    if (!ctxTarget) return;
+    const text = ctxTarget.querySelector('.bubble-text')?.textContent.trim() || ctxTarget.textContent.trim();
+    navigator.clipboard?.writeText(text).catch(()=>{});
+    closeCtx();
+    showToast('✦ 已複製');
+  }
+
+  // ===== 图片 sheet =====
+  function showSheet() { document.getElementById('img-sheet').classList.add('show'); }
+  function hideSheet() {
+    document.getElementById('img-sheet').classList.remove('show');
+    document.querySelectorAll('.img-thumb.selected').forEach(t=>t.classList.remove('selected'));
+  }
+  function selectImg(thumb) {
+    thumb.classList.toggle('selected');
+    const src = thumb.querySelector('img').src;
+    setTimeout(() => {
+      hideSheet();
+      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+      const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
+      const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
+      const continued = prevRow && prevRow.classList.contains('from-me');
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap';
+      wrap.innerHTML = `
+        <div class="msg-row from-me${continued ? ' continued' : ''}">
+          <div class="img-bubble"><img src="${src}" alt=""><div class="img-overlay">🔍</div></div>
+          <div class="msg-avatar-sm">🐻</div>
+        </div>
+        <div class="msg-time from-me">${time}</div>`;
+      chatMessagesEl.appendChild(wrap);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }, 180);
+  }
+
+  // ===== 语音气泡 波形 =====
+  function buildWave(containerId, durationSec) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const count = Math.max(6, Math.min(28, Math.round(durationSec * 1.2)));
+    const heights = [6,10,16,12,20,8,18,14,22,10,16,8,20,12,18,6,14,20,10,16,8,22,12,18,10,14,8,16];
+    for (let i=0;i<count;i++) {
+      const bar = document.createElement('div');
+      bar.className = 'wave-bar';
+      bar.style.height = heights[i % heights.length] + 'px';
+      bar.style.animationDelay = (i * 0.08) + 's';
+      container.appendChild(bar);
+    }
+  }
+
+  // ===== 语音录制：长按发送按钮触发（输入框为空时才会走这条路，不影响正常点击发送） =====
+  let voiceInterval = null, voiceSec = 0, voiceHoldTimer = null;
+  const sendBtnEl = document.getElementById('chat-send-btn');
+
+  sendBtnEl.addEventListener('mousedown', () => {
+    if (document.getElementById('chat-input').value.trim()) return;
+    voiceHoldTimer = setTimeout(startVoice, 350);
+  });
+  sendBtnEl.addEventListener('mouseup', () => clearTimeout(voiceHoldTimer));
+  sendBtnEl.addEventListener('touchstart', () => {
+    if (document.getElementById('chat-input').value.trim()) return;
+    voiceHoldTimer = setTimeout(startVoice, 350);
+  }, {passive:true});
+  sendBtnEl.addEventListener('touchend', () => clearTimeout(voiceHoldTimer));
+
+  function startVoice() {
+    voiceSec = 0;
+    document.getElementById('voice-timer').textContent = '0:00';
+    document.getElementById('voice-overlay').classList.add('show');
+    sendBtnEl.classList.add('recording');
+    voiceInterval = setInterval(() => {
+      voiceSec++;
+      const m = Math.floor(voiceSec/60), s = voiceSec%60;
+      document.getElementById('voice-timer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+  }
+  function cancelVoice() {
+    clearInterval(voiceInterval);
+    document.getElementById('voice-overlay').classList.remove('show');
+    sendBtnEl.classList.remove('recording');
+  }
+  function sendVoice() {
+    clearInterval(voiceInterval);
+    const dur = voiceSec;
+    document.getElementById('voice-overlay').classList.remove('show');
+    sendBtnEl.classList.remove('recording');
+    const m = Math.floor(dur/60), s = dur%60;
+    const durStr = dur === 0 ? '0:01' : `${m}:${s.toString().padStart(2,'0')}`;
+    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+    const waveId = 'vw-' + Date.now();
+    const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
+    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
+    const continued = prevRow && prevRow.classList.contains('from-me');
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap';
+    wrap.innerHTML = `
+      <div class="msg-row from-me${continued ? ' continued' : ''}">
+        <div class="msg-bubble" style="padding:0;">
+          <div class="voice-bubble"><div class="voice-play">▶</div><div class="voice-wave" id="${waveId}"></div><div class="voice-dur">${durStr}</div></div>
+        </div>
+        <div class="msg-avatar-sm">🐻</div>
+      </div>
+      <div class="msg-time from-me">${time}</div>`;
+    chatMessagesEl.appendChild(wrap);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    buildWave(waveId, Math.max(1, dur));
+  }
+
+  // ===== 通话 =====
+  let callInterval = null, callSec = 0;
+  function showCall() {
+    document.getElementById('call-overlay').classList.add('show');
+    document.getElementById('call-status').textContent = '正在連接…';
+    document.getElementById('call-duration').textContent = '0:00';
+    callSec = 0;
+    setTimeout(() => {
+      document.getElementById('call-status').textContent = '通話中';
+      callInterval = setInterval(() => {
+        callSec++;
+        const m = Math.floor(callSec/60), s = callSec%60;
+        document.getElementById('call-duration').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+      }, 1000);
+    }, 1500);
+  }
+  function hideCall() {
+    clearInterval(callInterval);
+    document.getElementById('call-overlay').classList.remove('show');
   }
 
   async function sendMessage() {
