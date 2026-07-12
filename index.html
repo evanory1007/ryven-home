@@ -2613,7 +2613,7 @@
         <div class="sidebar-label"><span>記憶連接</span><small>ombre</small></div>
         <div class="mem-status">
           <span class="dot"></span>
-          Ombre 已連 · 海裡 <strong class="TODO">XX</strong> 顆
+          Ombre 已連 · 海裡 <strong id="ombre-pearl-count">XX</strong> 顆
         </div>
         <div class="mem-status-detail">breath · hold · 衰減 · 歸檔 all live</div>
       </div>
@@ -4094,6 +4094,7 @@ function renderOmbreUI() {
       selectedConfigId = currentConfigId;
       renderModelPanel();
       fetchStats();
+      fetchOmbreCount();
     }
   }
 
@@ -4556,6 +4557,20 @@ function renderOmbreUI() {
 function formatNum(n) {
   if (n >= 1000) return (n/1000).toFixed(1) + 'k';
   return n.toString();
+}
+
+async function fetchOmbreCount() {
+  try {
+    const res = await fetch('https://ryven.homes/relay/ombre/count', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const el = document.getElementById('ombre-pearl-count');
+    if (el && data.count != null) el.textContent = data.count;
+  } catch(e) {
+    console.error('Ombre 記憶總數獲取失敗', e);
+  }
 }
 
 async function fetchStats() {
