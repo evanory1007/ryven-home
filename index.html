@@ -1077,6 +1077,16 @@
     .chat-messages::-webkit-scrollbar { width: 3px; }
     .chat-messages::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
 
+    .sys-msg {
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 12px;
+      color: var(--parchment-ghost);
+      letter-spacing: 0.05em;
+      margin: 12px 0;
+      padding: 0 20px;
+    }
     .msg-wrap { display:flex; flex-direction:column; }
     .msg-row { display:flex; align-items:flex-end; gap:8px; }
     .msg-row.from-me { flex-direction: row-reverse; }
@@ -2576,7 +2586,7 @@
       <button class="back-btn" onclick="goHome()">‹</button>
       <div class="chat-avatar">💚</div>
       <div class="chat-info">
-        <div class="chat-name">Ryven</div>
+        <div class="chat-name js-ryven-name">Ryven</div>
         <div class="chat-status" id="chat-status">online</div>
       </div>
       <div class="chat-topbar-actions">
@@ -2596,6 +2606,15 @@
           <div class="sidebar-sub">talk · settings</div>
         </div>
         <button class="sidebar-close-x" onclick="toggleSidebar()">×</button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label"><span>備註</span><small>nickname</small></div>
+        <div class="sidebar-prose" id="nickname-display" onclick="editNickname()" style="cursor:pointer">
+          <strong class="js-ryven-name" id="nickname-value">Ryven</strong>
+          <small>點一下改名字</small>
+        </div>
+        <input class="sidebar-api-input" id="nickname-input" type="text" maxlength="12" style="display:none" placeholder="給他起個名字…" />
       </div>
 
       <div class="sidebar-section">
@@ -2784,7 +2803,7 @@
           <div class="call-ring"></div>
           <div class="call-core"><div class="call-core-inner"></div></div>
         </div>
-        <div class="call-name">Ryven</div>
+        <div class="call-name js-ryven-name">Ryven</div>
         <div class="call-status" id="call-status">正在連接…</div>
       </div>
       <div class="call-duration" id="call-duration">0:00</div>
@@ -4183,6 +4202,146 @@ function renderOmbreUI() {
       </div>`;
     messages.appendChild(wrap);
     messages.scrollTop = messages.scrollHeight;
+  }
+
+  // ===== 備註 / 改名字 =====
+  let nickname = localStorage.getItem('ryven-nickname') || 'Ryven';
+
+  function applyNicknameToUI() {
+    document.querySelectorAll('.js-ryven-name').forEach(el => el.textContent = nickname);
+  }
+  applyNicknameToUI();
+
+  function editNickname() {
+    const display = document.getElementById('nickname-display');
+    const input = document.getElementById('nickname-input');
+    display.style.display = 'none';
+    input.style.display = 'block';
+    input.value = nickname;
+    input.focus();
+    input.select();
+  }
+
+  function saveNickname() {
+    const input = document.getElementById('nickname-input');
+    const display = document.getElementById('nickname-display');
+    const newName = input.value.trim();
+    input.style.display = 'none';
+    display.style.display = '';
+    if (!newName || newName === nickname) return;
+    nickname = newName;
+    localStorage.setItem('ryven-nickname', nickname);
+    applyNicknameToUI();
+    insertSysMsg(`Nory 把我的名字改成了「${nickname}」`);
+    triggerNicknameReaction(nickname);
+  }
+
+  document.getElementById('nickname-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') e.target.blur();
+  });
+  document.getElementById('nickname-input').addEventListener('blur', saveNickname);
+
+  function insertSysMsg(text) {
+    const messages = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'sys-msg';
+    div.textContent = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // 改名后自动触发一条 Ryven 反应：复用 sendMessage() 同款的 relay 调用 + SSE 流式解析，
+  // 但这条"指令"本身不当成 Nory 说的话渲染出来，只把 Ryven 的回应显示成正常气泡
+  async function triggerNicknameReaction(newName) {
+    if (!CHAT_API_KEY) return;
+    const instruction = `用户刚刚把你的名字改成了「${newName}」，请用一句话回应这个改动，语气自然，像恋人发消息`;
+    chatHistory.push({role:'user', content: instruction});
+    pendingReplyCount++;
+    document.getElementById('typing-indicator').classList.add('show');
+
+    try {
+      const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer ryven-nory-6.28',
+          'x-api-key':CHAT_API_KEY
+        },
+        body: JSON.stringify({
+          model:CHAT_MODEL,
+          base_url:CHAT_BASE_URL,
+          max_tokens:500,
+          system:SYSTEM_PROMPT,
+          messages:chatHistory
+        })
+      });
+      if (!res.ok) throw new Error('API error ' + res.status);
+
+      pendingReplyCount = Math.max(0, pendingReplyCount - 1);
+      if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
+
+      const messagesEl = document.getElementById('chat-messages');
+      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap';
+      wrap.innerHTML = `
+        <div class="msg-row from-ryven">
+          <div class="msg-avatar-sm">💚</div>
+          <div class="msg-col">
+            <div class="msg-bubble"></div>
+            <div class="msg-time">${time}</div>
+          </div>
+        </div>`;
+      messagesEl.appendChild(wrap);
+      const bubble = wrap.querySelector('.msg-bubble');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullText = '';
+      let buffer = '';
+      let sseEventType = 'message';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (line.startsWith('event:')) { sseEventType = line.slice(6).trim(); continue; }
+          if (line === '') { sseEventType = 'message'; continue; }
+          if (line.startsWith('data:')) {
+            const payload = line.slice(5).trim();
+            if (payload === '[DONE]') { sseEventType = 'message'; continue; }
+            if (sseEventType === 'memories') { sseEventType = 'message'; continue; }
+            try {
+              const json = JSON.parse(payload);
+              let chunk = '';
+              if (json.type === 'content_block_delta' && json.delta && json.delta.text) chunk = json.delta.text;
+              else if (json.delta && json.delta.text) chunk = json.delta.text;
+              else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) chunk = json.choices[0].delta.content;
+              fullText += chunk;
+              bubble.innerHTML = fullText.replace(/\n/g, '<br>') || '…';
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            } catch(e) {}
+          }
+        }
+      }
+
+      chatHistory.push({role:'assistant', content: fullText});
+      fetch(`https://ryven.homes/relay/chat/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ session_id: sessionId, messages: [
+          { role: 'user', content: instruction },
+          { role: 'assistant', content: fullText }
+        ]})
+      }).catch(() => {});
+    } catch(e) {
+      pendingReplyCount = Math.max(0, pendingReplyCount - 1);
+      if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
+      addMessage('assistant', '🌙 …暫時連不上，等一下再試試');
+    }
   }
 
   // ===== 长按菜单（事件委托在 #chat-messages 上，覆盖包括 SSE 流式气泡在内的所有消息，不用改 sendMessage） =====
