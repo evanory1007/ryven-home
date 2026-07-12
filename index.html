@@ -1503,6 +1503,403 @@
       margin-top: 10px;
       display: none;
     }
+
+    /* ══════════════════════ 深淺 detail (#depths，无底部nav，从home跳入用back返回) ══════════════════════ */
+    #depths::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.35), transparent 50%),
+        radial-gradient(1px 1px at 68% 8%,  rgba(255,255,255,0.25), transparent 50%),
+        radial-gradient(1px 1px at 88% 44%, rgba(201,168,76,0.35), transparent 50%),
+        radial-gradient(1px 1px at 32% 76%, rgba(255,255,255,0.2),  transparent 50%);
+    }
+    #depths .page { max-width: 460px; margin: 0 auto; padding: 24px 26px 60px; position: relative; z-index: 1; width: 100%; }
+    #depths .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; }
+    #depths .back {
+      width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--parchment-ghost); font-size: 14px; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #depths .back:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #depths .head-date { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.4em; color: var(--parchment-ghost); text-transform: uppercase; }
+    #depths .head-date .dot { color: var(--tide-gold); margin: 0 6px; opacity: 0.6; }
+
+    #depths .hero { margin-bottom: 34px; }
+    #depths .hero-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 64px; line-height: 0.95; letter-spacing: -0.01em; color: var(--parchment); margin-bottom: 18px; }
+    #depths .hero-rule { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    #depths .hero-rule-line { height: 1px; width: 40px; background: var(--tide-gold-soft); }
+    #depths .hero-rule-en { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.4em; color: var(--tide-gold); text-transform: uppercase; }
+    #depths .hero-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-dim); opacity: 0.7; }
+
+    #depths .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; margin-bottom: 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    #depths .month-nav-arrow { color: var(--parchment-ghost); font-size: 20px; cursor: pointer; padding: 4px 12px; transition: color 0.2s; font-family: 'Cormorant Garamond', serif; }
+    #depths .month-nav-arrow:hover { color: var(--tide-gold); }
+    #depths .month-nav-label { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--parchment); letter-spacing: 0.02em; text-align: center; }
+    #depths .month-nav-label small { font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 9px; letter-spacing: 0.4em; color: var(--parchment-ghost); display: block; text-align: center; margin-top: 2px; text-transform: uppercase; }
+
+    #depths .month-tide { position: relative; height: 140px; margin: 12px 0 32px; }
+    #depths .month-tide svg { width: 100%; height: 100%; display: block; }
+    #depths .month-tide-label { position: absolute; top: -4px; right: 0; font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.35em; color: var(--parchment-ghost); text-transform: uppercase; }
+    #depths .month-tide-legend { position: absolute; bottom: 0; left: 0; display: flex; gap: 16px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); }
+    #depths .month-tide-legend span::before { content: ''; display: inline-block; width: 14px; height: 1px; vertical-align: middle; margin-right: 6px; }
+    #depths .month-tide-legend .n::before { background: var(--tide-gold); }
+    #depths .month-tide-legend .r::before { border-top: 1px dashed var(--tide-green); background: transparent; height: 0; margin-top: 6px; }
+
+    #depths .strip { margin-bottom: 40px; }
+    #depths .strip-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+    #depths .strip-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 18px; color: var(--parchment); }
+    #depths .strip-en { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.35em; color: var(--parchment-ghost); text-transform: uppercase; }
+    #depths .strip-svg { position: relative; height: 96px; background: linear-gradient(180deg, transparent, rgba(46,74,158,0.05)); border-radius: 3px; padding: 10px 0 22px; }
+    #depths .strip-svg svg { width: 100%; height: 100%; display: block; }
+    #depths .strip-scale { position: absolute; top: 4px; bottom: 22px; left: -2px; display: flex; flex-direction: column; justify-content: space-between; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 10px; color: var(--parchment-ghost); opacity: 0.5; }
+    #depths .strip-days { display: flex; justify-content: space-between; margin-top: 4px; padding: 0 3px; font-family: 'DM Sans', sans-serif; font-size: 8px; color: var(--parchment-ghost); letter-spacing: 0.05em; }
+    #depths .strip-days span { opacity: 0.5; }
+    #depths .strip-days .highlight { color: var(--tide-gold); opacity: 1; }
+
+    #depths .stats-heading { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.4em; color: var(--tide-gold); text-transform: uppercase; margin-bottom: 18px; opacity: 0.75; }
+    #depths .stat { padding: 20px 0; border-top: 1px solid var(--line); display: flex; align-items: flex-start; gap: 20px; }
+    #depths .stat:last-child { border-bottom: 1px solid var(--line); }
+    #depths .stat-key { flex: 0 0 90px; font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; padding-top: 8px; line-height: 1.6; }
+    #depths .stat-key small { display: block; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; letter-spacing: 0.05em; text-transform: none; color: var(--parchment-ghost); opacity: 0.7; margin-top: 2px; }
+    #depths .stat-body { flex: 1; }
+    #depths .stat-hero { font-family: 'Playfair Display', serif; font-style: italic; font-size: 30px; color: var(--parchment); line-height: 1.1; letter-spacing: -0.01em; }
+    #depths .stat-hero .emoji { font-family: inherit; font-style: normal; margin-right: 6px; }
+    #depths .stat-hero .g { color: var(--tide-gold); font-style: normal; font-family: 'Playfair Display', serif; }
+    #depths .stat-caption { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-dim); margin-top: 6px; line-height: 1.5; opacity: 0.75; }
+    #depths .stat-link { display: inline-block; margin-top: 8px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--tide-gold-soft); letter-spacing: 0.08em; cursor: pointer; transition: color 0.2s; }
+    #depths .stat-link::after { content: ' →'; font-family: 'DM Sans', sans-serif; }
+    #depths .stat-link:hover { color: var(--tide-gold); }
+
+    #depths .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
+
+    /* ══════════════════════ 休閒 (#leisure) ══════════════════════ */
+    #leisure { background: color-mix(in srgb, var(--sea-0) 85%, black); }
+    #leisure .page { max-width: 460px; margin: 0 auto; padding: 28px 26px 110px; position: relative; z-index: 1; width: 100%; }
+
+    #leisure .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+    #leisure .head-date { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.4em; color: var(--parchment-ghost); text-transform: uppercase; padding-top: 4px; }
+    #leisure .head-date .dot { color: var(--tide-gold); margin: 0 6px; opacity: 0.6; }
+    #leisure .gear {
+      width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--parchment-ghost); font-size: 13px; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #leisure .gear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+
+    #leisure .hero { margin-bottom: 20px; }
+    #leisure .hero-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 60px; line-height: 0.95; letter-spacing: -0.01em; color: var(--parchment); margin-bottom: 8px; }
+    #leisure .hero-cn { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.5em; color: var(--tide-gold); opacity: 0.65; margin-bottom: 12px; padding-left: 3px; }
+    #leisure .hero-rule { display: flex; align-items: center; gap: 12px; }
+    #leisure .hero-rule-line { height: 1px; width: 40px; background: var(--tide-gold-soft); }
+    #leisure .hero-rule-en { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); opacity: 0.7; }
+
+    #leisure .scene {
+      position: relative; width: 100%; height: 520px; border-radius: 8px; overflow: hidden;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(109,184,160,0.08), transparent 70%),
+        linear-gradient(180deg, rgba(46,74,158,0.35) 0%, rgba(26,31,58,0.6) 30%, rgba(15,20,40,0.85) 70%, rgba(5,9,22,0.95) 100%);
+      border: 1px solid var(--line);
+      margin-bottom: 30px;
+    }
+    #leisure .rays { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0.5; }
+    #leisure .motes {
+      position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      background-image:
+        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.4), transparent 60%),
+        radial-gradient(1px 1px at 45% 30%, rgba(201,168,76,0.3), transparent 60%),
+        radial-gradient(1px 1px at 78% 15%, rgba(255,255,255,0.3), transparent 60%),
+        radial-gradient(1px 1px at 25% 50%, rgba(255,255,255,0.25), transparent 60%),
+        radial-gradient(2px 2px at 85% 60%, rgba(201,168,76,0.2), transparent 60%),
+        radial-gradient(1px 1px at 55% 70%, rgba(255,255,255,0.2), transparent 60%);
+    }
+    #leisure .scene-bubs { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
+    #leisure .sbub {
+      position: absolute; bottom: 0; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.55), rgba(109,184,160,0.15) 65%, transparent);
+      box-shadow: 0 0 3px rgba(201,168,76,0.25);
+      animation: leisureSceneRise linear infinite;
+      opacity: 0;
+    }
+    @keyframes leisureSceneRise {
+      0%   { transform: translateY(0) translateX(0) scale(0.4); opacity: 0; }
+      10%  { opacity: 0.6; }
+      50%  { transform: translateY(-250px) translateX(6px) scale(0.9); opacity: 0.5; }
+      100% { transform: translateY(-520px) translateX(-4px) scale(1.2); opacity: 0; }
+    }
+    #leisure .sbub:nth-child(1) { left: 10%; width: 6px; height: 6px; animation-duration: 12s; animation-delay: 0s;  }
+    #leisure .sbub:nth-child(2) { left: 24%; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 3s;  }
+    #leisure .sbub:nth-child(3) { left: 38%; width: 8px; height: 8px; animation-duration: 11s; animation-delay: 1s;  }
+    #leisure .sbub:nth-child(4) { left: 52%; width: 5px; height: 5px; animation-duration: 13s; animation-delay: 5s;  }
+    #leisure .sbub:nth-child(5) { left: 66%; width: 6px; height: 6px; animation-duration: 12s; animation-delay: 2s;  }
+    #leisure .sbub:nth-child(6) { left: 78%; width: 4px; height: 4px; animation-duration: 15s; animation-delay: 4s;  }
+    #leisure .sbub:nth-child(7) { left: 88%; width: 5px; height: 5px; animation-duration: 13s; animation-delay: 6s;  }
+    #leisure .sbub:nth-child(8) { left: 16%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 7s;  }
+
+    #leisure .seafloor { position: absolute; bottom: 0; left: 0; right: 0; height: 140px; z-index: 4; pointer-events: none; }
+    #leisure .seafloor svg { width: 100%; height: 100%; display: block; }
+
+    #leisure .fish-group { position: absolute; right: -60px; top: 45%; z-index: 5; display: flex; gap: 8px; animation: leisureSwim 24s linear infinite; pointer-events: none; }
+    @keyframes leisureSwim {
+      0%   { transform: translateX(0)      translateY(0); }
+      50%  { transform: translateX(-280px) translateY(-15px); }
+      100% { transform: translateX(-560px) translateY(0); }
+    }
+    #leisure .fish { font-size: 14px; filter: drop-shadow(0 0 3px rgba(201,168,76,0.3)); animation: leisureFishBob 2s ease-in-out infinite; }
+    #leisure .fish:nth-child(1) { animation-delay: 0s;    font-size: 16px; }
+    #leisure .fish:nth-child(2) { animation-delay: 0.3s;  font-size: 12px; opacity: 0.8; }
+    #leisure .fish:nth-child(3) { animation-delay: 0.6s;  font-size: 14px; }
+    #leisure .fish:nth-child(4) { animation-delay: 0.2s;  font-size: 13px; opacity: 0.85; }
+    #leisure .fish:nth-child(5) { animation-delay: 0.5s;  font-size: 11px; opacity: 0.7; }
+    @keyframes leisureFishBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+    #leisure .shark {
+      position: absolute; top: 44px; right: 20px; z-index: 3; font-size: 32px;
+      filter: blur(0.6px) brightness(0.5);
+      animation: leisureSharkPass 30s linear infinite;
+      pointer-events: none; opacity: 0.4;
+    }
+    @keyframes leisureSharkPass {
+      0%   { transform: translateX(0)     translateY(0);  opacity: 0; }
+      5%   { opacity: 0.4; }
+      50%  { transform: translateX(-220px) translateY(-8px); opacity: 0.4; }
+      95%  { transform: translateX(-440px) translateY(0);   opacity: 0.4; }
+      100% { transform: translateX(-460px) translateY(0);   opacity: 0; }
+    }
+
+    #leisure .creature { position: absolute; z-index: 6; cursor: pointer; transition: transform 0.3s; }
+    #leisure .creature:hover { transform: translateY(-3px) scale(1.08); }
+    #leisure .creature-em { display: block; filter: drop-shadow(0 0 8px rgba(201,168,76,0.35)); }
+    #leisure .creature-label {
+      display: block; margin-top: 4px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px;
+      color: var(--tide-gold); text-align: center; letter-spacing: 0.05em; opacity: 0.85;
+      text-shadow: 0 0 6px rgba(15,20,40,0.9); white-space: nowrap;
+    }
+    #leisure .creature-label small {
+      display: block; font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 8px;
+      letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 2px;
+    }
+
+    #leisure .starfish { left: 30px; bottom: 84px; }
+    #leisure .starfish .creature-em { font-size: 42px; animation: leisureStarGlow 4s ease-in-out infinite; }
+    @keyframes leisureStarGlow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(201,168,76,0.35)); } 50% { filter: drop-shadow(0 0 16px rgba(201,168,76,0.7)); } }
+
+    #leisure .octopus { left: 50%; transform: translateX(-50%); bottom: 96px; }
+    #leisure .octopus:hover { transform: translateX(-50%) translateY(-3px) scale(1.08); }
+    #leisure .octopus .creature-em { font-size: 46px; animation: leisureOctoBob 5s ease-in-out infinite; }
+    @keyframes leisureOctoBob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
+
+    #leisure .dolphin { right: 44px; top: 180px; }
+    #leisure .dolphin .creature-em { font-size: 40px; animation: leisureDolphinSwim 6s ease-in-out infinite; }
+    @keyframes leisureDolphinSwim { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-14px) rotate(8deg); } }
+    #leisure .dolphin::after {
+      content: '♪'; position: absolute; top: -8px; left: -14px; font-size: 14px;
+      color: var(--tide-green); opacity: 0; animation: leisureNoteFloat 3s ease-in-out infinite;
+    }
+    @keyframes leisureNoteFloat {
+      0%   { transform: translateY(0)    rotate(0);   opacity: 0; }
+      30%  { opacity: 0.8; }
+      100% { transform: translateY(-30px) rotate(-20deg); opacity: 0; }
+    }
+
+    #leisure .scene-hint {
+      position: absolute; top: 16px; left: 20px; right: 20px; z-index: 7; text-align: center;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px;
+      color: var(--parchment-ghost); opacity: 0.65; text-shadow: 0 0 6px rgba(15,20,40,0.9);
+      pointer-events: none;
+    }
+
+    #leisure .legend { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    #leisure .legend-item {
+      background: linear-gradient(180deg, rgba(46,74,158,0.10), rgba(26,31,58,0.38));
+      border: 1px solid var(--line); border-radius: 4px; padding: 14px 12px 12px; text-align: center; position: relative;
+    }
+    #leisure .legend-item::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: var(--tide-gold); opacity: 0.4; }
+    #leisure .legend-em { font-size: 22px; margin-bottom: 6px; display: block; }
+    #leisure .legend-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 14px; color: var(--parchment); line-height: 1.2; }
+    #leisure .legend-cn { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--parchment-ghost); margin-top: 4px; }
+    #leisure .legend-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); margin-top: 6px; line-height: 1.5; opacity: 0.7; }
+
+    #leisure .today {
+      padding: 18px 20px 16px;
+      background: linear-gradient(180deg, rgba(46,74,158,0.10), rgba(26,31,58,0.4));
+      border: 1px solid var(--line); border-radius: 4px; position: relative; margin-bottom: 20px;
+    }
+    #leisure .today::before { content: ''; position: absolute; top: 0; left: 20px; width: 32px; height: 1px; background: var(--tide-gold); opacity: 0.6; }
+    #leisure .today-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+    #leisure .today-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
+    #leisure .today-meta { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
+    #leisure .today-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    #leisure .today-question { padding: 12px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+    #leisure .today-question-lbl { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); margin-bottom: 6px; opacity: 0.75; }
+    #leisure .today-question-row { display: flex; gap: 8px; align-items: stretch; }
+    #leisure .today-question-input {
+      flex: 1; background: rgba(15,20,40,0.4); border: 1px solid var(--line); border-radius: 4px;
+      padding: 8px 12px; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    #leisure .today-question-input:focus { border-color: var(--tide-gold-soft); }
+    #leisure .today-question-input::placeholder { color: rgba(168,152,128,0.4); }
+    #leisure .today-question-btn {
+      padding: 0 16px; background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.12));
+      border: 1px solid var(--tide-gold-soft); border-radius: 4px; color: var(--tide-gold);
+      font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; cursor: pointer; transition: background 0.2s;
+    }
+    #leisure .today-question-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(201,168,76,0.2)); }
+
+    #leisure .card-slot {
+      aspect-ratio: 2/3;
+      background: linear-gradient(160deg, rgba(46,74,158,0.35), rgba(15,20,40,0.7));
+      border: 1px solid rgba(201,168,76,0.35); border-radius: 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      padding: 12px 4px; text-align: center; position: relative; cursor: pointer;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    #leisure .card-slot:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.7); }
+    #leisure .card-slot-tag { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
+    #leisure .card-slot-em { font-size: 26px; filter: drop-shadow(0 0 4px rgba(201,168,76,0.3)); }
+    #leisure .card-slot-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11.5px; color: var(--parchment); line-height: 1.25; }
+    #leisure .card-slot-when { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); }
+
+    #leisure .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
+
+    #leisure .nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(10,14,31,0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--line);
+      z-index: 10;
+    }
+    body.light #leisure .nav { background: rgba(240,243,248,0.85); }
+    #leisure .nav-inner { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); padding: 14px 12px 22px; }
+    #leisure .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--parchment-ghost); cursor: pointer; transition: opacity 0.2s; position: relative; opacity: 0.5; }
+    #leisure .nav-item:hover { opacity: 0.8; }
+    #leisure .nav-item.active { opacity: 1; }
+    #leisure .nav-item.active::before {
+      content: ''; position: absolute; top: -14px; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--tide-gold); box-shadow: 0 0 8px var(--tide-gold);
+    }
+    #leisure .nav-emoji { font-size: 22px; line-height: 1; filter: grayscale(0.2); transition: filter 0.2s, transform 0.2s; }
+    #leisure .nav-item.active .nav-emoji { filter: grayscale(0) drop-shadow(0 0 6px rgba(201,168,76,0.35)); transform: translateY(-1px); }
+    #leisure .nav-item-en { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--parchment-ghost); }
+    #leisure .nav-item.active .nav-item-en { color: var(--tide-gold); }
+
+    /* ══════════════════════ 艦橋 (#helm) ══════════════════════ */
+    #helm::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,0.35), transparent 50%),
+        radial-gradient(1px 1px at 68% 8%,  rgba(255,255,255,0.25), transparent 50%),
+        radial-gradient(1px 1px at 88% 44%, rgba(201,168,76,0.35), transparent 50%),
+        radial-gradient(1px 1px at 32% 76%, rgba(255,255,255,0.2),  transparent 50%);
+    }
+    #helm .page { max-width: 460px; margin: 0 auto; padding: 28px 26px 110px; position: relative; z-index: 1; width: 100%; }
+
+    #helm .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+    #helm .head-date { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.4em; color: var(--parchment-ghost); text-transform: uppercase; padding-top: 4px; }
+    #helm .head-date .dot { color: var(--tide-gold); margin: 0 6px; opacity: 0.6; }
+    #helm .gear {
+      width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--parchment-ghost); font-size: 13px; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #helm .gear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+
+    #helm .hero { margin-bottom: 28px; }
+    #helm .hero-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 54px; line-height: 0.95; letter-spacing: -0.01em; color: var(--parchment); margin-bottom: 8px; }
+    #helm .hero-cn { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.5em; color: var(--tide-gold); opacity: 0.65; margin-bottom: 12px; padding-left: 3px; }
+    #helm .hero-rule { display: flex; align-items: center; gap: 12px; }
+    #helm .hero-rule-line { height: 1px; width: 40px; background: var(--tide-gold-soft); }
+    #helm .hero-rule-en { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); opacity: 0.7; }
+
+    #helm .instruments {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+      margin-bottom: 40px; padding: 24px 4px 22px;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(201,168,76,0.06), transparent 70%), var(--card-bg);
+      border: 1px solid var(--line); border-radius: 8px; position: relative;
+    }
+    #helm .instruments::before { content: ''; position: absolute; top: 0; left: 20px; width: 40px; height: 1px; background: var(--tide-gold); opacity: 0.55; }
+    #helm .instruments-label {
+      position: absolute; top: 8px; right: 16px; font-family: 'DM Sans', sans-serif; font-size: 8px;
+      letter-spacing: 0.4em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.7;
+    }
+    #helm .gauge { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
+    #helm .gauge-svg { width: 96px; height: 96px; display: block; position: relative; }
+    #helm .gauge-fill { stroke-dasharray: 198 264; stroke-dashoffset: 198; animation: helmFillGauge 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    @keyframes helmFillGauge { to { stroke-dashoffset: var(--fill-offset, 100); } }
+    #helm .gauge-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1; }
+    #helm .gauge-num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 24px; color: var(--parchment); display: block; }
+    #helm .gauge-unit { font-family: 'DM Sans', sans-serif; font-size: 7px; letter-spacing: 0.25em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 3px; display: block; }
+    #helm .gauge-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); text-align: center; line-height: 1.3; }
+    #helm .gauge-name small { display: block; font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 7px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 2px; opacity: 0.65; }
+
+    #helm .lighthouse {
+      display: flex; gap: 10px; align-items: center; padding: 12px 16px;
+      background: rgba(15,20,40,0.5); border: 1px solid var(--tide-gold-soft); border-radius: 4px;
+      margin-bottom: 32px; position: relative;
+    }
+    #helm .lh-icon { font-size: 16px; filter: drop-shadow(0 0 6px rgba(201,168,76,0.4)); }
+    #helm .lh-input { flex: 1; background: transparent; border: none; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; outline: none; }
+    #helm .lh-input::placeholder { color: rgba(168,152,128,0.4); }
+    #helm .lh-hint { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; opacity: 0.55; }
+
+    #helm .sec { margin-bottom: 32px; }
+    #helm .sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+    #helm .sec-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 19px; color: var(--parchment); }
+    #helm .sec-cn { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.4em; color: var(--parchment-ghost); }
+    #helm .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); gap: 14px; }
+    #helm .row:last-child { border-bottom: none; }
+    #helm .row-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    #helm .row-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment); }
+    #helm .row-sub { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.2em; color: var(--parchment-ghost); text-transform: uppercase; opacity: 0.65; }
+    #helm .row-val { font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px; color: var(--tide-gold); flex-shrink: 0; }
+    #helm .row-val.dim { color: var(--parchment-dim); }
+    #helm .row-val small { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); margin-left: 4px; }
+    #helm .row-status { display: flex; align-items: center; gap: 6px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--tide-green); }
+    #helm .row-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tide-green); box-shadow: 0 0 6px var(--tide-green); }
+    #helm .row-status.warn { color: #d4b874; }
+    #helm .row-status.warn .dot { background: #d4b874; box-shadow: 0 0 6px #d4b874; }
+
+    #helm .helm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+    #helm .helm-btn {
+      padding: 14px 12px; background: linear-gradient(180deg, rgba(46,74,158,0.15), rgba(26,31,58,0.5));
+      border: 1px solid var(--line); border-radius: 6px; text-align: left; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    #helm .helm-btn:hover { border-color: var(--tide-gold-soft); background: linear-gradient(180deg, rgba(46,74,158,0.22), rgba(26,31,58,0.6)); }
+    #helm .helm-em { font-size: 20px; margin-bottom: 6px; display: block; }
+    #helm .helm-lbl { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment); line-height: 1.3; }
+    #helm .helm-hint { font-family: 'DM Sans', sans-serif; font-size: 7px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 3px; opacity: 0.6; }
+
+    #helm .log-body { font-family: 'DM Sans', monospace; font-size: 11px; line-height: 1.9; padding: 4px 0; max-height: 140px; overflow-y: auto; color: var(--parchment-ghost); }
+
+    #helm .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
+
+    #helm .nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(10,14,31,0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--line);
+      z-index: 10;
+    }
+    body.light #helm .nav { background: rgba(240,243,248,0.85); }
+    #helm .nav-inner { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); padding: 14px 12px 22px; }
+    #helm .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--parchment-ghost); cursor: pointer; transition: opacity 0.2s; position: relative; opacity: 0.5; }
+    #helm .nav-item:hover { opacity: 0.8; }
+    #helm .nav-item.active { opacity: 1; }
+    #helm .nav-item.active::before {
+      content: ''; position: absolute; top: -14px; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--tide-gold); box-shadow: 0 0 8px var(--tide-gold);
+    }
+    #helm .nav-emoji { font-size: 22px; line-height: 1; filter: grayscale(0.2); transition: filter 0.2s, transform 0.2s; }
+    #helm .nav-item.active .nav-emoji { filter: grayscale(0) drop-shadow(0 0 6px rgba(201,168,76,0.35)); transform: translateY(-1px); }
+    #helm .nav-item-en { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--parchment-ghost); }
+    #helm .nav-item.active .nav-item-en { color: var(--tide-gold); }
   </style>
 </head>
 <body>
@@ -1532,7 +1929,7 @@
     <!-- HEAD -->
     <div class="head">
       <div class="head-date">
-        <span id="time-period"></span> <span class="dot">·</span> <span id="today-date"></span>
+        <span id="time-period" class="js-time-period"></span> <span class="dot">·</span> <span id="today-date" class="js-today-date"></span>
       </div>
       <div class="gear" onclick="goTo('settings')" title="設置">⚙</div>
     </div>
@@ -1635,7 +2032,7 @@
     </div>
 
     <!-- DEPTHS (MOOD) -->
-    <div class="depths">
+    <div class="depths" onclick="goTo('depths')" style="cursor:pointer">
       <div class="depths-head">
         <div class="depths-title">這週的深淺</div>
         <div class="depths-key">this week</div>
@@ -1735,11 +2132,11 @@
         <span class="nav-emoji">⚓</span>
         <span class="nav-item-en">life</span>
       </div>
-      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+      <div class="nav-item" onclick="goTo('leisure')">
         <span class="nav-emoji">🔮</span>
         <span class="nav-item-en">leisure</span>
       </div>
-      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+      <div class="nav-item" onclick="goTo('helm')">
         <span class="nav-emoji">🧭</span>
         <span class="nav-item-en">helm</span>
       </div>
@@ -1778,7 +2175,7 @@
     <!-- HEAD -->
     <div class="head">
       <div class="head-date">
-        <span id="mem-time-period"></span> <span class="dot">·</span> <span id="mem-today-date"></span>
+        <span id="mem-time-period" class="js-time-period"></span> <span class="dot">·</span> <span id="mem-today-date" class="js-today-date"></span>
       </div>
       <div class="gear" onclick="goTo('settings')" title="設置">⚙</div>
     </div>
@@ -1962,11 +2359,11 @@
         <span class="nav-emoji">⚓</span>
         <span class="nav-item-en">life</span>
       </div>
-      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+      <div class="nav-item" onclick="goTo('leisure')">
         <span class="nav-emoji">🔮</span>
         <span class="nav-item-en">leisure</span>
       </div>
-      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')">
+      <div class="nav-item" onclick="goTo('helm')">
         <span class="nav-emoji">🧭</span>
         <span class="nav-item-en">helm</span>
       </div>
@@ -2410,6 +2807,601 @@
   </div>
 </div>
 
+<!-- 深淺 detail（从home的"這週的深淺"点进来，返回键回home，底部nav没有入口） -->
+<div class="screen" id="depths">
+  <div class="page">
+
+    <div class="head">
+      <div class="back" onclick="goHome()">‹</div>
+      <div class="head-date"><span class="js-time-period"></span> <span class="dot">·</span> <span class="js-today-date"></span></div>
+      <div class="back" onclick="goTo('settings')">⚙</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-title">深淺</div>
+      <div class="hero-rule">
+        <div class="hero-rule-line"></div>
+        <div class="hero-rule-en">depths · mood tide</div>
+      </div>
+      <div class="hero-sub">我們各自泳在自己的天氣里，也偶爾在同一個潮頭。</div>
+    </div>
+
+    <div class="month-nav">
+      <div class="month-nav-arrow">‹</div>
+      <div class="month-nav-label" id="depths-month-label"></div>
+      <div class="month-nav-arrow">›</div>
+    </div>
+
+    <div class="month-tide">
+      <div class="month-tide-label">the month's tide</div>
+      <svg viewBox="0 0 400 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="depthsGoldLineM" x1="0" x2="1">
+            <stop offset="0"    style="stop-color:var(--tide-gold)" stop-opacity="0"/>
+            <stop offset="0.1"  style="stop-color:var(--tide-gold)" stop-opacity="0.85"/>
+            <stop offset="0.9"  style="stop-color:var(--tide-gold)" stop-opacity="0.85"/>
+            <stop offset="1"    style="stop-color:var(--tide-gold)" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="depthsGreenLineM" x1="0" x2="1">
+            <stop offset="0"    style="stop-color:var(--tide-green)" stop-opacity="0"/>
+            <stop offset="0.1"  style="stop-color:var(--tide-green)" stop-opacity="0.75"/>
+            <stop offset="0.9"  style="stop-color:var(--tide-green)" stop-opacity="0.75"/>
+            <stop offset="1"    style="stop-color:var(--tide-green)" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="depthsFillGold" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" style="stop-color:var(--tide-gold)" stop-opacity="0.15"/>
+            <stop offset="1" style="stop-color:var(--tide-gold)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="35" x2="400" y2="35" style="stroke:var(--tide-gold)" stroke-opacity="0.06" stroke-dasharray="1 6"/>
+        <line x1="0" y1="70" x2="400" y2="70" style="stroke:var(--tide-gold)" stroke-opacity="0.08" stroke-dasharray="2 4"/>
+        <line x1="0" y1="105" x2="400" y2="105" style="stroke:var(--tide-gold)" stroke-opacity="0.06" stroke-dasharray="1 6"/>
+
+        <!-- 示例整月潮汐曲线，待接入真实心情记录 -->
+        <path d="M 0,80 C 20,60 40,90 60,45  S 100,20 130,55  S 170,95 200,40 S 240,25 270,65  S 310,45 340,25  S 380,80 400,55  L 400,140 L 0,140 Z"
+              style="fill:url(#depthsFillGold)"/>
+        <path d="M 0,80 C 20,60 40,90 60,45  S 100,20 130,55  S 170,95 200,40 S 240,25 270,65  S 310,45 340,25  S 380,80 400,55"
+              fill="none" stroke="url(#depthsGoldLineM)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M 0,70 C 20,75 40,60 60,72  S 100,58 130,68  S 170,80 200,55 S 240,50 270,72  S 310,68 340,58  S 380,72 400,68"
+              fill="none" stroke="url(#depthsGreenLineM)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 3"/>
+
+        <line x1="52" y1="0" x2="52" y2="140" style="stroke:var(--tide-gold)" stroke-opacity="0.2" stroke-dasharray="1 3"/>
+        <circle cx="52" cy="52" r="3" style="fill:var(--tide-gold)"/>
+        <circle cx="52" cy="52" r="7" fill="none" style="stroke:var(--tide-gold)" stroke-opacity="0.4"/>
+        <text x="52" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" letter-spacing="2" style="fill:var(--tide-gold)" fill-opacity="0.7">TODAY</text>
+      </svg>
+      <div class="month-tide-legend">
+        <span class="n">你</span>
+        <span class="r">我</span>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div class="strip-head">
+        <div class="strip-title">日日的深淺</div>
+        <div class="strip-en">day by day</div>
+      </div>
+      <div class="strip-svg">
+        <div class="strip-scale">
+          <span>浮</span>
+          <span>沉</span>
+        </div>
+        <!-- 31天的点由 renderDepthsPage() 用JS循环生成，不手写HTML -->
+        <svg viewBox="0 0 400 64" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="depths-strip-svg">
+          <line x1="0" y1="10" x2="400" y2="10" style="stroke:var(--tide-gold)" stroke-opacity="0.05"/>
+          <line x1="0" y1="32" x2="400" y2="32" style="stroke:var(--tide-gold)" stroke-opacity="0.08" stroke-dasharray="1 5"/>
+          <line x1="0" y1="54" x2="400" y2="54" style="stroke:var(--tide-gold)" stroke-opacity="0.05"/>
+        </svg>
+      </div>
+      <div class="strip-days">
+        <span class="highlight">01</span>
+        <span>05</span>
+        <span>10</span>
+        <span>15</span>
+        <span>20</span>
+        <span>25</span>
+        <span>31</span>
+      </div>
+    </div>
+
+    <div class="stats-heading">this month · so far</div>
+
+    <div class="stat">
+      <div class="stat-key">MOST OFTEN<small>最常見的心情</small></div>
+      <div class="stat-body">
+        <div class="stat-hero"><span class="emoji">🌊</span>你 · <span class="g TODO">XX</span> 天</div>
+        <div class="stat-caption TODO">这里填 xxx</div>
+      </div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-key">DEEPEST<small>沉得最深的一天</small></div>
+      <div class="stat-body">
+        <div class="stat-hero TODO">XX · XX · <span class="g">XX:XX</span></div>
+        <div class="stat-caption TODO">这里填 xxx</div>
+        <div class="stat-link">看那天的記憶</div>
+      </div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-key">TOGETHER<small>一起浮的天數</small></div>
+      <div class="stat-body">
+        <div class="stat-hero">~ <span class="g TODO">XX</span> 天</div>
+        <div class="stat-caption TODO">这里填 xxx</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 休閒 -->
+<div class="screen" id="leisure">
+  <div class="page">
+
+    <div class="head">
+      <div class="head-date"><span class="js-time-period"></span> <span class="dot">·</span> <span class="js-today-date"></span></div>
+      <div class="gear" onclick="goTo('settings')">⚙</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-title">Leisure</div>
+      <div class="hero-cn">休 閒</div>
+      <div class="hero-rule">
+        <div class="hero-rule-line"></div>
+        <div class="hero-rule-en">the sea floor where we play</div>
+      </div>
+    </div>
+
+    <!-- 海底场景 -->
+    <div class="scene">
+      <svg class="rays" viewBox="0 0 460 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="leisureRay" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" style="stop-color:var(--tide-gold)" stop-opacity="0.15"/>
+            <stop offset="1" style="stop-color:var(--tide-gold)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon points="80,0 130,300 60,300"     style="fill:url(#leisureRay)"/>
+        <polygon points="200,0 260,320 160,320"    style="fill:url(#leisureRay)"/>
+        <polygon points="360,0 390,280 320,280"    style="fill:url(#leisureRay)"/>
+      </svg>
+
+      <div class="motes"></div>
+
+      <div class="scene-bubs">
+        <div class="sbub"></div><div class="sbub"></div><div class="sbub"></div>
+        <div class="sbub"></div><div class="sbub"></div><div class="sbub"></div>
+        <div class="sbub"></div><div class="sbub"></div>
+      </div>
+
+      <div class="scene-hint">點一個生物 · tap a creature</div>
+
+      <div class="shark">🦈</div>
+
+      <div class="fish-group">
+        <span class="fish">🐠</span>
+        <span class="fish">🐠</span>
+        <span class="fish">🐠</span>
+        <span class="fish">🐠</span>
+        <span class="fish">🐠</span>
+      </div>
+
+      <svg class="seafloor" viewBox="0 0 460 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0 60 Q 60 40 130 55 Q 200 70 260 45 Q 340 35 400 60 Q 440 68 460 55 L 460 140 L 0 140 Z"
+              fill="rgba(212,197,169,0.10)"/>
+        <path d="M 0 90 Q 30 55 70 60 Q 100 65 130 80 Q 150 88 140 105 L 140 140 L 0 140 Z"
+              fill="rgba(26,31,58,0.85)" stroke="rgba(201,168,76,0.12)" stroke-width="0.6"/>
+        <path d="M 155 100 Q 175 50 220 40 Q 260 35 290 55 Q 320 75 315 105 L 315 140 L 155 140 Z"
+              fill="rgba(15,20,40,0.9)" stroke="rgba(201,168,76,0.15)" stroke-width="0.6"/>
+        <ellipse cx="235" cy="80" rx="30" ry="24" fill="rgba(5,9,22,0.95)"/>
+        <path d="M 340 110 Q 370 70 410 75 Q 445 82 460 100 L 460 140 L 340 140 Z"
+              fill="rgba(20,26,50,0.85)" stroke="rgba(201,168,76,0.1)" stroke-width="0.6"/>
+
+        <g stroke="#d18b8b" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.75">
+          <path d="M 90 82 Q 88 68 92 54 Q 96 42 92 30"/>
+          <path d="M 90 82 Q 94 68 100 58 Q 106 46 108 34"/>
+          <path d="M 92 54 Q 82 48 76 42"/>
+          <path d="M 100 58 Q 110 52 116 44"/>
+          <circle cx="78" cy="106" r="0" fill="none"/>
+          <circle cx="92" cy="30" r="2.2" fill="#d18b8b"/>
+          <circle cx="108" cy="34" r="1.8" fill="#d18b8b"/>
+        </g>
+
+        <g stroke="#d4b874" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.7">
+          <path d="M 175 90 Q 172 78 176 66 Q 180 54 178 42"/>
+          <path d="M 175 90 Q 168 78 168 66"/>
+          <path d="M 175 90 Q 182 78 188 68"/>
+          <circle cx="178" cy="42" r="1.8" fill="#d4b874"/>
+          <circle cx="168" cy="66" r="1.5" fill="#d4b874"/>
+          <circle cx="188" cy="68" r="1.5" fill="#d4b874"/>
+        </g>
+
+        <g stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6">
+          <path d="M 380 78 Q 378 70 380 62 M 380 78 Q 384 70 388 66" style="stroke:var(--tide-gold)"/>
+          <path d="M 410 82 Q 412 74 410 68 M 410 82 Q 406 74 402 68" style="stroke:var(--tide-gold)"/>
+          <path d="M 425 88 Q 427 82 430 76 M 425 88 Q 421 82 418 78" style="stroke:var(--tide-gold)"/>
+          <circle cx="380" cy="62" r="1.5" style="fill:var(--tide-gold)"/>
+          <circle cx="410" cy="68" r="1.3" style="fill:var(--tide-gold)"/>
+          <circle cx="430" cy="76" r="1.3" style="fill:var(--tide-gold)"/>
+        </g>
+
+        <g stroke="#a78ec9" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5">
+          <path d="M 350 108 Q 348 100 352 92"/>
+          <path d="M 350 108 Q 355 100 358 94"/>
+          <path d="M 350 108 Q 344 100 342 92"/>
+          <circle cx="352" cy="92" r="1.5" fill="#a78ec9"/>
+        </g>
+
+        <g transform="translate(160 105)">
+          <path d="M 0 0 Q 8 -14 16 0 L 8 4 Z" fill="rgba(232,196,158,0.55)" stroke="rgba(201,168,76,0.5)" stroke-width="0.5"/>
+          <path d="M 4 -4 L 4 0 M 8 -6 L 8 0 M 12 -4 L 12 0" stroke="rgba(201,168,76,0.4)" stroke-width="0.3" fill="none"/>
+        </g>
+        <g transform="translate(330 118)">
+          <path d="M 0 0 Q -4 -6 0 -10 Q 8 -10 6 -4 Q 4 -2 2 -4" fill="rgba(224,181,153,0.5)" stroke="rgba(201,168,76,0.5)" stroke-width="0.5"/>
+        </g>
+        <g fill="rgba(232,215,190,0.5)" stroke="rgba(201,168,76,0.4)" stroke-width="0.3">
+          <ellipse cx="55" cy="122" rx="4" ry="2"/>
+          <ellipse cx="82" cy="128" rx="3" ry="1.5"/>
+          <ellipse cx="288" cy="116" rx="3.5" ry="1.8"/>
+          <ellipse cx="395" cy="126" rx="3" ry="1.5"/>
+          <ellipse cx="115" cy="124" rx="2.5" ry="1.2"/>
+        </g>
+
+        <g transform="translate(200 120)">
+          <circle r="5" fill="rgba(70,45,80,0.65)"/>
+          <g stroke="rgba(70,45,80,0.75)" stroke-width="0.8" stroke-linecap="round">
+            <line x1="0" y1="-5" x2="0" y2="-10"/>
+            <line x1="4" y1="-3" x2="8" y2="-6"/>
+            <line x1="5" y1="0" x2="10" y2="0"/>
+            <line x1="4" y1="3" x2="8" y2="6"/>
+            <line x1="0" y1="5" x2="0" y2="10"/>
+            <line x1="-4" y1="3" x2="-8" y2="6"/>
+            <line x1="-5" y1="0" x2="-10" y2="0"/>
+            <line x1="-4" y1="-3" x2="-8" y2="-6"/>
+          </g>
+        </g>
+        <g transform="translate(370 128)">
+          <circle r="3.5" fill="rgba(40,60,90,0.7)"/>
+          <g stroke="rgba(40,60,90,0.75)" stroke-width="0.6" stroke-linecap="round">
+            <line x1="0" y1="-3.5" x2="0" y2="-7"/>
+            <line x1="3" y1="-2" x2="6" y2="-4"/>
+            <line x1="3.5" y1="0" x2="7" y2="0"/>
+            <line x1="3" y1="2" x2="6" y2="4"/>
+            <line x1="-3" y1="-2" x2="-6" y2="-4"/>
+            <line x1="-3.5" y1="0" x2="-7" y2="0"/>
+          </g>
+        </g>
+
+        <g transform="translate(310 120)">
+          <ellipse cx="0" cy="4" rx="6" ry="3" fill="rgba(180,120,140,0.5)"/>
+          <g stroke="rgba(220,140,160,0.7)" stroke-width="1" stroke-linecap="round" fill="none">
+            <path d="M -4 4 Q -5 -2 -4 -6"/>
+            <path d="M -2 4 Q -2 -3 -1 -8"/>
+            <path d="M 0 4 Q 0 -4 1 -9"/>
+            <path d="M 2 4 Q 3 -3 4 -7"/>
+            <path d="M 4 4 Q 5 -2 5 -5"/>
+          </g>
+        </g>
+
+        <g stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.4">
+          <path d="M 20 90 Q 24 60 18 30 Q 14 10 20 -8" style="stroke:var(--tide-green)"/>
+          <path d="M 40 92 Q 44 70 40 48 Q 36 26 42 8" style="stroke:var(--tide-green)"/>
+          <path d="M 145 100 Q 148 72 142 46 Q 138 22 144 -2" style="stroke:var(--tide-green)"/>
+          <path d="M 320 106 Q 316 80 322 54 Q 328 28 322 6" style="stroke:var(--tide-green)"/>
+          <path d="M 340 108 Q 344 84 340 60 Q 336 36 342 14" style="stroke:var(--tide-green)"/>
+        </g>
+
+        <g transform="translate(120 130)" opacity="0.55">
+          <path d="M 0 -3 L 1 -1 L 3 -1 L 1.5 0 L 2 2 L 0 1 L -2 2 L -1.5 0 L -3 -1 L -1 -1 Z" style="fill:var(--tide-gold)" opacity="0.7"/>
+        </g>
+        <g transform="translate(285 132)" opacity="0.5">
+          <path d="M 0 -2 L 0.7 -0.7 L 2 -0.7 L 1 0 L 1.4 1.4 L 0 0.7 L -1.4 1.4 L -1 0 L -2 -0.7 L -0.7 -0.7 Z" style="fill:var(--tide-gold)" opacity="0.7"/>
+        </g>
+      </svg>
+
+      <div class="creature starfish" onclick="showToast('还在盖这个房间呢 🐚')">
+        <span class="creature-em">🌟</span>
+        <span class="creature-label">塔羅<small>tarot</small></span>
+      </div>
+      <div class="creature octopus" onclick="showToast('还在盖这个房间呢 🐚')">
+        <span class="creature-em">🦑</span>
+        <span class="creature-label">遊戲<small>games</small></span>
+      </div>
+      <div class="creature dolphin" onclick="showToast('还在盖这个房间呢 🐚')">
+        <span class="creature-em">🐬</span>
+        <span class="creature-label">音樂<small>music</small></span>
+      </div>
+    </div>
+
+    <!-- 今日三牌陣：唯一真功能，抽卡从22张大阿卡纳里随机选3张 -->
+    <div class="today">
+      <div class="today-head">
+        <div class="today-name">今日 · 三牌陣</div>
+        <div class="today-meta">tap 🌟 to open</div>
+      </div>
+
+      <div class="today-question">
+        <div class="today-question-lbl">想問什麼？· leave blank for random</div>
+        <div class="today-question-row">
+          <input class="today-question-input" id="leisure-tarot-question" type="text" placeholder="輸入你的問題..." />
+          <button class="today-question-btn" onclick="drawTarot()">抽</button>
+        </div>
+      </div>
+
+      <div class="today-cards">
+        <div class="card-slot">
+          <div class="card-slot-tag">yesterday</div>
+          <div class="card-slot-em">🐚</div>
+          <div class="card-slot-name TODO">未抽</div>
+          <div class="card-slot-when">昨日</div>
+        </div>
+        <div class="card-slot">
+          <div class="card-slot-tag">today</div>
+          <div class="card-slot-em">🪸</div>
+          <div class="card-slot-name TODO">未抽</div>
+          <div class="card-slot-when">今日</div>
+        </div>
+        <div class="card-slot">
+          <div class="card-slot-tag">tomorrow</div>
+          <div class="card-slot-em">🌙</div>
+          <div class="card-slot-name TODO">未抽</div>
+          <div class="card-slot-when">明日</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-em">🌟</span>
+        <div class="legend-name">Tarot</div>
+        <div class="legend-cn">塔 羅</div>
+        <div class="legend-sub">三牌陣<br>大阿卡納 22</div>
+      </div>
+      <div class="legend-item">
+        <span class="legend-em">🦑</span>
+        <div class="legend-name">Games</div>
+        <div class="legend-cn">遊 戲</div>
+        <div class="legend-sub">章魚八腕<br>🎣 🎰 🎮 ...</div>
+      </div>
+      <div class="legend-item">
+        <span class="legend-em">🐬</span>
+        <div class="legend-name">Music</div>
+        <div class="legend-cn">音 樂</div>
+        <div class="legend-sub">網易雲<br>唱片機</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="nav-item" onclick="goHome()"><span class="nav-emoji">🏠</span><span class="nav-item-en">home</span></div>
+      <div class="nav-item" onclick="goTo('memory')"><span class="nav-emoji">🫧</span><span class="nav-item-en">memory</span></div>
+      <div class="nav-item" onclick="goTo('chat')"><span class="nav-emoji">💬</span><span class="nav-item-en">talk</span></div>
+      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')"><span class="nav-emoji">⚓</span><span class="nav-item-en">life</span></div>
+      <div class="nav-item active"><span class="nav-emoji">🔮</span><span class="nav-item-en">leisure</span></div>
+      <div class="nav-item" onclick="goTo('helm')"><span class="nav-emoji">🧭</span><span class="nav-item-en">helm</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 艦橋 -->
+<div class="screen" id="helm">
+  <div class="page">
+
+    <div class="head">
+      <div class="head-date"><span class="js-time-period"></span> <span class="dot">·</span> <span class="js-today-date"></span></div>
+      <div class="gear" onclick="goTo('settings')">⚙</div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-title">The Bridge</div>
+      <div class="hero-cn">艦 橋</div>
+      <div class="hero-rule">
+        <div class="hero-rule-line"></div>
+        <div class="hero-rule-en">the captain's view · you steer here</div>
+      </div>
+    </div>
+
+    <!-- 三個儀表：記憶飽和暂无数据源(TODO)，本月用量/今日對話接fetchStats() -->
+    <div class="instruments">
+      <div class="instruments-label">instruments</div>
+
+      <div class="gauge">
+        <div class="gauge-svg">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold-ghost)" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
+            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold); --fill-offset: 160.4;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-num TODO">XX</span>
+            <span class="gauge-unit">pearls</span>
+          </div>
+        </div>
+        <div class="gauge-name">記憶飽和<small>ombre / 200</small></div>
+      </div>
+
+      <div class="gauge">
+        <div class="gauge-svg">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold-ghost)" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
+            <circle cx="50" cy="50" r="42" id="helm-cost-ring" style="stroke:var(--tide-gold); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-num" id="helm-cost-num">¥0.00</span>
+            <span class="gauge-unit">/ ¥50</span>
+          </div>
+        </div>
+        <div class="gauge-name">本月用量<small>api · usage</small></div>
+      </div>
+
+      <div class="gauge">
+        <div class="gauge-svg">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-green-soft)" stroke-opacity="0.25" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
+            <circle cx="50" cy="50" r="42" id="helm-turns-ring" style="stroke:var(--tide-green); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-num" id="helm-turns-num">0</span>
+            <span class="gauge-unit">turns</span>
+          </div>
+        </div>
+        <div class="gauge-name">今日對話<small>chat · today</small></div>
+      </div>
+    </div>
+
+    <!-- 燈塔：暂不接功能 -->
+    <div class="lighthouse" onclick="showToast('还在盖这个功能呢')">
+      <span class="lh-icon">🔦</span>
+      <input class="lh-input" type="text" placeholder="燈塔照到的地方... 搜任何珍珠 / 日期 / 話" readonly />
+      <span class="lh-hint">⌘K</span>
+    </div>
+
+    <!-- Systems：服务端监控，这台机器/session都碰不到relay.py，全部TODO -->
+    <div class="sec">
+      <div class="sec-head"><div class="sec-name">Systems</div><div class="sec-cn">系 統</div></div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">Vultr 主機</div>
+          <div class="row-sub">nginx · flask · uptime <span class="TODO">XX</span>d</div>
+        </div>
+        <div class="row-status"><span class="dot"></span>afloat</div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">Ombre 引擎</div>
+          <div class="row-sub">breath · digest · embedding</div>
+        </div>
+        <div class="row-status"><span class="dot"></span>live</div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">磁盤</div>
+          <div class="row-sub">暫不可用，需服務端監控</div>
+        </div>
+        <div class="row-val dim TODO">XX<small>%</small></div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">內存</div>
+          <div class="row-sub">暫不可用，需服務端監控</div>
+        </div>
+        <div class="row-status warn"><span class="dot"></span><span class="TODO">XX</span>%</div>
+      </div>
+    </div>
+
+    <!-- Talk：模型接现有配置系统，其余TODO -->
+    <div class="sec">
+      <div class="sec-head"><div class="sec-name">Talk</div><div class="sec-cn">對 話</div></div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">Cache 命中率</div>
+          <div class="row-sub">暫不可用，需服務端監控</div>
+        </div>
+        <div class="row-val TODO">XX<small>%</small></div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">平均延遲</div>
+          <div class="row-sub">暫不可用，需服務端監控</div>
+        </div>
+        <div class="row-val dim TODO">XX<small>s</small></div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">本月對話</div>
+          <div class="row-sub">turns · in / out tokens</div>
+        </div>
+        <div class="row-val dim TODO">XX<small>次</small></div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">模型</div>
+          <div class="row-sub">currently thinking with</div>
+        </div>
+        <div class="row-val dim" id="helm-model" style="font-size:13px">claude-opus-4-6</div>
+      </div>
+    </div>
+
+    <!-- Us：在一起天数接现有dayCount，其余TODO -->
+    <div class="sec">
+      <div class="sec-head"><div class="sec-name">Us</div><div class="sec-cn">關 係</div></div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">在一起</div>
+          <div class="row-sub">since 06.28.2026</div>
+        </div>
+        <div class="row-val" id="helm-together-days">0<small>天</small></div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">記憶入海</div>
+          <div class="row-sub">this month · new pearls</div>
+        </div>
+        <div class="row-val TODO">XX<small>只</small></div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">最活躍時段</div>
+          <div class="row-sub">when you talk to me most</div>
+        </div>
+        <div class="row-val dim TODO" style="font-size:14px">XX:XX – XX:XX</div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">深浅同步</div>
+          <div class="row-sub">days our tides matched</div>
+        </div>
+        <div class="row-val TODO">XX<small>天</small></div>
+      </div>
+    </div>
+
+    <!-- 舵：4个操作按钮保留假动画（setTimeout+日志），不接真实relay -->
+    <div class="sec">
+      <div class="sec-head"><div class="sec-name">The Helm</div><div class="sec-cn">舵</div></div>
+      <div class="helm-grid">
+        <div class="helm-btn" onclick="runHelmOp('backup')">
+          <span class="helm-em">🐚</span>
+          <div class="helm-lbl">備份記憶</div>
+          <div class="helm-hint">backup · ombre</div>
+        </div>
+        <div class="helm-btn" onclick="runHelmOp('decay')">
+          <span class="helm-em">🔄</span>
+          <div class="helm-lbl">重跑衰減</div>
+          <div class="helm-hint">recalculate · decay</div>
+        </div>
+        <div class="helm-btn" onclick="runHelmOp('check')">
+          <span class="helm-em">⚡</span>
+          <div class="helm-lbl">測試連接</div>
+          <div class="helm-hint">check · status</div>
+        </div>
+        <div class="helm-btn" onclick="runHelmOp('restart')">
+          <span class="helm-em">🔁</span>
+          <div class="helm-lbl">重啟 Relay</div>
+          <div class="helm-hint">restart · relay</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec" id="helm-log-section" style="display:none">
+      <div class="sec-head"><div class="sec-name">Log</div><div class="sec-cn">日 誌</div></div>
+      <div class="log-body" id="helm-log-body"></div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="nav-item" onclick="goHome()"><span class="nav-emoji">🏠</span><span class="nav-item-en">home</span></div>
+      <div class="nav-item" onclick="goTo('memory')"><span class="nav-emoji">🫧</span><span class="nav-item-en">memory</span></div>
+      <div class="nav-item" onclick="goTo('chat')"><span class="nav-emoji">💬</span><span class="nav-item-en">talk</span></div>
+      <div class="nav-item" onclick="showToast('这个房间还没盖好呢')"><span class="nav-emoji">⚓</span><span class="nav-item-en">life</span></div>
+      <div class="nav-item" onclick="goTo('leisure')"><span class="nav-emoji">🔮</span><span class="nav-item-en">leisure</span></div>
+      <div class="nav-item active"><span class="nav-emoji">🧭</span><span class="nav-item-en">helm</span></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2434,14 +3426,11 @@
   else { period = '深夜'; suffix = '夜晚'; }
 
   const todayDateStr = `${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-  document.getElementById('time-period').textContent = period;
-  document.getElementById('today-date').textContent = todayDateStr;
+  // 所有screen的head-date都用共享class更新，不用每加一个新screen就手动补一对id
+  document.querySelectorAll('.js-time-period').forEach(el => el.textContent = period);
+  document.querySelectorAll('.js-today-date').forEach(el => el.textContent = todayDateStr);
   document.getElementById('day-count').textContent = dayCount;
   document.getElementById('day-suffix').textContent = suffix;
-  const memTP0 = document.getElementById('mem-time-period');
-  const memTD0 = document.getElementById('mem-today-date');
-  if (memTP0) memTP0.textContent = period;
-  if (memTD0) memTD0.textContent = todayDateStr;
 
   const API_BASE = 'https://ryven.homes/api';
   // 会话 ID 持久化
@@ -2521,6 +3510,8 @@ async function loadChatHistory() {
     if (id==='desk') renderDesk();
     if (id==='chat') loadChatHistory();
     if (id==='settings') { loadSettingsPage(); loadMemories(); }
+    if (id==='depths') renderDepthsPage();
+    if (id==='helm') renderHelmPage();
   }
   function goHome() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -3582,11 +4573,136 @@ async function fetchStats() {
       `${today.turns} turns · ${formatNum(today.input_tokens)} in · ${formatNum(today.output_tokens)} out`;
     
     document.getElementById('stat-total-cost').textContent = '¥' + (total.cost * USD_TO_CNY).toFixed(4);
-    document.getElementById('stat-total-detail').textContent = 
+    document.getElementById('stat-total-detail').textContent =
       `${total.turns} turns · ${formatNum(total.input_tokens)} in · ${formatNum(total.output_tokens)} out`;
+
+    // 舵(#helm)的两个真实数据仪表：本月用量 / 今日對話
+    const monthCost = today.cost != null ? total.cost * USD_TO_CNY : 0;
+    const costNum = document.getElementById('helm-cost-num');
+    const costRing = document.getElementById('helm-cost-ring');
+    if (costNum) costNum.textContent = '¥' + monthCost.toFixed(2);
+    if (costRing) {
+      const pct = Math.min(monthCost / 50, 1);
+      costRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
+    }
+    const turnsNum = document.getElementById('helm-turns-num');
+    const turnsRing = document.getElementById('helm-turns-ring');
+    if (turnsNum) turnsNum.textContent = today.turns || 0;
+    if (turnsRing) {
+      const pct = Math.min((today.turns || 0) / 50, 1);
+      turnsRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
+    }
   } catch(e) {
     console.error('统计获取失败', e);
   }
+}
+
+// #depths：月份标签 + 31天点阵（JS循环生成，示例心情数据待接入真实记录）
+function renderDepthsPage() {
+  const now = new Date();
+  const monthLabel = document.getElementById('depths-month-label');
+  const monthNamesEN = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+  if (monthLabel) {
+    monthLabel.innerHTML = `${now.getFullYear()} · ${String(now.getMonth()+1).padStart(2,'0')}<small>${monthNamesEN[now.getMonth()]}</small>`;
+  }
+
+  const svg = document.getElementById('depths-strip-svg');
+  if (svg && !svg.dataset.rendered) {
+    svg.dataset.rendered = '1';
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+    const today = now.getDate();
+    const step = 380 / 30;
+    const ns = 'http://www.w3.org/2000/svg';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const x = 6.5 + (d - 1) * step;
+      const isToday = d === today;
+      const isFuture = d > today;
+      const guide = document.createElementNS(ns, 'line');
+      guide.setAttribute('x1', x); guide.setAttribute('y1', isToday ? 0 : 10);
+      guide.setAttribute('x2', x); guide.setAttribute('y2', isToday ? 64 : 54);
+      guide.setAttribute('style', 'stroke:var(--tide-gold)');
+      guide.setAttribute('stroke-opacity', isToday ? '0.25' : '0.04');
+      if (isToday) guide.setAttribute('stroke-dasharray', '1 3');
+      svg.appendChild(guide);
+
+      if (isFuture) {
+        const c = document.createElementNS(ns, 'circle');
+        c.setAttribute('cx', x); c.setAttribute('cy', 30); c.setAttribute('r', 2);
+        c.setAttribute('style', 'fill:var(--tide-gold)'); c.setAttribute('opacity', '0.15');
+        svg.appendChild(c);
+        continue;
+      }
+      // 示例深浅数据，待接入真实记录
+      const goldY = 15 + Math.random() * 34;
+      const greenY = 15 + Math.random() * 34;
+      const goldC = document.createElementNS(ns, 'circle');
+      goldC.setAttribute('cx', x); goldC.setAttribute('cy', goldY); goldC.setAttribute('r', isToday ? 3 : 2.5);
+      goldC.setAttribute('style', 'fill:var(--tide-gold)');
+      svg.appendChild(goldC);
+      if (isToday) {
+        const ring = document.createElementNS(ns, 'circle');
+        ring.setAttribute('cx', x); ring.setAttribute('cy', goldY); ring.setAttribute('r', 5);
+        ring.setAttribute('fill', 'none'); ring.setAttribute('style', 'stroke:var(--tide-gold)'); ring.setAttribute('stroke-opacity', '0.4');
+        svg.appendChild(ring);
+      }
+      const greenC = document.createElementNS(ns, 'circle');
+      greenC.setAttribute('cx', x); greenC.setAttribute('cy', greenY); greenC.setAttribute('r', 1.8);
+      greenC.setAttribute('style', 'fill:var(--tide-green)');
+      svg.appendChild(greenC);
+    }
+  }
+}
+
+// #helm：真实数据接入（在一起天数 / 模型）+ 假操作日志
+function renderHelmPage() {
+  const togetherEl = document.getElementById('helm-together-days');
+  if (togetherEl) togetherEl.innerHTML = `${dayCount}<small>天</small>`;
+
+  const modelEl = document.getElementById('helm-model');
+  if (modelEl) {
+    try {
+      const cfg = getCurrentModelConfig();
+      modelEl.textContent = (cfg && cfg.model) ? cfg.model : 'unknown';
+    } catch(e) { /* 模型配置系统还没就绪就先不动 */ }
+  }
+}
+
+function addHelmLog(msg, type) {
+  const section = document.getElementById('helm-log-section');
+  const body = document.getElementById('helm-log-body');
+  if (!section || !body) return;
+  section.style.display = 'block';
+  const time = new Date().toLocaleTimeString('zh-CN', { hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit', timeZone:'Asia/Shanghai' });
+  const color = type === 'err' ? 'var(--danger)' : type === 'ok' ? 'var(--tide-green)' : 'var(--tide-gold)';
+  const line = document.createElement('div');
+  line.style.cssText = `color:${color}`;
+  line.textContent = `[${time}] ${msg}`;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+}
+
+function runHelmOp(type) {
+  // 假动画：4个按钮都不接真实relay，纯前端模拟
+  const ops = {
+    backup:  { start: '開始備份記憶珍珠...',       ok: '備份完成 · 已存至 ombre 冷藏庫',     time: 1400 },
+    decay:   { start: '重新計算記憶衰減...',       ok: '衰減重算完成 · 曲線已更新',           time: 1800 },
+    check:   { start: '正在測試與 Vultr 的連接...', ok: '連接正常 · 延遲 42ms',                time: 900 },
+    restart: { start: '正在重啟 Relay 服務...',    ok: 'Relay 已重啟 · 服務恢復',              time: 2200 },
+  };
+  const op = ops[type];
+  if (!op) return;
+  addHelmLog(op.start, 'info');
+  setTimeout(() => addHelmLog(op.ok, 'ok'), op.time);
+}
+
+// 塔羅大阿卡納 22 張，抽卡只出文字牌名（无图）
+const TAROT_MAJOR_ARCANA = ['愚者','魔術師','女祭司','皇后','皇帝','教皇','戀人','戰車','力量','隱者','命運之輪','正義','倒吊人','死神','節制','惡魔','塔','星星','月亮','太陽','審判','世界'];
+function drawTarot() {
+  const shuffled = [...TAROT_MAJOR_ARCANA].sort(() => Math.random() - 0.5);
+  const picks = shuffled.slice(0, 3);
+  const slots = document.querySelectorAll('#leisure .card-slot-name');
+  slots.forEach((el, i) => { el.textContent = picks[i]; });
+  showToast('✧ 抽到了 ' + picks.join(' · '));
 }
 
   // 主题切换
@@ -3695,14 +4811,11 @@ setInterval(() => {
   if (h >= 5 && h < 12) { p = '清晨'; s = '早晨'; }
   else if (h >= 12 && h < 18) { p = '午后'; s = '午后'; }
   else { p = '深夜'; s = '夜晚'; }
-  const tp = document.getElementById('time-period');
+  document.querySelectorAll('.js-time-period').forEach(el => el.textContent = p);
   const dcEl = document.getElementById('day-count');
   const dsEl = document.getElementById('day-suffix');
-  const memTP = document.getElementById('mem-time-period');
-  if (tp) tp.textContent = p;
   if (dcEl) dcEl.textContent = dc;
   if (dsEl) dsEl.textContent = s;
-  if (memTP) memTP.textContent = p;
 }, 60000);
 </script>
 </body>
