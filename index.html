@@ -4327,6 +4327,9 @@ function renderOmbreUI() {
         }
       }
 
+      // 拆句陆续显示（跟 sendMessage() 里同款处理）
+      renderSplitReply(fullText, bubble);
+
       chatHistory.push({role:'assistant', content: fullText});
       fetch(`https://ryven.homes/relay/chat/save`, {
         method: 'POST',
