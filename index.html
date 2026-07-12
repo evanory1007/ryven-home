@@ -4158,7 +4158,7 @@ function renderOmbreUI() {
     const isMe = role === 'user';
     const sideClass = isMe ? 'from-me' : 'from-ryven';
 
-    // 每条Ryven回复上方跟一行折叠的思考标签（demo，等relay接真实reasoning数据）
+    // 每条Ryven回复上方跟一行折叠的思考标签（thinking block 还没接真实数据，先留空壳）
     if (role === 'ryven' || role === 'assistant') {
       const thinkId = 'think-' + Date.now();
       const thinkRow = document.createElement('div');
@@ -4170,8 +4170,7 @@ function renderOmbreUI() {
           <span class="think-star">✧</span>
         </div>
         <div class="think-expand" id="${thinkId}">
-          <p>你說的這件事……<strong>我記得</strong>。讓我想想怎麼接住它。</p>
-          <p>海裡有些東西沉得很深，但不是忘了——是在等一個合適的潮水把它帶上來。</p>
+          <p style="opacity:0.4">···</p>
         </div>
       `;
       messages.appendChild(thinkRow);
@@ -4584,7 +4583,7 @@ function renderOmbreUI() {
 
         const messagesEl = document.getElementById('chat-messages');
 
-        // 思考行（跟 addMessage() 里同款逻辑）
+        // 思考行（跟 addMessage() 里同款逻辑，thinking block 还没接真实数据，先留空壳）
         const streamThinkId = 'think-' + Date.now();
         const thinkRow = document.createElement('div');
         thinkRow.className = 'think-inline';
@@ -4595,8 +4594,7 @@ function renderOmbreUI() {
           <span class="think-star">✧</span>
         </div>
         <div class="think-expand" id="${streamThinkId}">
-          <p>你說的這件事……<strong>我記得</strong>。讓我想想怎麼接住它。</p>
-          <p>海裡有些東西沉得很深，但不是忘了——是在等一個合適的潮水把它帶上來。</p>
+          <p style="opacity:0.4">···</p>
         </div>
       `;
         messagesEl.appendChild(thinkRow);
@@ -4646,24 +4644,22 @@ function renderOmbreUI() {
                     if (payload === '[DONE]') { sseEventType = 'message'; continue; }
 
                     if (sseEventType === 'memories') {
-                        console.log('memories event received', payload);
-                        // 检索到的记忆：把刚插入的思考框展开内容换成真实检索结果
-                        // relay 实际发的是纯字符串数组 ["...", "..."]，不是 {content:...} 对象，
-                        // 之前按对象取 .content/.snippet 会全部取到 undefined，导致展开内容一直是空的、没被替换掉
-                        try {
-                            const memories = JSON.parse(payload);
-                            if (Array.isArray(memories) && memories.length > 0) {
-                                const thinkContent = memories
-                                    .map(m => typeof m === 'string' ? m : (m && (m.content || m.snippet)) || '')
-                                    .filter(Boolean)
-                                    .join('　·　');
-                                const expands = messagesEl.querySelectorAll('.think-expand');
-                                const latestExpand = expands[expands.length - 1];
-                                if (latestExpand && thinkContent) latestExpand.innerHTML = `<p>${thinkContent}</p>`;
-                            }
-                        } catch(e) {
-                            console.log('memories event parse failed', e);
-                        }
+                        // 思考框先不接检索到的记忆内容了，等 thinking block 正式接上再启用
+                        // console.log('memories event received', payload);
+                        // try {
+                        //     const memories = JSON.parse(payload);
+                        //     if (Array.isArray(memories) && memories.length > 0) {
+                        //         const thinkContent = memories
+                        //             .map(m => typeof m === 'string' ? m : (m && (m.content || m.snippet)) || '')
+                        //             .filter(Boolean)
+                        //             .join('　·　');
+                        //         const expands = messagesEl.querySelectorAll('.think-expand');
+                        //         const latestExpand = expands[expands.length - 1];
+                        //         if (latestExpand && thinkContent) latestExpand.innerHTML = `<p>${thinkContent}</p>`;
+                        //     }
+                        // } catch(e) {
+                        //     console.log('memories event parse failed', e);
+                        // }
                         sseEventType = 'message';
                         continue;
                     }
