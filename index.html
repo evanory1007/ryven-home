@@ -4543,6 +4543,54 @@ function renderOmbreUI() {
     document.getElementById('call-overlay').classList.remove('show');
   }
 
+  // ===== 分段消息显示：SSE流完之后，把完整回复拆成一句一句陆续发出来 =====
+  function splitIntoSentences(text) {
+    const rawParts = text.split(/(?<=[。！？\n])/).map(s => s.trim()).filter(Boolean);
+    const result = [];
+    let carry = '';
+    for (const part of rawParts) {
+      const combined = carry + part;
+      // 去掉标点后剩下的有效字数，太短（含纯标点，视为0字）就先留着跟下一句合并
+      const strippedLen = combined.replace(/[。！？\n，、；：""''（）·…\-—\s]/g, '').length;
+      if (strippedLen < 3) {
+        carry = combined;
+      } else {
+        result.push(combined);
+        carry = '';
+      }
+    }
+    if (carry) {
+      if (result.length > 0) result[result.length - 1] += carry;
+      else result.push(carry);
+    }
+    return result;
+  }
+
+  async function renderSplitReply(fullText, firstBubble) {
+    const segments = splitIntoSentences(fullText);
+    if (segments.length === 0) { firstBubble.innerHTML = (fullText || '…').replace(/\n/g, '<br>'); return; }
+    const messagesEl = document.getElementById('chat-messages');
+    firstBubble.innerHTML = segments[0].replace(/\n/g, '<br>');
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    for (let i = 1; i < segments.length; i++) {
+      const delay = 800 + Math.random() * 400;
+      await new Promise(r => setTimeout(r, delay));
+      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap';
+      wrap.innerHTML = `
+        <div class="msg-row from-ryven">
+          <div class="msg-avatar-sm">💚</div>
+          <div class="msg-col">
+            <div class="msg-bubble">${segments[i].replace(/\n/g, '<br>')}</div>
+            <div class="msg-time">${time}</div>
+          </div>
+        </div>`;
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+  }
+
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
@@ -4683,6 +4731,9 @@ function renderOmbreUI() {
                 }
             }
         }
+
+        // 拆句陆续显示（异步，不等它跑完——历史记录和保存用的还是完整 fullText）
+        renderSplitReply(fullText, bubble);
 
         chatHistory.push({role:'assistant', content: fullText});
         msgCount++;
