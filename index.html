@@ -3528,6 +3528,8 @@ async function loadChatHistory() {
       lastMsgDateKey = null;
       chatHistory = [];
       for (const msg of messages) {
+        // 修复前泄漏进relay的改名指令文本（实际文案是"用户刚刚把你的名字改成了..."），历史数据里可能还留着，过滤掉不渲染成气泡
+        if (msg.content && msg.content.includes('用户刚刚把你的名字改成了')) continue;
         addMessage(msg.role, msg.content, msg.timestamp || msg.created_at);
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
