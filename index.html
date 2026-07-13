@@ -557,7 +557,6 @@
     #memory .desk-tags { display: flex; flex-wrap: wrap; gap: 4px; }
     #memory .desk-tag { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 10px; color: var(--tide-gold); padding: 2px 8px; border: 1px solid rgba(201,168,76,0.25); border-radius: 10px; opacity: 0.75; }
 
-    /* 4 · 時刻 */
     /* TODO 占位符 */
     #memory .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
@@ -2009,21 +2008,49 @@
     #life .h-stat-val small { font-family: 'Cormorant Garamond', serif; font-size: 12px; color: var(--parchment-ghost); margin-left: 4px; }
     #life .h-stat-lbl { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 4px; }
 
-    /* Moments（样式参照 ryven_memory_v2.html 的 .moments-entry mini feed） */
-    #life .moment-list { display: flex; flex-direction: column; }
-    #life .moment-item {
-      display: grid; grid-template-columns: 22px 1fr auto auto;
-      gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: baseline;
+    /* Moments —— 严格照抄 ryven_memory_v2.html 的 .card-moments 卡片设计 */
+    #life .card {
+      background: var(--card-bg); border: 1px solid var(--line); border-radius: 6px;
+      position: relative; overflow: hidden; transition: border-color 0.3s;
     }
-    #life .moment-item:last-child { border-bottom: none; }
-    #life .moment-item-icon { font-size: 14px; line-height: 1; padding-top: 1px; }
-    #life .moment-item-content {
+    #life .card:hover { border-color: rgba(201,168,76,0.28); }
+    #life .card::before {
+      content: ''; position: absolute; top: 0; left: 20px; width: 32px; height: 1px;
+      background: var(--tide-gold); opacity: 0.5;
+    }
+    #life .card-cta {
+      display: inline-block; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px;
+      color: var(--tide-gold-soft); letter-spacing: 0.08em; margin-top: 10px; transition: color 0.2s;
+      text-decoration: none; cursor: pointer;
+    }
+    #life .card-cta::after { content: ' →'; font-family: 'DM Sans', sans-serif; }
+    #life .card:hover .card-cta { color: var(--tide-gold); }
+    #life .card-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 24px; color: var(--parchment); line-height: 1; letter-spacing: -0.01em; }
+    #life .card-cn { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.45em; color: var(--parchment-ghost); padding-top: 6px; }
+
+    #life .card-moments { padding: 52px 22px 20px; }
+    #life .moments-title-tr { position: absolute; top: 18px; right: 22px; text-align: right; z-index: 2; }
+    #life .moments-title-tr .card-name { font-size: 22px; }
+    #life .moments-title-tr .card-cn { display: block; padding-top: 4px; margin-top: 2px; }
+    #life .moments-add-btn { position: absolute; top: 18px; left: 22px; z-index: 2; }
+    #life .moments-legend { display: flex; gap: 16px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); margin-bottom: 14px; }
+    #life .moments-legend span { display: flex; align-items: center; gap: 4px; }
+    #life .moments-legend .n { color: var(--tide-gold); font-family: 'Playfair Display', serif; font-size: 13px; }
+    #life .moments-feed { display: flex; flex-direction: column; }
+    #life .moments-entry {
+      display: grid; grid-template-columns: 22px 1fr auto auto; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid var(--line); align-items: baseline;
+    }
+    #life .moments-entry:last-of-type { border-bottom: none; }
+    #life .moments-icon { font-size: 14px; line-height: 1; padding-top: 1px; }
+    #life .moments-text {
       font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment);
       line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
-    #life .moment-item-time { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.1em; color: var(--parchment-ghost); opacity: 0.6; }
-    #life .moment-item-del { font-size: 13px; color: var(--parchment-ghost); opacity: 0.4; cursor: pointer; line-height: 1; transition: opacity 0.2s, color 0.2s; }
-    #life .moment-item-del:hover { opacity: 1; color: var(--danger); }
+    #life .moments-time { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.1em; color: var(--parchment-ghost); opacity: 0.6; }
+    /* 原版没有删除按钮，但 #life 这边需要真的能删——加一颗很淡的 ×，平时几乎看不见，hover 才明显 */
+    #life .moment-del { font-size: 12px; color: var(--parchment-ghost); opacity: 0.25; cursor: pointer; line-height: 1; transition: opacity 0.2s, color 0.2s; }
+    #life .moment-del:hover { opacity: 1; color: var(--danger); }
     #life .moment-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-ghost); text-align: center; padding: 20px 0; opacity: 0.7; }
 
     /* Wishlist（占位版，内容之后单独一轮再做） */
@@ -3605,13 +3632,20 @@
       </div>
     </div>
 
-    <!-- ═════ 2. MOMENTS · 時刻 ═════ -->
+    <!-- ═════ 2. MOMENTS · 時刻（严格按 ryven_memory_v2.html 的 .card-moments 卡片还原） ═════ -->
     <div class="sec">
-      <div class="sec-head">
-        <div class="sec-name">Moments <span class="cn">時 刻</span></div>
-        <div class="sec-actions">
-          <button class="add-btn" id="life-moment-add-btn" onclick="lifeToggleMomentForm()" title="發一個時刻">+</button>
+      <div class="card card-moments">
+        <button class="add-btn moments-add-btn" id="life-moment-add-btn" onclick="lifeToggleMomentForm()" title="發一個時刻">+</button>
+        <div class="moments-title-tr">
+          <div class="card-name">Moments</div>
+          <div class="card-cn">時 刻</div>
         </div>
+        <div class="moments-legend">
+          <span>🫧 我 · <span class="n TODO">XX</span></span>
+          <span>🕯 你 · <span class="n" id="life-moment-count">0</span></span>
+        </div>
+        <div class="moments-feed" id="life-moment-list"></div>
+        <a href="javascript:void(0)" class="card-cta" onclick="showToast('時刻全部紀錄還在盖这个房间呢 🐚')">查看全部</a>
       </div>
 
       <div class="sheet-inline" id="life-moment-form">
@@ -3636,8 +3670,6 @@
           <button class="sheet-btn" onclick="lifeSaveMoment()">✧ 發布</button>
         </div>
       </div>
-
-      <div class="moment-list" id="life-moment-list"></div>
     </div>
 
     <!-- ═════ 3. WISHLIST · 我們的（占位，之後單獨一輪再做）═════ -->
@@ -5371,6 +5403,10 @@ function renderLifeMoments() {
   const listEl = document.getElementById('life-moment-list');
   if (!listEl) return;
   const moments = getLifeMoments().slice().sort((a, b) => b.createdAt - a.createdAt);
+
+  const countEl = document.getElementById('life-moment-count');
+  if (countEl) countEl.textContent = moments.length;
+
   if (moments.length === 0) {
     listEl.innerHTML = '<div class="moment-empty">還沒有時刻，寫下第一個吧</div>';
     return;
@@ -5379,11 +5415,11 @@ function renderLifeMoments() {
     const time = new Date(m.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' }).replace(':', ' · ');
     const icon = LIFE_MOMENT_TAG_EMOJI[m.tag] || '🫧';
     return `
-      <div class="moment-item">
-        <span class="moment-item-icon">${icon}</span>
-        <div class="moment-item-content">${escapeAttr(m.content)}</div>
-        <span class="moment-item-time">${time}</span>
-        <span class="moment-item-del" onclick="lifeDeleteMoment('${m.id}')">×</span>
+      <div class="moments-entry">
+        <span class="moments-icon">${icon}</span>
+        <div class="moments-text">${escapeAttr(m.content)}</div>
+        <span class="moments-time">${time}</span>
+        <span class="moment-del" onclick="lifeDeleteMoment('${m.id}')">×</span>
       </div>`;
   }).join('');
 }
