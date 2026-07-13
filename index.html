@@ -976,6 +976,11 @@
       padding: 2px 4px; flex-shrink: 0; line-height: 1; transition: color 0.2s, opacity 0.2s;
     }
     .model-item-edit:hover { opacity: 1; color: var(--tide-gold); }
+    .model-item-star {
+      font-size: 13px; opacity: 0.6; cursor: pointer;
+      padding: 2px 4px; flex-shrink: 0; line-height: 1; transition: opacity 0.2s, transform 0.15s;
+    }
+    .model-item-star:hover { opacity: 1; transform: scale(1.15); }
     .model-item-edit-form {
       background: var(--tide-gold-ghost);
       border: 1px dashed color-mix(in srgb, var(--tide-gold) 20%, transparent);
@@ -3965,8 +3970,10 @@ function renderOmbreUI() {
   }
 
   let modelConfigs = loadModelConfigs();
-  let currentConfigId = localStorage.getItem('ryven-current-config-id') || modelConfigs[0].id;
-  if (!modelConfigs.find(c => c.id === currentConfigId)) currentConfigId = modelConfigs[0].id;
+  // 默认 = 每次开页面自动加载的那个（持久化），使用中 = 这次session里选的（只在session内有效，不持久化）
+  let defaultConfigId = localStorage.getItem('ryven-default-config-id') || modelConfigs[0].id;
+  if (!modelConfigs.find(c => c.id === defaultConfigId)) defaultConfigId = modelConfigs[0].id;
+  let currentConfigId = defaultConfigId;
   let selectedConfigId = currentConfigId;
   applyCurrentModelConfig();
 
@@ -4022,7 +4029,8 @@ function renderOmbreUI() {
             <div class="model-item-model">${c.model}</div>
           </div>
           <div class="model-item-edit" onclick="event.stopPropagation();editModelConfig('${c.id}')">✏️</div>
-          ${c.id!=='default' ? `<div class="model-item-del" onclick="event.stopPropagation();deleteModelConfig('${c.id}')">×</div>` : ''}
+          <div class="model-item-star" onclick="event.stopPropagation();setDefaultModelConfig('${c.id}')" title="設為默認">${c.id===defaultConfigId?'⭐':'☆'}</div>
+          <div class="model-item-del" onclick="event.stopPropagation();deleteModelConfig('${c.id}')">×</div>
         </div>`;
       }).join('');
     }
@@ -4046,7 +4054,7 @@ function renderOmbreUI() {
 
   function confirmSwitchModel() {
     currentConfigId = selectedConfigId;
-    localStorage.setItem('ryven-current-config-id', currentConfigId);
+    // 使用中不持久化——只对这次session生效，刷新后回到默认配置
     applyCurrentModelConfig();
     const notice = document.getElementById('api-notice');
     if (notice && CHAT_API_KEY) notice.style.display = 'none';
@@ -4054,14 +4062,24 @@ function renderOmbreUI() {
     showToast(`✧ 已切換到 ${getCurrentModelConfig().name}`);
   }
 
+  function setDefaultModelConfig(id) {
+    defaultConfigId = id;
+    localStorage.setItem('ryven-default-config-id', defaultConfigId);
+    renderModelPanel();
+    showToast('✧ 已設為默認配置');
+  }
+
   function deleteModelConfig(id) {
-    if (id === 'default') return;
+    if (modelConfigs.length === 1) { showToast('✧ 至少要留一個配置'); return; }
     if (!confirm('刪除這個配置？')) return;
     modelConfigs = modelConfigs.filter(c => c.id !== id);
     saveModelConfigsToStorage();
+    if (defaultConfigId === id) {
+      defaultConfigId = modelConfigs[0].id;
+      localStorage.setItem('ryven-default-config-id', defaultConfigId);
+    }
     if (currentConfigId === id) {
-      currentConfigId = 'default';
-      localStorage.setItem('ryven-current-config-id', 'default');
+      currentConfigId = defaultConfigId;
       applyCurrentModelConfig();
     }
     if (selectedConfigId === id) selectedConfigId = currentConfigId;
