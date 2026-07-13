@@ -3525,9 +3525,10 @@ async function loadChatHistory() {
     const messages = data.messages || [];
     if (messages.length > 0) {
       document.getElementById('chat-messages').innerHTML = '';
+      lastMsgDateKey = null;
       chatHistory = [];
       for (const msg of messages) {
-        addMessage(msg.role, msg.content);
+        addMessage(msg.role, msg.content, msg.timestamp || msg.created_at);
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
       }
@@ -4235,6 +4236,7 @@ function renderOmbreUI() {
 
   function clearChat() {
     chatHistory = []; msgCount = 0; totalTokens = 0;
+    lastMsgDateKey = null;
     document.getElementById('chat-messages').innerHTML = `<div class="api-notice" id="api-notice" ${CHAT_API_KEY?'style="display:none"':''}>💙 在右上角選單填入 API Key 後 Ryven 就能回話了</div>`;
     showToast('🌊 對話已清空');
     toggleSidebar();
@@ -4255,9 +4257,11 @@ function renderOmbreUI() {
     el.style.display = el.style.display === 'block' ? 'none' : 'block';
   }
 
-  function addMessage(role, text) {
+  function addMessage(role, text, timestampMs) {
     const messages = document.getElementById('chat-messages');
-    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    const msgDate = timestampMs ? new Date(timestampMs) : new Date();
+    maybeInsertDateDivider(msgDate);
+    const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
     const isMe = role === 'user';
     const sideClass = isMe ? 'from-me' : 'from-ryven';
 
@@ -4352,6 +4356,27 @@ function renderOmbreUI() {
     messages.scrollTop = messages.scrollHeight;
   }
 
+  // ===== 消息日期分隔线 =====
+  let lastMsgDateKey = null;
+  function dateKeyOf(date) { return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`; }
+  function formatDateDivider(date) {
+    if (dateKeyOf(date) === dateKeyOf(new Date())) return '今天';
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+    return `${date.getMonth()+1}月${date.getDate()}日 · ${weekdays[date.getDay()]}`;
+  }
+  // 只在跟上一条消息日期不同时插入；同一天连续消息、或第一条消息前都不插
+  function maybeInsertDateDivider(date) {
+    const key = dateKeyOf(date);
+    if (lastMsgDateKey !== null && lastMsgDateKey !== key) {
+      const messages = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'sys-msg date-divider';
+      div.textContent = formatDateDivider(date);
+      messages.appendChild(div);
+    }
+    lastMsgDateKey = key;
+  }
+
   // 改名后自动触发一条 Ryven 反应：复用 sendMessage() 同款的 relay 调用 + SSE 流式解析，
   // 但这条"指令"本身不当成 Nory 说的话渲染出来，只把 Ryven 的回应显示成正常气泡
   async function triggerNicknameReaction(newName) {
@@ -4385,7 +4410,9 @@ function renderOmbreUI() {
       if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
 
       const messagesEl = document.getElementById('chat-messages');
-      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+      const nickReplyNow = new Date();
+      maybeInsertDateDivider(nickReplyNow);
+      const time = nickReplyNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
       const wrap = document.createElement('div');
       wrap.className = 'msg-wrap';
       wrap.innerHTML = `
@@ -4537,7 +4564,9 @@ function renderOmbreUI() {
     const src = thumb.querySelector('img').src;
     setTimeout(() => {
       hideSheet();
-      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+      const imgNow = new Date();
+      maybeInsertDateDivider(imgNow);
+      const time = imgNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
       const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
       const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
       const continued = prevRow && prevRow.classList.contains('from-me');
@@ -4609,7 +4638,9 @@ function renderOmbreUI() {
     sendBtnEl.classList.remove('recording');
     const m = Math.floor(dur/60), s = dur%60;
     const durStr = dur === 0 ? '0:01' : `${m}:${s.toString().padStart(2,'0')}`;
-    const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    const voiceNow = new Date();
+    maybeInsertDateDivider(voiceNow);
+    const time = voiceNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
     const waveId = 'vw-' + Date.now();
     const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
     const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
@@ -4760,7 +4791,9 @@ function renderOmbreUI() {
         // 注意：不用id取元素——允许连续发送后，同一时间可能有好几条正在流式输出的回复，
         // 固定id会撞在一起，getElementById永远只抓得到第一条，后面几条的文字会被写错气泡。
         // 改成用创建时直接拿到的引用（wrap.querySelector），每条各拿各的，互不影响。
-        const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+        const replyNow = new Date();
+        maybeInsertDateDivider(replyNow);
+        const time = replyNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
         const wrap = document.createElement('div');
         wrap.className = 'msg-wrap';
         wrap.innerHTML = `
