@@ -4800,11 +4800,15 @@ function renderOmbreUI() {
               else if (json.delta && json.delta.text) chunk = json.delta.text;
               else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) chunk = json.choices[0].delta.content;
               fullText += chunk;
+              // TODO(debug): 排查空气泡问题的临时追踪，问题定位后删掉
+              console.log('[bubble-debug][nickname] 收到 delta chunk =', JSON.stringify(chunk));
               for (const ch of chunk) {
                 currentText += ch;
-                if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append，理由同 sendMessage()
                 currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
                 if (/[。！？\n]/.test(ch)) {
+                  console.log('[bubble-debug][nickname] 句末标点', JSON.stringify(ch), '定型气泡为', JSON.stringify(currentText), '→ prepareRyvenBubble()（未append）');
                   currentText = '';
                   currentBubble = prepareRyvenBubble();
                 }
@@ -4815,10 +4819,11 @@ function renderOmbreUI() {
         }
       }
 
+      console.log('[bubble-debug][nickname] 流结束，currentText=', JSON.stringify(currentText), 'currentBubble.appended=', currentBubble.appended, 'fullText長度=', fullText.length);
       if (currentText === '' && !currentBubble.appended && fullText === '') {
         // 整条什么都没收到，兜底显示一个"…"，不能什么都不留
-        appendPendingBubble(messagesEl, currentBubble);
         currentBubble.bubble.innerHTML = '…';
+        appendPendingBubble(messagesEl, currentBubble);
       }
 
       // 只把 Ryven 的回应存进 chatHistory/服务器，指令本身不留痕迹
@@ -5088,6 +5093,8 @@ function renderOmbreUI() {
 
   function appendPendingBubble(messagesEl, pending) {
     if (pending.appended) return;
+    // TODO(debug): 排查空气泡问题的临时追踪，问题定位后删掉
+    console.log('[bubble-debug] appendPendingBubble() 被调用，此刻 bubble.innerHTML =', JSON.stringify(pending.bubble.innerHTML), new Error().stack);
     const now = new Date();
     maybeInsertDateDivider(now);
     pending.timeEl.textContent = now.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
@@ -5216,11 +5223,16 @@ function renderOmbreUI() {
                             chunk = json.choices[0].delta.content;
                         }
                         fullText += chunk;
+                        // TODO(debug): 排查空气泡问题的临时追踪，问题定位后删掉
+                        console.log('[bubble-debug] 收到 delta chunk =', JSON.stringify(chunk));
                         for (const ch of chunk) {
                             currentText += ch;
-                            if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                            // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append——绝不能appended-then-filled，
+                            // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
                             currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                            if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
                             if (/[。！？\n]/.test(ch)) {
+                                console.log('[bubble-debug] 句末标点', JSON.stringify(ch), '定型气泡为', JSON.stringify(currentText), '→ prepareRyvenBubble()（未append）');
                                 currentText = '';
                                 currentBubble = prepareRyvenBubble();
                             }
@@ -5233,10 +5245,12 @@ function renderOmbreUI() {
             }
         }
 
+        // TODO(debug): 排查空气泡问题的临时追踪，问题定位后删掉
+        console.log('[bubble-debug] 流结束，currentText=', JSON.stringify(currentText), 'currentBubble.appended=', currentBubble.appended, 'fullText長度=', fullText.length);
         // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
         if (currentText === '' && !currentBubble.appended && fullText === '') {
-            appendPendingBubble(messagesEl, currentBubble);
             currentBubble.bubble.innerHTML = '…';
+            appendPendingBubble(messagesEl, currentBubble);
         }
 
         chatHistory.push({role:'assistant', content: fullText});
