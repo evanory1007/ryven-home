@@ -3873,7 +3873,18 @@ async function loadChatHistory() {
       for (const msg of messages) {
         // 修复前泄漏进relay的改名指令文本（实际文案是"用户刚刚把你的名字改成了..."），历史数据里可能还留着，过滤掉不渲染成气泡
         if (msg.content && msg.content.includes('用户刚刚把你的名字改成了')) continue;
-        addMessage(msg.role, msg.content, msg.timestamp || msg.created_at);
+        const msgTime = msg.timestamp || msg.created_at;
+        if (msg.role === 'assistant' || msg.role === 'ryven') {
+          // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框
+          const segments = splitIntoSentences(msg.content);
+          if (segments.length === 0) {
+            addMessage(msg.role, msg.content, msgTime);
+          } else {
+            segments.forEach((seg, i) => addMessage(msg.role, seg, msgTime, i > 0));
+          }
+        } else {
+          addMessage(msg.role, msg.content, msgTime);
+        }
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
       }
@@ -4603,7 +4614,7 @@ function renderOmbreUI() {
     el.style.display = el.style.display === 'block' ? 'none' : 'block';
   }
 
-  function addMessage(role, text, timestampMs) {
+  function addMessage(role, text, timestampMs, skipThink) {
     const messages = document.getElementById('chat-messages');
     const msgDate = timestampMs ? new Date(timestampMs) : new Date();
     maybeInsertDateDivider(msgDate);
@@ -4612,7 +4623,8 @@ function renderOmbreUI() {
     const sideClass = isMe ? 'from-me' : 'from-ryven';
 
     // 每条Ryven回复上方跟一行折叠的思考标签（thinking block 还没接真实数据，先留空壳）
-    if (role === 'ryven' || role === 'assistant') {
+    // skipThink：一条历史消息拆成多句渲染时，只有第一句带思考框，后面几句不重复加
+    if (!skipThink && (role === 'ryven' || role === 'assistant')) {
       const thinkId = 'think-' + Date.now();
       const thinkRow = document.createElement('div');
       thinkRow.className = 'think-inline';
@@ -4756,25 +4768,15 @@ function renderOmbreUI() {
       if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
 
       const messagesEl = document.getElementById('chat-messages');
-      const nickReplyNow = new Date();
-      maybeInsertDateDivider(nickReplyNow);
-      const time = nickReplyNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
-      const wrap = document.createElement('div');
-      wrap.className = 'msg-wrap';
-      wrap.innerHTML = `
-        <div class="msg-row from-ryven">
-          <div class="msg-avatar-sm">💚</div>
-          <div class="msg-col">
-            <div class="msg-bubble"></div>
-            <div class="msg-time">${time}</div>
-          </div>
-        </div>`;
-      messagesEl.appendChild(wrap);
-      const bubble = wrap.querySelector('.msg-bubble');
+
+      // 逐句流式（跟 sendMessage() 里同款处理）：每收到一个字符就追加，碰到句末标点就换一个新气泡
+      let currentBubble = createRyvenBubble(messagesEl);
+      let currentText = '';
+      let extraBubbleCreated = false;
+      let fullText = '';
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
-      let fullText = '';
       let buffer = '';
       let sseEventType = 'message';
 
@@ -4798,16 +4800,29 @@ function renderOmbreUI() {
               else if (json.delta && json.delta.text) chunk = json.delta.text;
               else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) chunk = json.choices[0].delta.content;
               fullText += chunk;
-              bubble.innerHTML = fullText.replace(/\n/g, '<br>') || '…';
+              for (const ch of chunk) {
+                currentText += ch;
+                currentBubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                if (/[。！？\n]/.test(ch)) {
+                  currentText = '';
+                  currentBubble = createRyvenBubble(messagesEl);
+                  extraBubbleCreated = true;
+                }
+              }
               messagesEl.scrollTop = messagesEl.scrollHeight;
             } catch(e) {}
           }
         }
       }
 
-      // 拆句陆续显示（跟 sendMessage() 里同款处理）：先清空流式阶段留下的全文，避免全文和第一句同时出现
-      bubble.innerHTML = '';
-      renderSplitReply(fullText, bubble);
+      if (currentText === '') {
+        if (extraBubbleCreated) {
+          const emptyWrap = currentBubble.closest('.msg-wrap');
+          if (emptyWrap) emptyWrap.remove();
+        } else {
+          currentBubble.innerHTML = '…';
+        }
+      }
 
       // 只把 Ryven 的回应存进 chatHistory/服务器，指令本身不留痕迹
       chatHistory.push({role:'assistant', content: fullText});
@@ -5052,29 +5067,24 @@ function renderOmbreUI() {
     return result;
   }
 
-  async function renderSplitReply(fullText, firstBubble) {
-    const segments = splitIntoSentences(fullText);
-    if (segments.length === 0) { firstBubble.innerHTML = (fullText || '…').replace(/\n/g, '<br>'); return; }
-    const messagesEl = document.getElementById('chat-messages');
-    firstBubble.innerHTML = segments[0].replace(/\n/g, '<br>');
+  // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
+  function createRyvenBubble(messagesEl) {
+    const now = new Date();
+    maybeInsertDateDivider(now);
+    const time = now.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap';
+    wrap.innerHTML = `
+      <div class="msg-row from-ryven">
+        <div class="msg-avatar-sm">💚</div>
+        <div class="msg-col">
+          <div class="msg-bubble"></div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+    messagesEl.appendChild(wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
-    for (let i = 1; i < segments.length; i++) {
-      const delay = 800 + Math.random() * 400;
-      await new Promise(r => setTimeout(r, delay));
-      const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
-      const wrap = document.createElement('div');
-      wrap.className = 'msg-wrap';
-      wrap.innerHTML = `
-        <div class="msg-row from-ryven">
-          <div class="msg-avatar-sm">💚</div>
-          <div class="msg-col">
-            <div class="msg-bubble">${segments[i].replace(/\n/g, '<br>')}</div>
-            <div class="msg-time">${time}</div>
-          </div>
-        </div>`;
-      messagesEl.appendChild(wrap);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
+    return wrap.querySelector('.msg-bubble');
   }
 
   async function sendMessage() {
@@ -5133,29 +5143,15 @@ function renderOmbreUI() {
       `;
         messagesEl.appendChild(thinkRow);
 
-        // 先插入一個空氣泡
-        // 注意：不用id取元素——允许连续发送后，同一时间可能有好几条正在流式输出的回复，
-        // 固定id会撞在一起，getElementById永远只抓得到第一条，后面几条的文字会被写错气泡。
-        // 改成用创建时直接拿到的引用（wrap.querySelector），每条各拿各的，互不影响。
-        const replyNow = new Date();
-        maybeInsertDateDivider(replyNow);
-        const time = replyNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
-        const wrap = document.createElement('div');
-        wrap.className = 'msg-wrap';
-        wrap.innerHTML = `
-            <div class="msg-row from-ryven">
-                <div class="msg-avatar-sm">💚</div>
-                <div class="msg-col">
-                  <div class="msg-bubble"></div>
-                  <div class="msg-time">${time}</div>
-                </div>
-            </div>`;
-        messagesEl.appendChild(wrap);
-        const bubble = wrap.querySelector('.msg-bubble');
+        // 逐句流式：每收到一个字符就追加，一碰到句末标点（。！？\n）就把当前气泡定型，换一个新气泡接着收
+        // 不再等整条流完再拆句——不然会有先显示全文、再清空重排的闪烁感
+        let currentBubble = createRyvenBubble(messagesEl);
+        let currentText = '';
+        let extraBubbleCreated = false;
+        let fullText = '';
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
-        let fullText = '';
         let buffer = '';
         let sseEventType = 'message'; // 默认类型
 
@@ -5211,7 +5207,15 @@ function renderOmbreUI() {
                             chunk = json.choices[0].delta.content;
                         }
                         fullText += chunk;
-                        bubble.innerHTML = fullText.replace(/\n/g, '<br>') || '…';
+                        for (const ch of chunk) {
+                            currentText += ch;
+                            currentBubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                            if (/[。！？\n]/.test(ch)) {
+                                currentText = '';
+                                currentBubble = createRyvenBubble(messagesEl);
+                                extraBubbleCreated = true;
+                            }
+                        }
                         messagesEl.scrollTop = messagesEl.scrollHeight;
                     } catch(e) {
                         // 非 JSON 行跳過
@@ -5220,9 +5224,15 @@ function renderOmbreUI() {
             }
         }
 
-        // 拆句陆续显示（异步，不等它跑完——历史记录和保存用的还是完整 fullText）：先清空流式阶段留下的全文，避免全文和第一句同时出现
-        bubble.innerHTML = '';
-        renderSplitReply(fullText, bubble);
+        // 流刚好在句末标点结束时会多建一个没收到内容的空气泡，删掉；真的完全没收到任何内容时兜底显示…
+        if (currentText === '') {
+            if (extraBubbleCreated) {
+                const emptyWrap = currentBubble.closest('.msg-wrap');
+                if (emptyWrap) emptyWrap.remove();
+            } else {
+                currentBubble.innerHTML = '…';
+            }
+        }
 
         chatHistory.push({role:'assistant', content: fullText});
         msgCount++;
