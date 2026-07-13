@@ -2009,14 +2009,20 @@
     #life .h-stat-val small { font-family: 'Cormorant Garamond', serif; font-size: 12px; color: var(--parchment-ghost); margin-left: 4px; }
     #life .h-stat-lbl { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 4px; }
 
-    /* Moments */
+    /* Moments（样式参照 ryven_memory_v2.html 的 .moments-entry mini feed） */
     #life .moment-list { display: flex; flex-direction: column; }
-    #life .moment-item { padding: 14px 4px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; position: relative; }
+    #life .moment-item {
+      display: grid; grid-template-columns: 22px 1fr auto auto;
+      gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: baseline;
+    }
     #life .moment-item:last-child { border-bottom: none; }
-    #life .moment-item-content { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment); line-height: 1.5; padding-right: 22px; }
-    #life .moment-item-meta { display: flex; align-items: center; gap: 10px; font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.15em; color: var(--parchment-ghost); }
-    #life .moment-item-tag { color: var(--tide-gold); text-transform: uppercase; }
-    #life .moment-item-del { position: absolute; top: 14px; right: 2px; color: var(--parchment-ghost); opacity: 0.5; cursor: pointer; font-size: 15px; line-height: 1; transition: opacity 0.2s, color 0.2s; }
+    #life .moment-item-icon { font-size: 14px; line-height: 1; padding-top: 1px; }
+    #life .moment-item-content {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment);
+      line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    #life .moment-item-time { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.1em; color: var(--parchment-ghost); opacity: 0.6; }
+    #life .moment-item-del { font-size: 13px; color: var(--parchment-ghost); opacity: 0.4; cursor: pointer; line-height: 1; transition: opacity 0.2s, color 0.2s; }
     #life .moment-item-del:hover { opacity: 1; color: var(--danger); }
     #life .moment-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-ghost); text-align: center; padding: 20px 0; opacity: 0.7; }
 
@@ -5364,6 +5370,8 @@ function lifeDeleteMoment(id) {
   renderLifeMoments();
 }
 
+const LIFE_MOMENT_TAG_EMOJI = { '日常': '🫧', '感受': '🕯', '发现': '✨', '随手': '🐚' };
+
 function renderLifeMoments() {
   const listEl = document.getElementById('life-moment-list');
   if (!listEl) return;
@@ -5373,14 +5381,13 @@ function renderLifeMoments() {
     return;
   }
   listEl.innerHTML = moments.map(m => {
-    const time = new Date(m.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' });
+    const time = new Date(m.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' }).replace(':', ' · ');
+    const icon = LIFE_MOMENT_TAG_EMOJI[m.tag] || '🫧';
     return `
       <div class="moment-item">
+        <span class="moment-item-icon">${icon}</span>
         <div class="moment-item-content">${escapeAttr(m.content)}</div>
-        <div class="moment-item-meta">
-          <span class="moment-item-tag">${escapeAttr(m.tag || '')}</span>
-          <span>${time}</span>
-        </div>
+        <span class="moment-item-time">${time}</span>
         <span class="moment-item-del" onclick="lifeDeleteMoment('${m.id}')">×</span>
       </div>`;
   }).join('');
