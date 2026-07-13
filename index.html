@@ -124,7 +124,6 @@
 
     body {
       background: linear-gradient(180deg, var(--sea-0) 0%, var(--sea-1) 30%, var(--sea-2) 70%, var(--sea-3) 100%);
-      background-attachment: fixed;
       color: var(--silver);
       font-family: 'DM Sans', sans-serif;
       font-weight: 300;
@@ -132,17 +131,22 @@
       overflow-x: hidden;
     }
 
-    /* 海洋背景 */
-    .ocean-bg { position:fixed; inset:0; z-index:0; overflow:hidden; }
-    .wave { position:absolute; bottom:0; left:-50%; width:200%; height:180px; border-radius:50% 50% 0 0; }
-    .wave-1 { background:#4a6fa5; animation:wave 8s ease-in-out infinite; bottom:-20px; opacity:0.1; }
-    .wave-2 { background:#2e4a9e; animation:wave 11s ease-in-out infinite reverse; bottom:-40px; opacity:0.08; }
-    .wave-3 { background:#c9a84c; animation:wave 14s ease-in-out infinite; bottom:-60px; opacity:0.04; }
-    @keyframes wave { 0%,100%{transform:translateX(0) scaleY(1)} 50%{transform:translateX(-8%) scaleY(1.1)} }
+    /* 全局背景噪点纹理 */
+    .noise-overlay {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size: 300px 300px;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.03;
+    }
+    body.light .noise-overlay { opacity: 0.05; }
 
     .bubbles { position:fixed; inset:0; z-index:0; pointer-events:none; }
     .bubble { position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent); opacity:0; animation:float-up linear infinite; }
-    @keyframes float-up { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:0.15} 90%{opacity:0.06} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
+    body.light .bubble { background: radial-gradient(circle at 30% 30%, rgba(74,111,165,0.2), transparent); }
+    @keyframes float-up { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:var(--bub-opacity, 0.15)} 90%{opacity:calc(var(--bub-opacity, 0.15) * 0.4)} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
 
     /* 页面容器 */
     .screen { display:none; position:relative; z-index:1; min-height:100vh; }
@@ -2106,11 +2110,7 @@
     <div class="login-error" id="login-error">帳號或密碼錯誤</div>
   </div>
 </div>
-<div class="ocean-bg">
-  <div class="wave wave-1"></div>
-  <div class="wave wave-2"></div>
-  <div class="wave wave-3"></div>
-</div>
+<div class="noise-overlay"></div>
 <div class="bubbles" id="bubbles"></div>
 
 <!-- 首页 (v5) -->
@@ -3759,11 +3759,13 @@
 <script>
   // 气泡
   const bubblesEl = document.getElementById('bubbles');
-  for (let i=0;i<14;i++) {
+  for (let i=0;i<15;i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
-    const size = Math.random()*8+3;
-    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
+    const size = Math.random()*12+4; // 4-16px
+    const duration = Math.random()*12+8; // 8-20s
+    const peakOpacity = (Math.random()*0.25+0.15).toFixed(2); // 0.15-0.4
+    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${duration}s;animation-delay:${Math.random()*10}s;--bub-opacity:${peakOpacity};`;
     bubblesEl.appendChild(b);
   }
 
