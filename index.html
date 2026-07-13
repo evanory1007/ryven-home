@@ -2046,9 +2046,6 @@
     #life .cycle-days { display: flex; justify-content: space-between; font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.15em; color: var(--parchment-ghost); opacity: 0.5; margin-bottom: 14px; }
     #life .cycle-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-dim); line-height: 1.6; }
     #life .cycle-text strong { font-family: 'Playfair Display', serif; color: var(--tide-gold); margin: 0 2px; }
-    #life .cycle-dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 18px; }
-    #life .cycle-dot { width: 100%; aspect-ratio: 1; border-radius: 50%; opacity: 0.6; }
-    #life .cycle-dot.today { opacity: 1; box-shadow: 0 0 0 2px var(--parchment); }
 
     #life .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
@@ -3684,8 +3681,6 @@
       <div class="cycle-text" id="life-cycle-text">
         現在 <strong>Day 1</strong> · 讀取中。
       </div>
-
-      <div class="cycle-dots" id="life-cycle-dots"></div>
 
       <div class="sheet-inline" id="life-cycle-form">
         <div class="sheet">
@@ -5456,24 +5451,6 @@ function renderLifeCycle() {
   if (dayMid2) dayMid2.textContent = 'D' + Math.round(info.cycleLength * 0.5);
   if (dayMid3) dayMid3.textContent = 'D' + Math.round(info.cycleLength * 0.75);
   if (dayEnd) dayEnd.textContent = 'D' + info.cycleLength;
-
-  // 日历点阵：整个周期每天一个点，按阶段着色，今天描边高亮
-  const dotsEl = document.getElementById('life-cycle-dots');
-  if (dotsEl) {
-    dotsEl.innerHTML = '';
-    for (let d = 1; d <= info.cycleLength; d++) {
-      const dot = document.createElement('div');
-      dot.className = 'cycle-dot';
-      let phaseVar;
-      if (d <= info.periodLength) phaseVar = '--cyc-menstr';
-      else if (d < info.ovulStart) phaseVar = '--cyc-follic';
-      else if (d <= info.ovulEnd) phaseVar = '--cyc-ovul';
-      else phaseVar = '--cyc-luteal';
-      dot.style.background = `var(${phaseVar})`;
-      if (d === info.dayInCycle) dot.classList.add('today');
-      dotsEl.appendChild(dot);
-    }
-  }
 }
 
 function lifeToggleCycleForm() {
