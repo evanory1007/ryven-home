@@ -4769,10 +4769,10 @@ function renderOmbreUI() {
 
       const messagesEl = document.getElementById('chat-messages');
 
-      // 逐句流式（跟 sendMessage() 里同款处理）：每收到一个字符就追加，碰到句末标点就换一个新气泡
-      let currentBubble = createRyvenBubble(messagesEl);
+      // 逐句流式（跟 sendMessage() 里同款处理）：每收到一个字符就追加，碰到句末标点就换一个新气泡；
+      // 新气泡先在内存里准备好，真的收到内容才 appendPendingBubble()，网络延迟时不会露出空气泡
+      let currentBubble = prepareRyvenBubble();
       let currentText = '';
-      let extraBubbleCreated = false;
       let fullText = '';
 
       const reader = res.body.getReader();
@@ -4802,11 +4802,11 @@ function renderOmbreUI() {
               fullText += chunk;
               for (const ch of chunk) {
                 currentText += ch;
-                currentBubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
                 if (/[。！？\n]/.test(ch)) {
                   currentText = '';
-                  currentBubble = createRyvenBubble(messagesEl);
-                  extraBubbleCreated = true;
+                  currentBubble = prepareRyvenBubble();
                 }
               }
               messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -4815,13 +4815,10 @@ function renderOmbreUI() {
         }
       }
 
-      if (currentText === '') {
-        if (extraBubbleCreated) {
-          const emptyWrap = currentBubble.closest('.msg-wrap');
-          if (emptyWrap) emptyWrap.remove();
-        } else {
-          currentBubble.innerHTML = '…';
-        }
+      if (currentText === '' && !currentBubble.appended && fullText === '') {
+        // 整条什么都没收到，兜底显示一个"…"，不能什么都不留
+        appendPendingBubble(messagesEl, currentBubble);
+        currentBubble.bubble.innerHTML = '…';
       }
 
       // 只把 Ryven 的回应存进 chatHistory/服务器，指令本身不留痕迹
@@ -5068,10 +5065,9 @@ function renderOmbreUI() {
   }
 
   // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
-  function createRyvenBubble(messagesEl) {
-    const now = new Date();
-    maybeInsertDateDivider(now);
-    const time = now.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+  // 只在内存里搭好一个"from-ryven"气泡的架子，先不插进DOM——
+  // 真正收到第一个字符时才 appendPendingBubble()，这样网络延迟时用户永远看不到空气泡
+  function prepareRyvenBubble() {
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
@@ -5079,12 +5075,25 @@ function renderOmbreUI() {
         <div class="msg-avatar-sm">💚</div>
         <div class="msg-col">
           <div class="msg-bubble"></div>
-          <div class="msg-time">${time}</div>
+          <div class="msg-time"></div>
         </div>
       </div>`;
-    messagesEl.appendChild(wrap);
+    return {
+      wrap,
+      bubble: wrap.querySelector('.msg-bubble'),
+      timeEl: wrap.querySelector('.msg-time'),
+      appended: false
+    };
+  }
+
+  function appendPendingBubble(messagesEl, pending) {
+    if (pending.appended) return;
+    const now = new Date();
+    maybeInsertDateDivider(now);
+    pending.timeEl.textContent = now.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    messagesEl.appendChild(pending.wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
-    return wrap.querySelector('.msg-bubble');
+    pending.appended = true;
   }
 
   async function sendMessage() {
@@ -5145,9 +5154,9 @@ function renderOmbreUI() {
 
         // 逐句流式：每收到一个字符就追加，一碰到句末标点（。！？\n）就把当前气泡定型，换一个新气泡接着收
         // 不再等整条流完再拆句——不然会有先显示全文、再清空重排的闪烁感
-        let currentBubble = createRyvenBubble(messagesEl);
+        // 新气泡先在内存里准备好，真的收到内容才 appendPendingBubble()，网络延迟时不会露出空气泡
+        let currentBubble = prepareRyvenBubble();
         let currentText = '';
-        let extraBubbleCreated = false;
         let fullText = '';
 
         const reader = res.body.getReader();
@@ -5209,11 +5218,11 @@ function renderOmbreUI() {
                         fullText += chunk;
                         for (const ch of chunk) {
                             currentText += ch;
-                            currentBubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                            if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                            currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
                             if (/[。！？\n]/.test(ch)) {
                                 currentText = '';
-                                currentBubble = createRyvenBubble(messagesEl);
-                                extraBubbleCreated = true;
+                                currentBubble = prepareRyvenBubble();
                             }
                         }
                         messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -5224,14 +5233,10 @@ function renderOmbreUI() {
             }
         }
 
-        // 流刚好在句末标点结束时会多建一个没收到内容的空气泡，删掉；真的完全没收到任何内容时兜底显示…
-        if (currentText === '') {
-            if (extraBubbleCreated) {
-                const emptyWrap = currentBubble.closest('.msg-wrap');
-                if (emptyWrap) emptyWrap.remove();
-            } else {
-                currentBubble.innerHTML = '…';
-            }
+        // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
+        if (currentText === '' && !currentBubble.appended && fullText === '') {
+            appendPendingBubble(messagesEl, currentBubble);
+            currentBubble.bubble.innerHTML = '…';
         }
 
         chatHistory.push({role:'assistant', content: fullText});
