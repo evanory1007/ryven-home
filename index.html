@@ -971,6 +971,18 @@
       padding: 2px 4px; flex-shrink: 0; line-height: 1; transition: color 0.2s, opacity 0.2s;
     }
     .model-item-del:hover { opacity: 1; color: var(--danger); }
+    .model-item-edit {
+      font-size: 13px; color: var(--parchment-ghost); opacity: 0.6; cursor: pointer;
+      padding: 2px 4px; flex-shrink: 0; line-height: 1; transition: color 0.2s, opacity 0.2s;
+    }
+    .model-item-edit:hover { opacity: 1; color: var(--tide-gold); }
+    .model-item-edit-form {
+      background: var(--tide-gold-ghost);
+      border: 1px dashed color-mix(in srgb, var(--tide-gold) 20%, transparent);
+      border-radius: 14px;
+      padding: 12px 14px 14px;
+      animation: fadeIn 0.2s ease;
+    }
 
     /* 添加新配置 */
     .model-add-section {
@@ -2620,11 +2632,12 @@
       <div class="sidebar-section">
         <div class="sidebar-label"><span>本月潮汐</span><small>this month</small></div>
         <div class="sidebar-prose">
-          我們說了不少話，用掉 <strong class="g" id="stat-total-cost">¥0.00</strong>。
+          我們說了 <strong class="g" id="stat-sidebar-turns">0</strong> 次話，用掉了 <strong class="g" id="stat-sidebar-tokens">0</strong> tokens。
           <small id="stat-total-detail">0 turns · 0 in · 0 out</small>
         </div>
         <div style="display:none">
           <span id="stat-today-cost">¥0.00</span><span id="stat-today-detail">0 turns · 0 in · 0 out</span>
+          <span id="stat-total-cost">¥0.00</span>
         </div>
       </div>
 
@@ -3969,7 +3982,38 @@ function renderOmbreUI() {
     }
     const list = document.getElementById('model-list');
     if (list) {
-      list.innerHTML = modelConfigs.map(c => `
+      list.innerHTML = modelConfigs.map(c => {
+        if (c.id === editingConfigId) {
+          return `
+            <div class="model-item-edit-form">
+              <div class="model-input-label">圖標</div>
+              <div class="model-emoji-row">
+                <div class="model-emoji-preview">${editEmoji}</div>
+                <div class="model-emoji-picker">${emojiPickerHTML(editEmoji, 'pickEditConfigEmoji')}</div>
+              </div>
+              <div class="sidebar-input-group">
+                <label class="model-input-label">名稱</label>
+                <input class="sidebar-api-input model-input-field" id="model-edit-name" type="text" value="${escapeAttr(c.name)}" />
+              </div>
+              <div class="sidebar-input-group">
+                <label class="model-input-label">API Key</label>
+                <input class="sidebar-api-input model-input-field" id="model-edit-key" type="password" value="${escapeAttr(c.apiKey)}" />
+              </div>
+              <div class="sidebar-input-group">
+                <label class="model-input-label">Base URL</label>
+                <input class="sidebar-api-input model-input-field" id="model-edit-url" type="text" value="${escapeAttr(c.baseUrl)}" />
+              </div>
+              <div class="sidebar-input-group">
+                <label class="model-input-label">模型</label>
+                <input class="sidebar-api-input model-input-field" id="model-edit-model" type="text" value="${escapeAttr(c.model)}" />
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="model-save-btn" style="margin-top:0" onclick="saveEditedModelConfig('${c.id}')">✦ 保存</button>
+                <button class="model-save-btn" style="margin-top:0;background:transparent;color:var(--parchment-ghost);border:1px solid var(--line)" onclick="cancelEditModelConfig()">取消</button>
+              </div>
+            </div>`;
+        }
+        return `
         <div class="model-item ${c.id===currentConfigId?'active':''} ${c.id===selectedConfigId?'selected':''}" onclick="selectModelConfig('${c.id}')">
           <div class="model-item-emoji">${c.emoji}</div>
           <div class="model-item-radio"><div class="model-item-radio-dot"></div></div>
@@ -3977,8 +4021,10 @@ function renderOmbreUI() {
             <div class="model-item-name">${c.name}</div>
             <div class="model-item-model">${c.model}</div>
           </div>
+          <div class="model-item-edit" onclick="event.stopPropagation();editModelConfig('${c.id}')">✏️</div>
           ${c.id!=='default' ? `<div class="model-item-del" onclick="event.stopPropagation();deleteModelConfig('${c.id}')">×</div>` : ''}
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
     const confirmBar = document.getElementById('model-confirm-bar');
     if (confirmBar) confirmBar.classList.toggle('show', selectedConfigId !== currentConfigId);
@@ -4030,16 +4076,55 @@ function renderOmbreUI() {
     if (isOpen) renderEmojiPicker();
   }
 
+  function escapeAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function emojiPickerHTML(selected, onclickFn) {
+    return MODEL_EMOJI_OPTIONS.map(e => `<div class="model-emoji-opt ${e===selected?'selected':''}" onclick="${onclickFn}('${e}')">${e}</div>`).join('');
+  }
+
   let newConfigEmoji = '🐾';
   function renderEmojiPicker() {
     const preview = document.getElementById('model-emoji-preview');
     if (preview) preview.textContent = newConfigEmoji;
     const picker = document.getElementById('model-emoji-picker');
-    picker.innerHTML = MODEL_EMOJI_OPTIONS.map(e => `<div class="model-emoji-opt ${e===newConfigEmoji?'selected':''}" onclick="pickNewConfigEmoji('${e}')">${e}</div>`).join('');
+    picker.innerHTML = emojiPickerHTML(newConfigEmoji, 'pickNewConfigEmoji');
   }
   function pickNewConfigEmoji(e) {
     newConfigEmoji = e;
     renderEmojiPicker();
+  }
+
+  // ===== 编辑已保存的模型配置 =====
+  let editingConfigId = null;
+  let editEmoji = '🐾';
+  function editModelConfig(id) {
+    const c = modelConfigs.find(x => x.id === id);
+    if (!c) return;
+    editingConfigId = id;
+    editEmoji = c.emoji;
+    renderModelPanel();
+  }
+  function cancelEditModelConfig() {
+    editingConfigId = null;
+    renderModelPanel();
+  }
+  function pickEditConfigEmoji(e) {
+    editEmoji = e;
+    renderModelPanel();
+  }
+  function saveEditedModelConfig(id) {
+    const c = modelConfigs.find(x => x.id === id);
+    if (!c) return;
+    const name = document.getElementById('model-edit-name').value.trim();
+    const apiKey = document.getElementById('model-edit-key').value.trim();
+    const baseUrl = document.getElementById('model-edit-url').value.trim();
+    const model = document.getElementById('model-edit-model').value.trim();
+    if (!name || !apiKey || !baseUrl || !model) { showToast('✧ 名稱、Key、URL、模型都要填'); return; }
+    c.name = name; c.apiKey = apiKey; c.baseUrl = baseUrl; c.model = model; c.emoji = editEmoji;
+    saveModelConfigsToStorage();
+    if (id === currentConfigId) applyCurrentModelConfig();
+    editingConfigId = null;
+    renderModelPanel();
+    showToast('✧ 配置已更新');
   }
 
   function saveNewModelConfig() {
@@ -4254,7 +4339,9 @@ function renderOmbreUI() {
   async function triggerNicknameReaction(newName) {
     if (!CHAT_API_KEY) return;
     const instruction = `用户刚刚把你的名字改成了「${newName}」，请用一句话回应这个改动，语气自然，像恋人发消息`;
-    chatHistory.push({role:'user', content: instruction});
+    // 这条指令只临时拼进这一次的请求 payload，不 push 进共享的 chatHistory——
+    // 否则会被 chat/save 存到服务器，下次 loadChatHistory() 时就会被当成 Nory 说的话渲染成气泡
+    const messagesForApi = [...chatHistory, {role:'user', content: instruction}];
     pendingReplyCount++;
     document.getElementById('typing-indicator').classList.add('show');
 
@@ -4271,7 +4358,7 @@ function renderOmbreUI() {
           base_url:CHAT_BASE_URL,
           max_tokens:500,
           system:SYSTEM_PROMPT,
-          messages:chatHistory
+          messages:messagesForApi
         })
       });
       if (!res.ok) throw new Error('API error ' + res.status);
@@ -4327,15 +4414,16 @@ function renderOmbreUI() {
         }
       }
 
-      // 拆句陆续显示（跟 sendMessage() 里同款处理）
+      // 拆句陆续显示（跟 sendMessage() 里同款处理）：先清空流式阶段留下的全文，避免全文和第一句同时出现
+      bubble.innerHTML = '';
       renderSplitReply(fullText, bubble);
 
+      // 只把 Ryven 的回应存进 chatHistory/服务器，指令本身不留痕迹
       chatHistory.push({role:'assistant', content: fullText});
       fetch(`https://ryven.homes/relay/chat/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({ session_id: sessionId, messages: [
-          { role: 'user', content: instruction },
           { role: 'assistant', content: fullText }
         ]})
       }).catch(() => {});
@@ -4735,7 +4823,8 @@ function renderOmbreUI() {
             }
         }
 
-        // 拆句陆续显示（异步，不等它跑完——历史记录和保存用的还是完整 fullText）
+        // 拆句陆续显示（异步，不等它跑完——历史记录和保存用的还是完整 fullText）：先清空流式阶段留下的全文，避免全文和第一句同时出现
+        bubble.innerHTML = '';
         renderSplitReply(fullText, bubble);
 
         chatHistory.push({role:'assistant', content: fullText});
@@ -4799,6 +4888,10 @@ async function fetchStats() {
     document.getElementById('stat-total-cost').textContent = '¥' + (total.cost * USD_TO_CNY).toFixed(4);
     document.getElementById('stat-total-detail').textContent =
       `${total.turns} turns · ${formatNum(total.input_tokens)} in · ${formatNum(total.output_tokens)} out`;
+
+    // 侧边栏"本月潮汐"：次数用今日turns，tokens用累计input_tokens
+    document.getElementById('stat-sidebar-turns').textContent = today.turns || 0;
+    document.getElementById('stat-sidebar-tokens').textContent = formatNum(total.input_tokens || 0);
 
     // 舵(#helm)的两个真实数据仪表：本月用量 / 今日對話
     const monthCost = today.cost != null ? total.cost * USD_TO_CNY : 0;
