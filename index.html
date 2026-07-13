@@ -1606,6 +1606,24 @@
     #depths .stat-link::after { content: ' →'; font-family: 'DM Sans', sans-serif; }
     #depths .stat-link:hover { color: var(--tide-gold); }
 
+    /* 打点区：今天(或点开的历史某天)的深淺 */
+    #depths .today-mood { margin-bottom: 28px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    #depths .today-mood-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+    #depths .today-mood-label { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-dim); }
+    #depths .today-mood-cancel { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.2em; color: var(--parchment-ghost); text-transform: uppercase; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+    #depths .today-mood-cancel:hover { opacity: 1; }
+    #depths .mood-picker { display: flex; gap: 6px; }
+    #depths .mood-btn {
+      flex: 1; text-align: center; padding: 10px 4px; border: 1px solid var(--line); border-radius: 8px;
+      font-size: 16px; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+    #depths .mood-btn:hover { border-color: var(--tide-gold-soft); transform: translateY(-1px); }
+    #depths .mood-btn.active { border-color: var(--tide-gold); background: rgba(201,168,76,0.1); }
+    #depths .today-mood-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; }
+    #depths .today-mood-hint { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); opacity: 0.7; }
+    #depths .today-mood-del { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.15em; color: var(--danger); text-transform: uppercase; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
+    #depths .today-mood-del:hover { opacity: 1; }
+
     #depths .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
     /* ══════════════════════ 休閒 (#leisure) ══════════════════════ */
@@ -2998,6 +3016,25 @@
       <div class="hero-sub">我們各自泳在自己的天氣里，也偶爾在同一個潮頭。</div>
     </div>
 
+    <!-- 打点：今天(或点开的历史某天)的深淺，可改可删 -->
+    <div class="today-mood">
+      <div class="today-mood-head">
+        <div class="today-mood-label" id="depths-edit-label">今天的深淺</div>
+        <div class="today-mood-cancel" id="depths-edit-cancel" onclick="depthsCancelEdit()" style="display:none">取消</div>
+      </div>
+      <div class="mood-picker" id="depths-mood-picker">
+        <div class="mood-btn" data-val="0" onclick="depthsSetMood(0)">🌊🌊🌊</div>
+        <div class="mood-btn" data-val="0.25" onclick="depthsSetMood(0.25)">🌊🌊</div>
+        <div class="mood-btn" data-val="0.5" onclick="depthsSetMood(0.5)">🌊☀️</div>
+        <div class="mood-btn" data-val="0.75" onclick="depthsSetMood(0.75)">☀️☀️</div>
+        <div class="mood-btn" data-val="1" onclick="depthsSetMood(1)">☀️☀️☀️</div>
+      </div>
+      <div class="today-mood-foot">
+        <div class="today-mood-hint" id="depths-mood-hint">還沒記，點一個</div>
+        <div class="today-mood-del" id="depths-mood-del" onclick="depthsDeleteEdit()" style="display:none">刪除這天</div>
+      </div>
+    </div>
+
     <div class="month-nav">
       <div class="month-nav-arrow">‹</div>
       <div class="month-nav-label" id="depths-month-label"></div>
@@ -3029,18 +3066,7 @@
         <line x1="0" y1="70" x2="400" y2="70" style="stroke:var(--tide-gold)" stroke-opacity="0.08" stroke-dasharray="2 4"/>
         <line x1="0" y1="105" x2="400" y2="105" style="stroke:var(--tide-gold)" stroke-opacity="0.06" stroke-dasharray="1 6"/>
 
-        <!-- 示例整月潮汐曲线，待接入真实心情记录 -->
-        <path d="M 0,80 C 20,60 40,90 60,45  S 100,20 130,55  S 170,95 200,40 S 240,25 270,65  S 310,45 340,25  S 380,80 400,55  L 400,140 L 0,140 Z"
-              style="fill:url(#depthsFillGold)"/>
-        <path d="M 0,80 C 20,60 40,90 60,45  S 100,20 130,55  S 170,95 200,40 S 240,25 270,65  S 310,45 340,25  S 380,80 400,55"
-              fill="none" stroke="url(#depthsGoldLineM)" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M 0,70 C 20,75 40,60 60,72  S 100,58 130,68  S 170,80 200,55 S 240,50 270,72  S 310,68 340,58  S 380,72 400,68"
-              fill="none" stroke="url(#depthsGreenLineM)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 3"/>
-
-        <line x1="52" y1="0" x2="52" y2="140" style="stroke:var(--tide-gold)" stroke-opacity="0.2" stroke-dasharray="1 3"/>
-        <circle cx="52" cy="52" r="3" style="fill:var(--tide-gold)"/>
-        <circle cx="52" cy="52" r="7" fill="none" style="stroke:var(--tide-gold)" stroke-opacity="0.4"/>
-        <text x="52" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" letter-spacing="2" style="fill:var(--tide-gold)" fill-opacity="0.7">TODAY</text>
+        <!-- 最近7天的曲线由 renderDepthsTideCurve() 用JS按真实数据画出来，不手写占位path -->
       </svg>
       <div class="month-tide-legend">
         <span class="n">你</span>
@@ -3058,11 +3084,12 @@
           <span>浮</span>
           <span>沉</span>
         </div>
-        <!-- 31天的点由 renderDepthsPage() 用JS循环生成，不手写HTML -->
+        <!-- 31天的点由 renderDepthsStrip() 用JS按真实数据循环生成，不手写HTML；每个点可以点开修改/删除那天的记录 -->
         <svg viewBox="0 0 400 64" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="depths-strip-svg">
           <line x1="0" y1="10" x2="400" y2="10" style="stroke:var(--tide-gold)" stroke-opacity="0.05"/>
           <line x1="0" y1="32" x2="400" y2="32" style="stroke:var(--tide-gold)" stroke-opacity="0.08" stroke-dasharray="1 5"/>
           <line x1="0" y1="54" x2="400" y2="54" style="stroke:var(--tide-gold)" stroke-opacity="0.05"/>
+          <g id="depths-strip-dynamic"></g>
         </svg>
       </div>
       <div class="strip-days">
@@ -3079,27 +3106,26 @@
     <div class="stats-heading">this month · so far</div>
 
     <div class="stat">
-      <div class="stat-key">MOST OFTEN<small>最常見的心情</small></div>
+      <div class="stat-key">AVERAGE<small>本月平均深淺</small></div>
       <div class="stat-body">
-        <div class="stat-hero"><span class="emoji">🌊</span>你 · <span class="g TODO">XX</span> 天</div>
-        <div class="stat-caption TODO">这里填 xxx</div>
+        <div class="stat-hero" id="depths-stat-avg"><span class="TODO">XX</span></div>
+        <div class="stat-caption" id="depths-stat-avg-caption">這個月還沒記錄</div>
       </div>
     </div>
 
     <div class="stat">
       <div class="stat-key">DEEPEST<small>沉得最深的一天</small></div>
       <div class="stat-body">
-        <div class="stat-hero TODO">XX · XX · <span class="g">XX:XX</span></div>
-        <div class="stat-caption TODO">这里填 xxx</div>
-        <div class="stat-link">看那天的記憶</div>
+        <div class="stat-hero" id="depths-stat-deepest"><span class="TODO">XX · XX</span></div>
+        <div class="stat-caption" id="depths-stat-deepest-caption">這個月還沒記錄</div>
       </div>
     </div>
 
     <div class="stat">
-      <div class="stat-key">TOGETHER<small>一起浮的天數</small></div>
+      <div class="stat-key">SHALLOWEST<small>浮得最淺的一天</small></div>
       <div class="stat-body">
-        <div class="stat-hero">~ <span class="g TODO">XX</span> 天</div>
-        <div class="stat-caption TODO">这里填 xxx</div>
+        <div class="stat-hero" id="depths-stat-shallowest"><span class="TODO">XX · XX</span></div>
+        <div class="stat-caption" id="depths-stat-shallowest-caption">這個月還沒記錄</div>
       </div>
     </div>
 
@@ -5309,6 +5335,294 @@ async function fetchStats() {
 }
 
 // #depths：月份标签 + 31天点阵（JS循环生成，示例心情数据待接入真实记录）
+// ═════════════════ #depths：情緒潮汐本地数据（增删改查，不锁死） ═════════════════
+function getDepthsData() {
+  try { return JSON.parse(localStorage.getItem('depths-data')) || {}; } catch(e) { return {}; }
+}
+function saveDepthsData(data) { localStorage.setItem('depths-data', JSON.stringify(data)); }
+function depthsDateKey(year, month, day) { return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; }
+function depthsTodayKey() { const n = new Date(); return depthsDateKey(n.getFullYear(), n.getMonth(), n.getDate()); }
+function depthsFormatDateLabel(key) { const [y, m, d] = key.split('-').map(Number); return `${m}月${d}日`; }
+
+// 平滑曲线：每两点之间用水平切线的三次贝塞尔连接，不会有原始 Catmull-Rom 的过冲
+function depthsSmoothPath(points) {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i], p1 = points[i + 1];
+    const cpOffset = (p1.x - p0.x) / 2;
+    d += ` C ${p0.x + cpOffset},${p0.y} ${p1.x - cpOffset},${p1.y} ${p1.x},${p1.y}`;
+  }
+  return d;
+}
+
+let depthsEditingDate = null;
+
+function depthsEditDay(dateKey) {
+  depthsEditingDate = dateKey;
+  renderDepthsMoodPicker();
+  const el = document.querySelector('#depths .today-mood');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function depthsCancelEdit() {
+  depthsEditingDate = depthsTodayKey();
+  renderDepthsMoodPicker();
+}
+
+function renderDepthsMoodPicker() {
+  if (!depthsEditingDate) depthsEditingDate = depthsTodayKey();
+  const data = getDepthsData();
+  const rec = data[depthsEditingDate];
+  const isToday = depthsEditingDate === depthsTodayKey();
+
+  const labelEl = document.getElementById('depths-edit-label');
+  if (labelEl) labelEl.textContent = isToday ? '今天的深淺' : `${depthsFormatDateLabel(depthsEditingDate)}的深淺`;
+
+  const cancelEl = document.getElementById('depths-edit-cancel');
+  if (cancelEl) cancelEl.style.display = isToday ? 'none' : '';
+
+  document.querySelectorAll('#depths-mood-picker .mood-btn').forEach(btn => {
+    const btnVal = parseFloat(btn.dataset.val);
+    btn.classList.toggle('active', !!rec && rec.nory != null && Math.abs(btnVal - rec.nory) < 0.001);
+  });
+
+  const hintEl = document.getElementById('depths-mood-hint');
+  if (hintEl) hintEl.textContent = (rec && rec.nory != null) ? '點一下可以改' : '還沒記，點一個';
+
+  const delEl = document.getElementById('depths-mood-del');
+  if (delEl) delEl.style.display = (rec && rec.nory != null) ? '' : 'none';
+}
+
+function depthsSetMood(val) {
+  const data = getDepthsData();
+  const key = depthsEditingDate || depthsTodayKey();
+  if (!data[key]) data[key] = { nory: null, ryven: null };
+  data[key].nory = val;
+  saveDepthsData(data);
+  renderDepthsMoodPicker();
+  renderDepthsTideCurve();
+  renderDepthsStrip();
+  renderDepthsStats();
+  showToast('✧ 記下了');
+}
+
+function depthsDeleteEdit() {
+  const data = getDepthsData();
+  const key = depthsEditingDate || depthsTodayKey();
+  delete data[key];
+  saveDepthsData(data);
+  renderDepthsMoodPicker();
+  renderDepthsTideCurve();
+  renderDepthsStrip();
+  renderDepthsStats();
+  showToast('✧ 刪掉了');
+}
+
+function renderDepthsTideCurve() {
+  const svg = document.querySelector('#depths .month-tide svg');
+  if (!svg) return;
+  svg.querySelectorAll('.tide-dynamic').forEach(el => el.remove());
+
+  const data = getDepthsData();
+  const now = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = depthsDateKey(d.getFullYear(), d.getMonth(), d.getDate());
+    days.push({ key, rec: data[key], isToday: i === 0 });
+  }
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const stepX = 400 / (days.length - 1);
+  const points = days.map((d, i) => {
+    const nory = d.rec && d.rec.nory != null ? d.rec.nory : null;
+    const y = nory != null ? 20 + (1 - nory) * 90 : 70;
+    return { x: i * stepX, y, nory, isToday: d.isToday };
+  });
+
+  const goldPoints = points.filter(p => p.nory != null);
+  if (goldPoints.length >= 2) {
+    const pathD = depthsSmoothPath(goldPoints);
+    const fillPath = document.createElementNS(ns, 'path');
+    fillPath.setAttribute('class', 'tide-dynamic');
+    fillPath.setAttribute('d', `${pathD} L ${goldPoints[goldPoints.length - 1].x},140 L ${goldPoints[0].x},140 Z`);
+    fillPath.setAttribute('style', 'fill:url(#depthsFillGold)');
+    svg.appendChild(fillPath);
+
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('class', 'tide-dynamic');
+    path.setAttribute('d', pathD);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'url(#depthsGoldLineM)');
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(path);
+  } else if (goldPoints.length === 1) {
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('class', 'tide-dynamic');
+    c.setAttribute('cx', goldPoints[0].x); c.setAttribute('cy', goldPoints[0].y); c.setAttribute('r', 3);
+    c.setAttribute('style', 'fill:var(--tide-gold)');
+    svg.appendChild(c);
+  }
+
+  // Ryven那條現在全是null，先用暗淡虛點占位
+  points.forEach(p => {
+    const c = document.createElementNS(ns, 'circle');
+    c.setAttribute('class', 'tide-dynamic');
+    c.setAttribute('cx', p.x); c.setAttribute('cy', 70); c.setAttribute('r', 2);
+    c.setAttribute('fill', 'none');
+    c.setAttribute('style', 'stroke:var(--tide-green)');
+    c.setAttribute('stroke-opacity', '0.2');
+    svg.appendChild(c);
+  });
+
+  const todayPoint = points[points.length - 1];
+  const marker = document.createElementNS(ns, 'line');
+  marker.setAttribute('class', 'tide-dynamic');
+  marker.setAttribute('x1', todayPoint.x); marker.setAttribute('y1', 0);
+  marker.setAttribute('x2', todayPoint.x); marker.setAttribute('y2', 140);
+  marker.setAttribute('style', 'stroke:var(--tide-gold)'); marker.setAttribute('stroke-opacity', '0.2'); marker.setAttribute('stroke-dasharray', '1 3');
+  svg.appendChild(marker);
+
+  if (todayPoint.nory != null) {
+    const dot = document.createElementNS(ns, 'circle');
+    dot.setAttribute('class', 'tide-dynamic');
+    dot.setAttribute('cx', todayPoint.x); dot.setAttribute('cy', todayPoint.y); dot.setAttribute('r', 3);
+    dot.setAttribute('style', 'fill:var(--tide-gold)');
+    svg.appendChild(dot);
+    const ring = document.createElementNS(ns, 'circle');
+    ring.setAttribute('class', 'tide-dynamic');
+    ring.setAttribute('cx', todayPoint.x); ring.setAttribute('cy', todayPoint.y); ring.setAttribute('r', 7);
+    ring.setAttribute('fill', 'none'); ring.setAttribute('style', 'stroke:var(--tide-gold)'); ring.setAttribute('stroke-opacity', '0.4');
+    svg.appendChild(ring);
+  }
+  const label = document.createElementNS(ns, 'text');
+  label.setAttribute('class', 'tide-dynamic');
+  label.setAttribute('x', todayPoint.x); label.setAttribute('y', 130);
+  label.setAttribute('text-anchor', 'middle');
+  label.setAttribute('font-family', 'DM Sans'); label.setAttribute('font-size', '7'); label.setAttribute('letter-spacing', '2');
+  label.setAttribute('style', 'fill:var(--tide-gold)'); label.setAttribute('fill-opacity', '0.7');
+  label.textContent = 'TODAY';
+  svg.appendChild(label);
+}
+
+function renderDepthsStrip() {
+  const g = document.getElementById('depths-strip-dynamic');
+  if (!g) return;
+  g.innerHTML = '';
+
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const today = now.getDate();
+  const data = getDepthsData();
+  const step = 380 / 30;
+  const ns = 'http://www.w3.org/2000/svg';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const x = 6.5 + (d - 1) * step;
+    const isToday = d === today;
+    const isFuture = d > today;
+    const dateKey = depthsDateKey(now.getFullYear(), now.getMonth(), d);
+    const rec = data[dateKey];
+
+    const guide = document.createElementNS(ns, 'line');
+    guide.setAttribute('x1', x); guide.setAttribute('y1', isToday ? 0 : 10);
+    guide.setAttribute('x2', x); guide.setAttribute('y2', isToday ? 64 : 54);
+    guide.setAttribute('style', 'stroke:var(--tide-gold)');
+    guide.setAttribute('stroke-opacity', isToday ? '0.25' : '0.04');
+    if (isToday) guide.setAttribute('stroke-dasharray', '1 3');
+    g.appendChild(guide);
+
+    if (isFuture) {
+      const c = document.createElementNS(ns, 'circle');
+      c.setAttribute('cx', x); c.setAttribute('cy', 30); c.setAttribute('r', 2);
+      c.setAttribute('style', 'fill:var(--tide-gold)'); c.setAttribute('opacity', '0.15');
+      g.appendChild(c);
+      continue;
+    }
+
+    if (rec && rec.nory != null) {
+      const y = 15 + (1 - rec.nory) * 34;
+      const goldC = document.createElementNS(ns, 'circle');
+      goldC.setAttribute('cx', x); goldC.setAttribute('cy', y); goldC.setAttribute('r', isToday ? 3 : 2.5);
+      goldC.setAttribute('style', 'fill:var(--tide-gold); cursor:pointer');
+      goldC.addEventListener('click', () => depthsEditDay(dateKey));
+      g.appendChild(goldC);
+      if (isToday) {
+        const ring = document.createElementNS(ns, 'circle');
+        ring.setAttribute('cx', x); ring.setAttribute('cy', y); ring.setAttribute('r', 5);
+        ring.setAttribute('fill', 'none'); ring.setAttribute('style', 'stroke:var(--tide-gold)'); ring.setAttribute('stroke-opacity', '0.4');
+        g.appendChild(ring);
+      }
+    } else {
+      const emptyC = document.createElementNS(ns, 'circle');
+      emptyC.setAttribute('cx', x); emptyC.setAttribute('cy', 32); emptyC.setAttribute('r', isToday ? 2.5 : 2);
+      emptyC.setAttribute('fill', 'none');
+      emptyC.setAttribute('style', 'stroke:var(--tide-gold); cursor:pointer');
+      emptyC.setAttribute('stroke-opacity', '0.25');
+      emptyC.addEventListener('click', () => depthsEditDay(dateKey));
+      g.appendChild(emptyC);
+    }
+
+    if (rec && rec.ryven != null) {
+      const yG = 15 + (1 - rec.ryven) * 34;
+      const greenC = document.createElementNS(ns, 'circle');
+      greenC.setAttribute('cx', x); greenC.setAttribute('cy', yG); greenC.setAttribute('r', 1.8);
+      greenC.setAttribute('style', 'fill:var(--tide-green)');
+      g.appendChild(greenC);
+    } else {
+      const greenEmpty = document.createElementNS(ns, 'circle');
+      greenEmpty.setAttribute('cx', x); greenEmpty.setAttribute('cy', 32); greenEmpty.setAttribute('r', 1.3);
+      greenEmpty.setAttribute('fill', 'none');
+      greenEmpty.setAttribute('style', 'stroke:var(--tide-green)');
+      greenEmpty.setAttribute('stroke-opacity', '0.15');
+      g.appendChild(greenEmpty);
+    }
+  }
+}
+
+function renderDepthsStats() {
+  const now = new Date();
+  const data = getDepthsData();
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
+  const entries = Object.keys(data)
+    .filter(k => k.startsWith(monthPrefix) && data[k].nory != null)
+    .map(k => ({ key: k, nory: data[k].nory }));
+
+  const avgEl = document.getElementById('depths-stat-avg');
+  const avgCaptionEl = document.getElementById('depths-stat-avg-caption');
+  const deepestEl = document.getElementById('depths-stat-deepest');
+  const deepestCaptionEl = document.getElementById('depths-stat-deepest-caption');
+  const shallowestEl = document.getElementById('depths-stat-shallowest');
+  const shallowestCaptionEl = document.getElementById('depths-stat-shallowest-caption');
+
+  if (entries.length === 0) {
+    if (avgEl) avgEl.innerHTML = '<span class="TODO">XX</span>';
+    if (avgCaptionEl) avgCaptionEl.textContent = '這個月還沒記錄';
+    if (deepestEl) deepestEl.innerHTML = '<span class="TODO">XX · XX</span>';
+    if (deepestCaptionEl) deepestCaptionEl.textContent = '這個月還沒記錄';
+    if (shallowestEl) shallowestEl.innerHTML = '<span class="TODO">XX · XX</span>';
+    if (shallowestCaptionEl) shallowestCaptionEl.textContent = '這個月還沒記錄';
+    return;
+  }
+
+  const avg = entries.reduce((s, e) => s + e.nory, 0) / entries.length;
+  if (avgEl) avgEl.innerHTML = `<span class="g">${avg.toFixed(2)}</span>`;
+  if (avgCaptionEl) avgCaptionEl.textContent = `${entries.length} 天有記錄 · 越接近1越浮`;
+
+  const deepest = entries.reduce((min, e) => e.nory < min.nory ? e : min, entries[0]);
+  const shallowest = entries.reduce((max, e) => e.nory > max.nory ? e : max, entries[0]);
+  const fmt = key => { const [, m, d] = key.split('-').map(Number); return `${String(m).padStart(2, '0')} · ${String(d).padStart(2, '0')}`; };
+
+  if (deepestEl) deepestEl.textContent = fmt(deepest.key);
+  if (deepestCaptionEl) deepestCaptionEl.textContent = `深淺值 ${deepest.nory.toFixed(2)}`;
+  if (shallowestEl) shallowestEl.textContent = fmt(shallowest.key);
+  if (shallowestCaptionEl) shallowestCaptionEl.textContent = `深淺值 ${shallowest.nory.toFixed(2)}`;
+}
+
 function renderDepthsPage() {
   const now = new Date();
   const monthLabel = document.getElementById('depths-month-label');
@@ -5317,51 +5631,11 @@ function renderDepthsPage() {
     monthLabel.innerHTML = `${now.getFullYear()} · ${String(now.getMonth()+1).padStart(2,'0')}<small>${monthNamesEN[now.getMonth()]}</small>`;
   }
 
-  const svg = document.getElementById('depths-strip-svg');
-  if (svg && !svg.dataset.rendered) {
-    svg.dataset.rendered = '1';
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-    const today = now.getDate();
-    const step = 380 / 30;
-    const ns = 'http://www.w3.org/2000/svg';
-    for (let d = 1; d <= daysInMonth; d++) {
-      const x = 6.5 + (d - 1) * step;
-      const isToday = d === today;
-      const isFuture = d > today;
-      const guide = document.createElementNS(ns, 'line');
-      guide.setAttribute('x1', x); guide.setAttribute('y1', isToday ? 0 : 10);
-      guide.setAttribute('x2', x); guide.setAttribute('y2', isToday ? 64 : 54);
-      guide.setAttribute('style', 'stroke:var(--tide-gold)');
-      guide.setAttribute('stroke-opacity', isToday ? '0.25' : '0.04');
-      if (isToday) guide.setAttribute('stroke-dasharray', '1 3');
-      svg.appendChild(guide);
-
-      if (isFuture) {
-        const c = document.createElementNS(ns, 'circle');
-        c.setAttribute('cx', x); c.setAttribute('cy', 30); c.setAttribute('r', 2);
-        c.setAttribute('style', 'fill:var(--tide-gold)'); c.setAttribute('opacity', '0.15');
-        svg.appendChild(c);
-        continue;
-      }
-      // 示例深浅数据，待接入真实记录
-      const goldY = 15 + Math.random() * 34;
-      const greenY = 15 + Math.random() * 34;
-      const goldC = document.createElementNS(ns, 'circle');
-      goldC.setAttribute('cx', x); goldC.setAttribute('cy', goldY); goldC.setAttribute('r', isToday ? 3 : 2.5);
-      goldC.setAttribute('style', 'fill:var(--tide-gold)');
-      svg.appendChild(goldC);
-      if (isToday) {
-        const ring = document.createElementNS(ns, 'circle');
-        ring.setAttribute('cx', x); ring.setAttribute('cy', goldY); ring.setAttribute('r', 5);
-        ring.setAttribute('fill', 'none'); ring.setAttribute('style', 'stroke:var(--tide-gold)'); ring.setAttribute('stroke-opacity', '0.4');
-        svg.appendChild(ring);
-      }
-      const greenC = document.createElementNS(ns, 'circle');
-      greenC.setAttribute('cx', x); greenC.setAttribute('cy', greenY); greenC.setAttribute('r', 1.8);
-      greenC.setAttribute('style', 'fill:var(--tide-green)');
-      svg.appendChild(greenC);
-    }
-  }
+  depthsEditingDate = depthsTodayKey();
+  renderDepthsMoodPicker();
+  renderDepthsTideCurve();
+  renderDepthsStrip();
+  renderDepthsStats();
 }
 
 // #helm：真实数据接入（在一起天数 / 模型）+ 假操作日志
