@@ -123,7 +123,8 @@
     * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
-      background: var(--deep);
+      background: linear-gradient(180deg, var(--sea-0) 0%, var(--sea-1) 30%, var(--sea-2) 70%, var(--sea-3) 100%);
+      background-attachment: fixed;
       color: var(--silver);
       font-family: 'DM Sans', sans-serif;
       font-weight: 300;
@@ -3374,7 +3375,7 @@
       </div>
     </div>
 
-    <!-- 三個儀表：記憶飽和暂无数据源(TODO)，本月用量/今日對話接fetchStats() -->
+    <!-- 三個儀表：記憶飽和接fetchOmbreCount()，Relay狀態接renderHelmPage()裡的即時檢測，今日對話接fetchStats() -->
     <div class="instruments">
       <div class="instruments-label">instruments</div>
 
@@ -3382,10 +3383,10 @@
         <div class="gauge-svg">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold-ghost)" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
-            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold); --fill-offset: 160.4;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
+            <circle cx="50" cy="50" r="42" id="helm-memory-ring" style="stroke:var(--tide-gold); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
           </svg>
           <div class="gauge-center">
-            <span class="gauge-num TODO">XX</span>
+            <span class="gauge-num" id="helm-memory-num">0</span>
             <span class="gauge-unit">pearls</span>
           </div>
         </div>
@@ -3396,14 +3397,14 @@
         <div class="gauge-svg">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold-ghost)" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
-            <circle cx="50" cy="50" r="42" id="helm-cost-ring" style="stroke:var(--tide-gold); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
+            <circle cx="50" cy="50" r="42" id="helm-relay-ring" style="stroke:var(--tide-gold); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
           </svg>
           <div class="gauge-center">
-            <span class="gauge-num" id="helm-cost-num">¥0.00</span>
-            <span class="gauge-unit">/ ¥50</span>
+            <span class="gauge-num" id="helm-relay-status">--</span>
+            <span class="gauge-unit" id="helm-relay-latency">checking</span>
           </div>
         </div>
-        <div class="gauge-name">本月用量<small>api · usage</small></div>
+        <div class="gauge-name">Relay狀態<small>relay · status</small></div>
       </div>
 
       <div class="gauge">
@@ -5234,8 +5235,39 @@ async function fetchOmbreCount() {
     const data = await res.json();
     const el = document.getElementById('ombre-pearl-count');
     if (el && data.count != null) el.textContent = data.count;
+
+    // 舵(#helm)的記憶飽和儀表也用同一份數據
+    const count = data.count != null ? data.count : 0;
+    const memNum = document.getElementById('helm-memory-num');
+    const memRing = document.getElementById('helm-memory-ring');
+    if (memNum) memNum.textContent = count;
+    if (memRing) {
+      const pct = Math.min(count / 200, 1);
+      memRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
+    }
   } catch(e) {
     console.error('Ombre 記憶總數獲取失敗', e);
+  }
+}
+
+async function checkHelmRelayStatus() {
+  const statusEl = document.getElementById('helm-relay-status');
+  const latencyEl = document.getElementById('helm-relay-latency');
+  const ring = document.getElementById('helm-relay-ring');
+  const start = performance.now();
+  try {
+    const res = await fetch('https://ryven.homes/relay/stats', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    const elapsed = Math.round(performance.now() - start);
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    if (statusEl) statusEl.textContent = '在線';
+    if (latencyEl) latencyEl.textContent = elapsed + 'ms';
+    if (ring) { ring.style.stroke = 'var(--tide-green)'; ring.style.setProperty('--fill-offset', '0'); }
+  } catch(e) {
+    if (statusEl) statusEl.textContent = '離線';
+    if (latencyEl) latencyEl.textContent = '--';
+    if (ring) { ring.style.stroke = 'var(--danger)'; ring.style.setProperty('--fill-offset', '198'); }
   }
 }
 
@@ -5261,15 +5293,7 @@ async function fetchStats() {
     document.getElementById('stat-sidebar-turns').textContent = today.turns || 0;
     document.getElementById('stat-sidebar-tokens').textContent = formatNum(total.input_tokens || 0);
 
-    // 舵(#helm)的两个真实数据仪表：本月用量 / 今日對話
-    const monthCost = today.cost != null ? total.cost * USD_TO_CNY : 0;
-    const costNum = document.getElementById('helm-cost-num');
-    const costRing = document.getElementById('helm-cost-ring');
-    if (costNum) costNum.textContent = '¥' + monthCost.toFixed(2);
-    if (costRing) {
-      const pct = Math.min(monthCost / 50, 1);
-      costRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
-    }
+    // 舵(#helm)的儀表：今日對話
     const turnsNum = document.getElementById('helm-turns-num');
     const turnsRing = document.getElementById('helm-turns-ring');
     if (turnsNum) turnsNum.textContent = today.turns || 0;
@@ -5350,6 +5374,11 @@ function renderHelmPage() {
       modelEl.textContent = (cfg && cfg.model) ? cfg.model : 'unknown';
     } catch(e) { /* 模型配置系统还没就绪就先不动 */ }
   }
+
+  // 三個儀表的真實數據：記憶飽和(ombre) / Relay狀態 / 今日對話(fetchStats)
+  fetchOmbreCount();
+  checkHelmRelayStatus();
+  fetchStats();
 }
 
 // ═════════════════ #life：Spending / Cycle 本地数据 ═════════════════
