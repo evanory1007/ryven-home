@@ -4805,7 +4805,8 @@ function renderOmbreUI() {
                 // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append，理由同 sendMessage()
                 currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
                 if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
-                if (/[。！？\n]/.test(ch)) {
+                if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
+                  // trim后是空的（纯标点/换行，没有真实内容）就不新建气泡，留在当前气泡里继续接
                   currentText = '';
                   currentBubble = prepareRyvenBubble();
                 }
@@ -5062,7 +5063,8 @@ function renderOmbreUI() {
       if (result.length > 0) result[result.length - 1] += carry;
       else result.push(carry);
     }
-    return result;
+    // 保险过滤：确保空字符串（或纯空白）不会生成一个看起来空的气泡
+    return result.filter(s => s.trim() !== '');
   }
 
   // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
@@ -5223,7 +5225,8 @@ function renderOmbreUI() {
                             // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
                             currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
                             if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
-                            if (/[。！？\n]/.test(ch)) {
+                            if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
+                                // trim后是空的（纯标点/换行，没有真实内容）就不新建气泡，留在当前气泡里继续接
                                 currentText = '';
                                 currentBubble = prepareRyvenBubble();
                             }
