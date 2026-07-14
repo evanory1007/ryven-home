@@ -4803,7 +4803,7 @@ function renderOmbreUI() {
               for (const ch of chunk) {
                 currentText += ch;
                 // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append，理由同 sendMessage()
-                currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                currentBubble.bubble.innerHTML = (currentText.trim() || '…').replace(/\n/g, '<br>');
                 if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
                 if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
                   // trim后是空的（纯标点/换行，没有真实内容）就不新建气泡，留在当前气泡里继续接
@@ -5223,7 +5223,7 @@ function renderOmbreUI() {
                             currentText += ch;
                             // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append——绝不能appended-then-filled，
                             // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
-                            currentBubble.bubble.innerHTML = (currentText || '…').replace(/\n/g, '<br>');
+                            currentBubble.bubble.innerHTML = (currentText.trim() || '…').replace(/\n/g, '<br>');
                             if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
                             if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
                                 // trim后是空的（纯标点/换行，没有真实内容）就不新建气泡，留在当前气泡里继续接
