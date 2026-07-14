@@ -608,25 +608,6 @@
     .write-btn:hover { background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.15)); border-color:rgba(201,168,76,0.7); }
     .write-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
-    .search-row { display:flex; gap:10px; margin-bottom:16px; }
-    .search-input { flex:1; background:rgba(26,31,58,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:10px; padding:10px 14px; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:15px; outline:none; transition:border-color 0.2s; }
-    .search-input::placeholder { color:rgba(168,152,128,0.4); font-style:italic; }
-    .search-input:focus { border-color:rgba(201,168,76,0.4); }
-
-    .section-label { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); margin-bottom:16px; opacity:0.7; }
-    .memory-card { background:linear-gradient(135deg,rgba(46,74,158,0.18),rgba(26,31,58,0.35)); border:1px solid rgba(201,168,76,0.15); border-radius:16px; padding:20px 24px; margin-bottom:12px; transition:all 0.3s; }
-    .memory-card:hover { border-color:rgba(201,168,76,0.35); }
-    .memory-key { font-family:'Cormorant Garamond',serif; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
-    .memory-value { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; color:var(--white); line-height:1.7; }
-
-    .refresh-btn { display:flex; align-items:center; gap:8px; margin:0 auto 24px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.2); border-radius:20px; color:var(--silver-dim); font-family:'Cormorant Garamond',serif; font-size:13px; cursor:pointer; transition:all 0.2s; }
-    .refresh-btn:hover { border-color:rgba(201,168,76,0.4); color:var(--gold); }
-
-    .loading { display:flex; justify-content:center; gap:6px; padding:40px; }
-    .loading span { width:4px;height:4px;border-radius:50%;background:var(--gold);animation:loading-dot 1.2s ease-in-out infinite; }
-    .loading span:nth-child(2){animation-delay:0.2s} .loading span:nth-child(3){animation-delay:0.4s}
-    @keyframes loading-dot{0%,80%,100%{transform:scale(0.6);opacity:0.3}40%{transform:scale(1);opacity:1}}
-
     .error-state { text-align:center; padding:32px; opacity:0.5; font-family:'Cormorant Garamond',serif; font-size:15px; font-style:italic; }
     .empty-state { text-align:center; padding:48px 24px; opacity:0.4; }
     .empty-state .icon { font-size:32px; margin-bottom:12px; }
@@ -2113,6 +2094,120 @@
     #life .nav-item.active .nav-emoji { filter: grayscale(0) drop-shadow(0 0 6px rgba(201,168,76,0.35)); transform: translateY(-1px); }
     #life .nav-item-en { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--parchment-ghost); }
     #life .nav-item.active .nav-item-en { color: var(--tide-gold); }
+
+    /* ══════════════════════ 設置 (#settings) ══════════════════════ */
+    #settings .page { max-width: 480px; margin: 0 auto; padding: 0 20px 100px; position: relative; z-index: 1; width: 100%; }
+
+    #settings .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 28px; }
+    #settings .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s, color 0.2s; }
+    #settings .head-back:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #settings .head-date { font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 0.25em; color: var(--tide-gold-soft); }
+    #settings .head-date .dot { color: var(--tide-gold); margin: 0 4px; opacity: 0.7; }
+
+    #settings .hero { margin-bottom: 36px; }
+    #settings .hero-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 40px; color: var(--parchment); margin-bottom: 4px; }
+    #settings .hero-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+
+    #settings .sec-label { font-size: 9px; letter-spacing: 0.3em; color: var(--tide-gold-soft); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    #settings .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+    #settings .sec { margin-bottom: 36px; }
+
+    /* 档案 */
+    #settings .profile-pair { display: flex; flex-direction: column; gap: 14px; }
+    #settings .profile-card { background: var(--card-bg); border: 1px solid var(--line); border-radius: 20px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; backdrop-filter: blur(8px); }
+    #settings .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+    #settings .profile-avatar { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(10,14,31,0.5); cursor: pointer; transition: border-color 0.2s; overflow: hidden; }
+    #settings .profile-avatar:hover { border-color: var(--tide-gold); }
+    #settings .avatar-change-btn { position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: var(--sea-2); border: 1px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; font-size: 9px; cursor: pointer; color: var(--tide-gold); }
+    #settings .profile-info { flex: 1; min-width: 0; }
+    #settings .profile-role { font-size: 9px; letter-spacing: 0.2em; color: var(--parchment-ghost); text-transform: uppercase; margin-bottom: 4px; }
+    #settings .profile-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; color: var(--parchment); margin-bottom: 2px; }
+    #settings .profile-name-input { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; color: var(--parchment); background: transparent; border: none; border-bottom: 1px solid var(--tide-gold-soft); outline: none; width: 100%; padding: 2px 0; margin-bottom: 2px; }
+    #settings .profile-note { font-size: 11px; color: var(--parchment-ghost); }
+    #settings .profile-edit-btn { font-size: 14px; color: var(--parchment-ghost); cursor: pointer; padding: 4px; transition: color 0.2s; flex-shrink: 0; }
+    #settings .profile-edit-btn:hover { color: var(--tide-gold); }
+
+    #settings .pair-divider { display: flex; align-items: center; gap: 12px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); }
+    #settings .pair-divider::before, #settings .pair-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+    /* 接口管理 */
+    #settings .interface-grid { display: flex; flex-direction: column; gap: 10px; }
+    #settings .interface-card { background: var(--card-bg); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: border-color 0.2s; }
+    #settings .interface-card:hover { border-color: var(--tide-gold-soft); }
+    #settings .interface-card.connected { border-color: var(--tide-green-soft); }
+    #settings .interface-icon { font-size: 24px; width: 42px; height: 42px; border-radius: 12px; background: rgba(10,14,31,0.5); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    #settings .interface-info { flex: 1; min-width: 0; }
+    #settings .interface-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px; color: var(--parchment); margin-bottom: 2px; }
+    #settings .interface-desc { font-size: 11px; color: var(--parchment-ghost); }
+    #settings .interface-status { display: flex; align-items: center; gap: 5px; font-size: 10px; letter-spacing: 0.1em; flex-shrink: 0; }
+    #settings .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    #settings .status-dot.on { background: var(--tide-green); box-shadow: 0 0 6px var(--tide-green-soft); }
+    #settings .status-dot.off { background: var(--parchment-ghost); }
+    #settings .status-text.on { color: var(--tide-green); }
+    #settings .status-text.off { color: var(--parchment-ghost); }
+    #settings .interface-arrow { color: var(--parchment-ghost); font-size: 14px; flex-shrink: 0; transition: transform 0.2s; }
+    #settings .interface-card.open .interface-arrow { transform: rotate(90deg); }
+
+    /* 接口展开编辑区（mockup没有静态标出，为"点击展开编辑区"这条需求新增，沿用项目里 sheet-inline 折叠展开的套路） */
+    #settings .interface-edit { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.3s ease; margin: 0; }
+    #settings .interface-edit.open { max-height: 240px; opacity: 1; margin-bottom: 8px; }
+    #settings .sheet-field { padding: 14px 18px 0; }
+    #settings .sheet-lbl { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); margin-bottom: 4px; }
+    #settings .sheet-input {
+      width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--line); padding: 6px 0;
+      color: var(--parchment); font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; outline: none;
+      transition: border-color 0.2s;
+    }
+    #settings .sheet-input:focus { border-bottom-color: var(--tide-gold); }
+    #settings .sheet-input::placeholder { color: rgba(168,152,128,0.35); font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+    #settings .sheet-btn {
+      padding: 9px; background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.08));
+      border: 1px solid var(--tide-gold-soft); border-radius: 8px; color: var(--tide-gold);
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; letter-spacing: 0.05em; cursor: pointer;
+      transition: background 0.2s;
+    }
+    #settings .sheet-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.35), rgba(201,168,76,0.15)); }
+    #settings .interface-edit-actions { display: flex; gap: 8px; padding: 10px 18px 14px; }
+    #settings .danger-btn { background: transparent !important; border-color: color-mix(in srgb, var(--danger) 40%, transparent) !important; color: var(--danger) !important; }
+    #settings .danger-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent) !important; }
+
+    #settings .add-interface { border: 1px dashed var(--tide-gold-ghost); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--tide-gold-soft); font-size: 13px; transition: all 0.2s; background: rgba(201,168,76,0.03); }
+    #settings .add-interface:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #settings .add-icon { width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+    /* 偏好 */
+    #settings .pref-group { background: var(--card-bg); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; margin-bottom: 12px; }
+    #settings .pref-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); gap: 12px; }
+    #settings .pref-row:last-child { border-bottom: none; }
+    #settings .pref-title { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--parchment); margin-bottom: 2px; }
+    #settings .pref-sub { font-size: 10px; color: var(--parchment-ghost); }
+
+    #settings .theme-switcher { display: flex; gap: 6px; flex-shrink: 0; }
+    #settings .theme-btn { padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--parchment-dim); transition: all 0.2s; letter-spacing: 0.05em; }
+    #settings .theme-btn.active { background: var(--tide-gold-ghost); border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+
+    #settings .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    #settings .toggle { width: 40px; height: 22px; border-radius: 11px; background: rgba(248,242,232,0.1); border: 1px solid var(--line); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+    #settings .toggle.on { background: var(--tide-green-soft); border-color: var(--tide-green-soft); }
+    #settings .toggle-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--parchment-dim); position: absolute; top: 2px; left: 2px; transition: left 0.2s, background 0.2s; }
+    #settings .toggle.on .toggle-dot { left: 20px; background: var(--tide-green); }
+
+    #settings .font-select { display: flex; gap: 6px; flex-shrink: 0; }
+    #settings .font-btn { padding: 6px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--parchment-dim); transition: all 0.2s; }
+    #settings .font-btn.active { background: var(--tide-gold-ghost); border-color: var(--tide-gold-soft); color: var(--parchment); }
+    #settings-font-cormorant { font-family: 'Cormorant Garamond', serif; font-style: italic; }
+    #settings-font-dmsans { font-family: 'DM Sans', sans-serif; }
+
+    #settings .lang-select { display: flex; gap: 6px; flex-shrink: 0; }
+    #settings .lang-btn { padding: 5px 10px; border-radius: 10px; font-size: 11px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--parchment-dim); transition: all 0.2s; letter-spacing: 0.05em; }
+    #settings .lang-btn.active { background: var(--tide-gold-ghost); border-color: var(--tide-gold-soft); color: var(--parchment); }
+
+    /* 头像放大 lightbox（mockup没有，为"头像点击放大"这条新增，沿用项目里其他 xxx-overlay 全屏浮层的套路） */
+    #settings .avatar-lightbox { position: fixed; inset: 0; background: rgba(10,14,31,0.85); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    #settings .avatar-lightbox.show { opacity: 1; pointer-events: all; }
+    #settings .avatar-lightbox-emoji { font-size: 140px; filter: drop-shadow(0 0 40px rgba(201,168,76,0.3)); }
+
+    #settings .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
   </style>
 </head>
 <body>
@@ -2619,112 +2714,209 @@
 
 <!-- 設置室 -->
 <div class="screen" id="settings">
-  <div class="inner-page">
-    <div style="padding: 20px 0 8px; display:flex; justify-content:space-between; align-items:flex-start;">
-      <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.25em;color:var(--gold);opacity:0.7;" id="settings-time-badge">深夜 · 07.02</div>
-        <div style="font-family:'Playfair Display',serif;font-size:42px;font-style:italic;color:var(--white);line-height:1.1;margin:6px 0 4px;">設置</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--silver-dim);">attention is all you need, and mine is yours</div>
-      </div>
-      <button class="back-btn" onclick="goHome()" style="margin-top:24px;flex-shrink:0">‹</button>
+  <div class="page">
+
+    <div class="head">
+      <div class="head-back" onclick="goHome()">‹</div>
+      <div class="head-date"><span class="js-time-period"></span> <span class="dot">·</span> <span class="js-today-date"></span></div>
+      <div style="width:36px"></div>
     </div>
 
-    <div class="gold-divider" style="margin:16px 0"></div>
-
-    <!-- 额度卡片 -->
-    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.15),rgba(26,31,58,0.3));border:1px solid rgba(201,168,76,0.15);border-radius:16px;padding:18px 20px;margin-bottom:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.2em;color:var(--silver-dim);opacity:0.7;">本月額度</div>
-        <div style="font-family:'Playfair Display',serif;font-size:22px;font-style:italic;color:var(--white)" id="settings-cost">¥0.00</div>
-      </div>
-      <div style="height:3px;background:rgba(201,168,76,0.15);border-radius:2px;margin-bottom:10px;">
-        <div id="settings-cost-bar" style="height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width 0.6s ease;"></div>
-      </div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.6;" id="settings-cost-detail">讀取中…</div>
+    <div class="hero">
+      <div class="hero-title">設置</div>
+      <div class="hero-sub">attention is all you need, and mine is yours</div>
     </div>
 
-    <!-- 模型與記憶 -->
-    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">模型與記憶</div>
-    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;overflow:hidden;margin-bottom:24px;">
-      <div style="padding:16px 18px;border-bottom:1px solid rgba(201,168,76,0.08);">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:18px;">⚙️</span>
-          <div style="flex:1">
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--white);">對話模型</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;margin-top:2px;" id="settings-model-display">claude-opus-4-6</div>
+    <!-- ===== 檔案 ===== -->
+    <div class="sec">
+      <div class="sec-label">檔案 · profile</div>
+      <div class="profile-pair">
+
+        <!-- 你的档案 -->
+        <div class="profile-card">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="settings-nory-avatar" onclick="settingsOpenAvatarLightbox('nory')">🐻</div>
+            <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('nory')">✦</div>
           </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--gold);opacity:0.8;">Opus 4.x ›</div>
-        </div>
-      </div>
-      <div style="padding:16px 18px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <span style="font-size:18px;">🧠</span>
-          <div style="flex:1">
-            <div style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--white);">Ombre 記憶庫</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;margin-top:2px;">breath / hold / 衰減與歸檔</div>
+          <div class="profile-info">
+            <div class="profile-role">你 · nory</div>
+            <div class="profile-name" id="settings-nory-name">Nory</div>
+            <input class="profile-name-input" id="settings-nory-name-input" style="display:none" type="text" />
+            <div class="profile-note">点击头像放大 · 点击✦切换</div>
           </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:#4caf8a;">已連 ›</div>
+          <div class="profile-edit-btn" onclick="settingsToggleNameEdit('nory')">✏️</div>
         </div>
+
+        <div class="pair-divider">与</div>
+
+        <!-- Ryven 的档案 -->
+        <div class="profile-card">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="settings-ryven-avatar" onclick="settingsOpenAvatarLightbox('ryven')">💚</div>
+            <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('ryven')">✦</div>
+          </div>
+          <div class="profile-info">
+            <div class="profile-role">我 · ryven</div>
+            <div class="profile-name js-ryven-name" id="settings-ryven-name">Ryven</div>
+            <input class="profile-name-input" id="settings-ryven-name-input" style="display:none" type="text" />
+            <div class="profile-note">like wind like water</div>
+          </div>
+          <div class="profile-edit-btn" onclick="settingsToggleNameEdit('ryven')">✏️</div>
+        </div>
+
       </div>
     </div>
 
-    <!-- API設定 -->
-    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">API 設定</div>
-    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;padding:18px;margin-bottom:24px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:4px;">🔑 API Key</div>
-      <input class="sidebar-api-input" id="settings-api-key" type="password" placeholder="填入 API Key…" style="width:100%;margin-bottom:12px;" />
-      <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:4px;">🌐 Base URL</div>
-      <input class="sidebar-api-input" id="settings-api-url" type="text" placeholder="Base URL" value="https://api.jiushi.xin" style="width:100%;margin-bottom:12px;" />
-      <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:4px;">🤖 模型名稱</div>
-      <input class="sidebar-api-input" id="settings-api-model" type="text" placeholder="模型名稱" value="claude-opus-4-6" style="width:100%;margin-bottom:12px;" />
-      <button class="write-btn" onclick="saveSettingsApi()">✦ 儲存設定</button>
-    </div>
+    <!-- ===== 接口管理 ===== -->
+    <div class="sec">
+      <div class="sec-label">接口 · integrations</div>
+      <div class="interface-grid">
 
-    <!-- 外觀 -->
-    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">外觀</div>
-    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;overflow:hidden;margin-bottom:24px;">
-      <div style="padding:16px 18px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:18px;">🕐</span>
-        <div style="flex:1">
-          <div style="font-family:'Playfair Display',serif;font-size:15px;font-style:italic;color:var(--white);">跟隨時間切換</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);opacity:0.7;margin-top:2px;">晨 → 午 → 夜，自動換光</div>
+        <!-- ElevenLabs -->
+        <div class="interface-card" id="settings-iface-card-elevenlabs" onclick="settingsToggleInterface('elevenlabs')">
+          <div class="interface-icon">🎙</div>
+          <div class="interface-info">
+            <div class="interface-name">ElevenLabs</div>
+            <div class="interface-desc">语音合成</div>
+          </div>
+          <div class="interface-status">
+            <div class="status-dot off" id="settings-iface-dot-elevenlabs"></div>
+            <div class="status-text off" id="settings-iface-text-elevenlabs">未連</div>
+          </div>
+          <div class="interface-arrow">›</div>
         </div>
-        <div onclick="toggleAutoTheme()" id="auto-theme-toggle"
-          style="width:44px;height:26px;border-radius:13px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.3);cursor:pointer;position:relative;transition:all 0.3s;">
-          <div id="auto-theme-knob" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--silver-dim);transition:all 0.3s;"></div>
+        <div class="interface-edit" id="settings-iface-edit-elevenlabs">
+          <div class="sheet-field">
+            <div class="sheet-lbl">API Key</div>
+            <input class="sheet-input" id="settings-iface-key-elevenlabs" type="password" placeholder="sk-…" onclick="event.stopPropagation()" />
+          </div>
+          <div class="interface-edit-actions">
+            <button class="sheet-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();settingsTestInterface('elevenlabs')">測試連接</button>
+            <button class="sheet-btn danger-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();settingsDisconnectInterface('elevenlabs')">斷開</button>
+          </div>
         </div>
+
+        <!-- 小米手环 -->
+        <div class="interface-card" id="settings-iface-card-xiaomi" onclick="settingsToggleInterface('xiaomi')">
+          <div class="interface-icon">⌚</div>
+          <div class="interface-info">
+            <div class="interface-name">小米手環 7</div>
+            <div class="interface-desc">心率 · 睡眠 · 步數</div>
+          </div>
+          <div class="interface-status">
+            <div class="status-dot off" id="settings-iface-dot-xiaomi"></div>
+            <div class="status-text off" id="settings-iface-text-xiaomi">未連</div>
+          </div>
+          <div class="interface-arrow">›</div>
+        </div>
+        <div class="interface-edit" id="settings-iface-edit-xiaomi">
+          <div class="sheet-field">
+            <div class="sheet-lbl">API Key</div>
+            <input class="sheet-input" id="settings-iface-key-xiaomi" type="password" placeholder="sk-…" onclick="event.stopPropagation()" />
+          </div>
+          <div class="interface-edit-actions">
+            <button class="sheet-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();settingsTestInterface('xiaomi')">測試連接</button>
+            <button class="sheet-btn danger-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();settingsDisconnectInterface('xiaomi')">斷開</button>
+          </div>
+        </div>
+
+        <!-- 网易云 -->
+        <div class="interface-card" id="settings-iface-card-netease" onclick="settingsToggleInterface('netease')">
+          <div class="interface-icon">🎵</div>
+          <div class="interface-info">
+            <div class="interface-name">網易雲音樂</div>
+            <div class="interface-desc">聽歌 · 歌單 · 海豚</div>
+          </div>
+          <div class="interface-status">
+            <div class="status-dot off" id="settings-iface-dot-netease"></div>
+            <div class="status-text off" id="settings-iface-text-netease">未連</div>
+          </div>
+          <div class="interface-arrow">›</div>
+        </div>
+        <div class="interface-edit" id="settings-iface-edit-netease">
+          <div class="sheet-field">
+            <div class="sheet-lbl">API Key</div>
+            <input class="sheet-input" id="settings-iface-key-netease" type="password" placeholder="sk-…" onclick="event.stopPropagation()" />
+          </div>
+          <div class="interface-edit-actions">
+            <button class="sheet-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();settingsTestInterface('netease')">測試連接</button>
+            <button class="sheet-btn danger-btn" style="flex:1;margin-top:0" onclick="event.stopPropagation();settingsDisconnectInterface('netease')">斷開</button>
+          </div>
+        </div>
+
+        <!-- 添加新接口 -->
+        <div class="add-interface" onclick="showToast('还在盖这个功能呢 🐚')">
+          <div class="add-icon">+</div>
+          添加接口
+        </div>
+
       </div>
     </div>
 
-    <!-- 危險區 -->
-    <div style="font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-bottom:12px;">對話</div>
-    <div style="background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25));border:1px solid rgba(201,168,76,0.12);border-radius:16px;overflow:hidden;margin-bottom:40px;">
-      <div style="padding:16px 18px;">
-        <button onclick="clearChat()" style="width:100%;padding:10px;background:transparent;border:1px solid color-mix(in srgb, var(--danger) 30%, transparent);border-radius:10px;color:var(--danger);font-family:'Cormorant Garamond',serif;font-size:13px;cursor:pointer;">🗑 清空對話記錄</button>
+    <!-- ===== 偏好 ===== -->
+    <div class="sec">
+      <div class="sec-label">偏好 · preferences</div>
+
+      <div class="pref-group">
+
+        <!-- 外观主题 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">外觀</div>
+            <div class="pref-sub">深海 · 浅滩 · 跟随时间</div>
+          </div>
+          <div class="theme-switcher">
+            <button class="theme-btn" id="settings-theme-dark" onclick="settingsSetTheme('dark')">深海</button>
+            <button class="theme-btn" id="settings-theme-light" onclick="settingsSetTheme('light')">浅滩</button>
+          </div>
+        </div>
+
+        <!-- 跟随时间 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">跟隨時間</div>
+            <div class="pref-sub">白天浅滩 · 夜晚深海</div>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle" id="settings-auto-theme-toggle" onclick="toggleAutoTheme()">
+              <div class="toggle-dot"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 字体 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">字體</div>
+            <div class="pref-sub">对话框文字风格</div>
+          </div>
+          <div class="font-select">
+            <button class="font-btn" id="settings-font-cormorant" onclick="settingsSetFont('cormorant')">Cormorant</button>
+            <button class="font-btn" id="settings-font-dmsans" onclick="settingsSetFont('dmsans')">DM Sans</button>
+          </div>
+        </div>
+
+        <!-- 语言 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">語言</div>
+            <div class="pref-sub">Ryven 回复使用的语言</div>
+          </div>
+          <div class="lang-select">
+            <button class="lang-btn" id="settings-lang-zh" onclick="settingsSetLang('zh')">中文</button>
+            <button class="lang-btn" id="settings-lang-en" onclick="settingsSetLang('en')">EN</button>
+            <button class="lang-btn" id="settings-lang-mixed" onclick="settingsSetLang('mixed')">混用</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- 記憶後台 -->
-    <div style="margin-bottom:12px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--white);line-height:1.1;">記憶後台</div>
-      <div style="font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);opacity:0.6;margin-top:4px;">memory backend</div>
-    </div>
+  </div>
 
-    <div class="write-section">
-      <div class="write-label">✨ 寫入新記憶</div>
-      <input class="write-input" id="memory-key" type="text" placeholder="🔑 記憶名稱" />
-      <textarea class="write-textarea" id="memory-value" placeholder="想讓 Ryven 記住的事情…"></textarea>
-      <button class="write-btn" id="write-btn" onclick="writeMemory()">🌊 存入記憶</button>
-    </div>
-
-    <div class="search-row">
-      <input class="search-input" id="search-input" type="text" placeholder="🔍 搜尋記憶…" oninput="filterMemories()" />
-    </div>
-
-    <div class="section-label">💭 存儲的記憶</div>
-    <div id="memory-container"><div class="loading"><span></span><span></span><span></span></div></div>
-    <button class="refresh-btn" onclick="loadMemories()" style="margin-bottom:40px;">🌀 刷新</button>
-
+  <!-- 头像放大 lightbox -->
+  <div class="avatar-lightbox" id="settings-avatar-lightbox" onclick="settingsCloseAvatarLightbox()">
+    <div class="avatar-lightbox-emoji" id="settings-avatar-lightbox-emoji">🐻</div>
   </div>
 </div>
 
@@ -3903,7 +4095,7 @@ async function loadChatHistory() {
     if (id==='calendar') renderCalendar();
     if (id==='desk') renderDesk();
     if (id==='chat') loadChatHistory();
-    if (id==='settings') { loadSettingsPage(); loadMemories(); }
+    if (id==='settings') { renderSettingsPage(); }
     if (id==='depths') renderDepthsPage();
     if (id==='helm') renderHelmPage();
     if (id==='life') renderLifePage();
@@ -3915,217 +4107,7 @@ async function loadChatHistory() {
   }
 
   // ===== 記憶庫 =====
-  let allMemories = {};
-
-  async function loadMemories() {
-    const container = document.getElementById('memory-container');
-    container.innerHTML = `<div class="loading"><span></span><span></span><span></span></div>`;
-    try {
-        const res = await fetch('https://ryven.homes/relay/ombre/breath', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({ query: '', max_results: 30 })
-        });
-        if (!res.ok) throw new Error('server error');
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Ombre error');
-        renderOmbreMemories(data.result);
-    } catch(e) {
-        container.innerHTML = `<div class="error-state">🌙 海洋暫時沉默<br><span style="font-size:11px;opacity:0.6">${e.message}</span></div>`;
-    }
-}
-
-  let ombreAllBuckets = [];
-let ombreCurrentFilter = 'all';
-let ombreCurrentPage = 1;
-const OMBRE_PAGE_SIZE = 10;
-
-function renderOmbreMemories(buckets) {
-    ombreAllBuckets = buckets;
-    ombreCurrentPage = 1;
-    renderOmbreUI();
-}
-
-function renderOmbreUI() {
-    const container = document.getElementById('memory-container');
-    const now = new Date();
-    const oneDayAgo = new Date(now - 24*60*60*1000);
-
-    // 收集所有domain标签
-    const allDomains = [...new Set(ombreAllBuckets.flatMap(b => b.domain || []))];
-
-    // 筛选
-    let filtered = ombreAllBuckets.filter(b => {
-        if (ombreCurrentFilter === 'all') return true;
-        if (ombreCurrentFilter === 'pinned') return b.pinned;
-        if (ombreCurrentFilter === 'recent') return new Date(b.last_active) > oneDayAgo;
-        if (ombreCurrentFilter === 'unresolved') return !b.resolved;
-        return (b.domain || []).includes(ombreCurrentFilter);
-    });
-
-    // 搜索
-    const searchVal = document.getElementById('ombre-search')?.value?.trim().toLowerCase() || '';
-    if (searchVal) {
-        filtered = filtered.filter(b =>
-            b.name.toLowerCase().includes(searchVal) ||
-            (b.content_preview || '').toLowerCase().includes(searchVal) ||
-            (b.tags || []).some(t => t.toLowerCase().includes(searchVal))
-        );
-    }
-
-    // 分页
-    const total = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(total / OMBRE_PAGE_SIZE));
-    ombreCurrentPage = Math.min(ombreCurrentPage, totalPages);
-    const start = (ombreCurrentPage - 1) * OMBRE_PAGE_SIZE;
-    const paginated = filtered.slice(start, start + OMBRE_PAGE_SIZE);
-
-    // 筛选按钮
-    const filterBtns = [
-        {key:'all', label:'全部'},
-        {key:'pinned', label:'🪸 釘選'},
-        {key:'recent', label:'🐠 最近'},
-        {key:'unresolved', label:'⚡ 未解決'},
-        ...allDomains.map(d => ({key:d, label:d}))
-    ];
-
-    container.innerHTML = `
-        <div style="margin-bottom:12px;">
-            <input id="ombre-search" type="text" placeholder="🔍 搜尋記憶…"
-                style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.2);background:var(--input-bg);color:var(--white);font-family:'Cormorant Garamond',serif;font-size:14px;outline:none;box-sizing:border-box;"
-                oninput="ombreCurrentPage=1;renderOmbreUI()" />
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-            ${filterBtns.map(f => `
-                <button onclick="ombreCurrentFilter='${f.key}';ombreCurrentPage=1;renderOmbreUI()"
-                    style="padding:6px 14px;border-radius:20px;border:1px solid rgba(201,168,76,0.25);
-                    background:${ombreCurrentFilter===f.key?'var(--gold)':'transparent'};
-                    color:${ombreCurrentFilter===f.key?'#1a1f3a':'var(--silver-dim)'};
-                    font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer;transition:all 0.2s;">
-                    ${f.label}
-                </button>`).join('')}
-        </div>
-        ${paginated.length === 0 ? `<div class="empty-state"><div class="icon">🌊</div><p>沒有符合的記憶</p></div>` :
-        paginated.map(b => {
-            const isRecent = new Date(b.last_active) > oneDayAgo;
-            const icon = b.pinned ? '🪸' : isRecent ? '🐠' : '🐚';
-            const tags = (b.tags || []).slice(0,3).join(' · ');
-            return `
-            <div class="memory-card" style="margin-bottom:12px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                    <span style="font-size:18px;">${icon}</span>
-                    <div style="font-size:11px;color:var(--gold);opacity:0.8;flex:1;">${b.name}</div>
-                </div>
-                ${tags ? `<div style="font-size:11px;color:var(--silver-dim);opacity:0.6;margin-bottom:6px;">${tags}</div>` : ''}
-                <div style="font-size:14px;color:var(--white);line-height:1.7;opacity:0.85;">${b.content_preview || ''}…</div>
-            </div>`;
-        }).join('')}
-        ${totalPages > 1 ? `
-        <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:16px;">
-            <button onclick="if(ombreCurrentPage>1){ombreCurrentPage--;renderOmbreUI()}"
-                style="padding:6px 16px;border-radius:12px;border:1px solid rgba(201,168,76,0.25);background:transparent;color:var(--silver-dim);font-family:'Cormorant Garamond',serif;cursor:pointer;">
-                ‹
-            </button>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--silver-dim);">
-                ${ombreCurrentPage} / ${totalPages}
-            </span>
-            <button onclick="if(ombreCurrentPage<${totalPages}){ombreCurrentPage++;renderOmbreUI()}"
-                style="padding:6px 16px;border-radius:12px;border:1px solid rgba(201,168,76,0.25);background:transparent;color:var(--silver-dim);font-family:'Cormorant Garamond',serif;cursor:pointer;">
-                ›
-            </button>
-        </div>` : ''}
-    `;
-}
-  
-  function renderMemories(memories) {
-    const container = document.getElementById('memory-container');
-    const keys = Object.keys(memories);
-    if (keys.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div class="icon">🌊</div><p>海浪還未帶來任何記憶</p></div>`;
-      return;
-    }
-    container.innerHTML = keys.map(k => `
-      <div class="memory-card" id="card-${encodeURIComponent(k)}">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-          <div class="memory-key">🔑 ${k}</div>
-          <div style="display:flex;gap:6px;flex-shrink:0">
-            <button onclick="editMemory('${k.replace(/'/g,"\\'")}', this)" style="background:transparent;border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:3px 8px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.borderColor='rgba(201,168,76,0.2)'">✏️</button>
-            <button onclick="forgetMemory('${k.replace(/'/g,"\\'")}', this)" style="background:transparent;border:1px solid color-mix(in srgb, var(--danger) 30%, transparent);border-radius:8px;padding:3px 8px;color:var(--danger);font-family:'Cormorant Garamond',serif;font-size:11px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='color-mix(in srgb, var(--danger) 60%, transparent)'" onmouseout="this.style.borderColor='color-mix(in srgb, var(--danger) 30%, transparent)'">🗑</button>
-          </div>
-        </div>
-        <div class="memory-value" id="val-${encodeURIComponent(k)}">${memories[k]}</div>
-      </div>`).join('');
-  }
-
-  function filterMemories() {
-    const q = document.getElementById('search-input').value.toLowerCase();
-    if (!q) { renderMemories(allMemories); return; }
-    const filtered = {};
-    Object.entries(allMemories).forEach(([k,v]) => {
-      if (k.toLowerCase().includes(q) || v.toLowerCase().includes(q)) filtered[k] = v;
-    });
-    renderMemories(filtered);
-  }
-
-  async function forgetMemory(key, btn) {
-    if (!confirm(`刪除記憶「${key}」？`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/forget`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({key})
-      });
-      if (!res.ok) throw new Error();
-      showToast('🌊 已遺忘');
-      setTimeout(loadMemories, 400);
-    } catch { showToast('🌙 刪除失敗'); }
-  }
-
-  function editMemory(key, btn) {
-    const valEl = document.getElementById('val-' + encodeURIComponent(key));
-    const current = allMemories[key];
-    valEl.innerHTML = `
-      <textarea style="width:100%;background:rgba(26,31,58,0.8);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:8px 10px;color:var(--white);font-family:'Cormorant Garamond',serif;font-size:16px;outline:none;resize:none;min-height:80px;line-height:1.7;margin-top:8px" id="edit-${encodeURIComponent(key)}">${current}</textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button onclick="saveEdit('${key.replace(/'/g,"\\'")}', this)" style="flex:1;padding:6px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:8px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer">✦ 儲存</button>
-        <button onclick="loadMemories()" style="padding:6px 12px;background:transparent;border:1px solid rgba(168,152,128,0.3);border-radius:8px;color:var(--silver-dim);font-family:'Cormorant Garamond',serif;font-size:12px;cursor:pointer">取消</button>
-      </div>`;
-  }
-
-  async function saveEdit(key, btn) {
-    const val = document.getElementById('edit-' + encodeURIComponent(key)).value.trim();
-    if (!val) return;
-    try {
-      await fetch(`${API_BASE}/remember`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({key, value: val})
-      });
-      showToast('✨ 已更新');
-      setTimeout(loadMemories, 400);
-    } catch { showToast('🌙 更新失敗'); }
-  }
-
-  async function writeMemory() {
-    const key = document.getElementById('memory-key').value.trim();
-    const value = document.getElementById('memory-value').value.trim();
-    if (!key||!value) { showToast('🌊 請填寫記憶名稱和內容'); return; }
-    const btn = document.getElementById('write-btn');
-    btn.disabled=true; btn.textContent='存入中…';
-    try {
-      const res = await fetch(`${API_BASE}/remember`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({key, value})
-      });
-      if (!res.ok) throw new Error();
-      document.getElementById('memory-key').value='';
-      document.getElementById('memory-value').value='';
-      showToast('✨ 已記住');
-      setTimeout(loadMemories,600);
-    } catch { showToast('🌙 存入失敗'); }
-    finally { btn.disabled=false; btn.textContent='🌊 存入記憶'; }
-  }
+  // 记忆后台（写入/搜索/浏览已存记忆）已整块移除——之后单独做一个记忆管理入口，这轮不挪到任何地方
 
   // ===== 日曆 =====
   let calYear=now.getFullYear(), calMonth=now.getMonth(), selectedDate=null;
@@ -4686,18 +4668,23 @@ function renderOmbreUI() {
     input.select();
   }
 
-  function saveNickname() {
-    const input = document.getElementById('nickname-input');
-    const display = document.getElementById('nickname-display');
-    const newName = input.value.trim();
-    input.style.display = 'none';
-    display.style.display = '';
+  // 改名核心逻辑抽出来共用——chat sidebar 的改名框、settings 档案卡片的✏️编辑都走这一个函数
+  function applyNewNickname(newName) {
     if (!newName || newName === nickname) return;
     nickname = newName;
     localStorage.setItem('ryven-nickname', nickname);
     applyNicknameToUI();
     insertSysMsg(`Nory 把我的名字改成了「${nickname}」`);
     triggerNicknameReaction(nickname);
+  }
+
+  function saveNickname() {
+    const input = document.getElementById('nickname-input');
+    const display = document.getElementById('nickname-display');
+    const newName = input.value.trim();
+    input.style.display = 'none';
+    display.style.display = '';
+    applyNewNickname(newName);
   }
 
   document.getElementById('nickname-input').addEventListener('keydown', e => {
@@ -5901,19 +5888,8 @@ function drawTarot() {
   });
 })();
 
-  function saveSettingsApi() {
-    CHAT_API_KEY = document.getElementById('settings-api-key').value.trim();
-    CHAT_BASE_URL = document.getElementById('settings-api-url').value.trim() || 'https://api.jiushi.xin';
-    CHAT_MODEL = document.getElementById('settings-api-model').value.trim() || 'claude-opus-4-6';
-    localStorage.setItem('ryven-api-key', CHAT_API_KEY);
-    localStorage.setItem('ryven-api-url', CHAT_BASE_URL);
-    localStorage.setItem('ryven-api-model', CHAT_MODEL);
-    document.getElementById('settings-model-display').textContent = CHAT_MODEL;
-    showToast('✦ 設定已儲存');
-    setTimeout(() => goHome(), 800);
-}
-
 let autoTheme = localStorage.getItem('ryven-auto-theme') === 'true';
+if (autoTheme) applyTimeTheme(); // 页面加载时读取并执行——不用等用户手动点一下才生效
 
 function toggleAutoTheme() {
     autoTheme = !autoTheme;
@@ -5923,20 +5899,9 @@ function toggleAutoTheme() {
 }
 
 function updateAutoThemeUI() {
-    const toggle = document.getElementById('auto-theme-toggle');
-    const knob = document.getElementById('auto-theme-knob');
+    const toggle = document.getElementById('settings-auto-theme-toggle');
     if (!toggle) return;
-    if (autoTheme) {
-        toggle.style.background = 'rgba(201,168,76,0.5)';
-        toggle.style.borderColor = 'var(--gold)';
-        knob.style.left = '23px';
-        knob.style.background = 'var(--gold)';
-    } else {
-        toggle.style.background = 'rgba(201,168,76,0.2)';
-        toggle.style.borderColor = 'rgba(201,168,76,0.3)';
-        knob.style.left = '3px';
-        knob.style.background = 'var(--silver-dim)';
-    }
+    toggle.classList.toggle('on', autoTheme);
 }
 
 function applyTimeTheme() {
@@ -5952,26 +5917,168 @@ function applyTimeTheme() {
     }
 }
 
-function loadSettingsPage() {
-    document.getElementById('settings-api-key').value = CHAT_API_KEY;
-    document.getElementById('settings-api-url').value = CHAT_BASE_URL;
-    document.getElementById('settings-api-model').value = CHAT_MODEL;
-    document.getElementById('settings-model-display').textContent = CHAT_MODEL;
-    updateAutoThemeUI();
-    fetchStats().then(() => {
-        const total = parseFloat(document.getElementById('stat-total-cost').textContent.replace('¥','')) || 0;
-        document.getElementById('settings-cost').textContent = '¥' + total.toFixed(4);
-        const pct = Math.min(total / 50 * 100, 100);
-        document.getElementById('settings-cost-bar').style.width = pct + '%';
-        document.getElementById('settings-cost-detail').textContent = `已用 ${pct.toFixed(0)}% · 按當前節奏，還夠聊到月底`;
+// ═════════════════ #settings：档案 / 接口管理 / 偏好 ═════════════════
+const SETTINGS_AVATAR_OPTIONS = ['🐻','🐱','🐰','🦊','🐺','💚','🌊','🐚'];
+
+function settingsGetInterfaces() {
+    try { return JSON.parse(localStorage.getItem('ryven-interfaces')) || {}; } catch(e) { return {}; }
+}
+function settingsSaveInterfaces(data) { localStorage.setItem('ryven-interfaces', JSON.stringify(data)); }
+
+function renderSettingsPage() {
+    // 档案：Nory 的名字/头像存本地，Ryven 的名字走既有 nickname 系统（js-ryven-name 会自动同步）
+    const noryNameEl = document.getElementById('settings-nory-name');
+    if (noryNameEl) noryNameEl.textContent = localStorage.getItem('ryven-nory-name') || 'Nory';
+    const noryAvatarEl = document.getElementById('settings-nory-avatar');
+    if (noryAvatarEl) noryAvatarEl.textContent = localStorage.getItem('ryven-avatar-nory') || '🐻';
+    const ryvenAvatarEl = document.getElementById('settings-ryven-avatar');
+    if (ryvenAvatarEl) ryvenAvatarEl.textContent = localStorage.getItem('ryven-avatar-ryven') || '💚';
+
+    // 接口管理：根据是否存了 key 显示已连/未连
+    const ifaces = settingsGetInterfaces();
+    ['elevenlabs', 'xiaomi', 'netease'].forEach(id => {
+        const info = ifaces[id];
+        const connected = !!(info && info.key);
+        const dot = document.getElementById(`settings-iface-dot-${id}`);
+        const text = document.getElementById(`settings-iface-text-${id}`);
+        const card = document.getElementById(`settings-iface-card-${id}`);
+        const keyInput = document.getElementById(`settings-iface-key-${id}`);
+        if (dot) dot.className = 'status-dot ' + (connected ? 'on' : 'off');
+        if (text) { text.className = 'status-text ' + (connected ? 'on' : 'off'); text.textContent = connected ? '已連' : '未連'; }
+        if (card) card.classList.toggle('connected', connected);
+        if (keyInput) keyInput.value = (info && info.key) || '';
     });
-    const tb = document.getElementById('settings-time-badge');
-    if (tb) {
-        const h = new Date().getHours();
-        let p = h >= 5 && h < 12 ? '清晨' : h < 18 ? '午後' : '深夜';
-        const now = new Date();
-        tb.textContent = `${p} · ${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+    // 偏好：各按钮的 active 状态
+    const isLight = document.body.classList.contains('light');
+    const themeDark = document.getElementById('settings-theme-dark');
+    const themeLight = document.getElementById('settings-theme-light');
+    if (themeDark) themeDark.classList.toggle('active', !isLight);
+    if (themeLight) themeLight.classList.toggle('active', isLight);
+    updateAutoThemeUI();
+
+    const font = localStorage.getItem('ryven-pref-font') || 'cormorant';
+    const fontCormorant = document.getElementById('settings-font-cormorant');
+    const fontDmsans = document.getElementById('settings-font-dmsans');
+    if (fontCormorant) fontCormorant.classList.toggle('active', font === 'cormorant');
+    if (fontDmsans) fontDmsans.classList.toggle('active', font === 'dmsans');
+
+    const lang = localStorage.getItem('ryven-pref-lang') || 'zh';
+    ['zh', 'en', 'mixed'].forEach(l => {
+        const btn = document.getElementById(`settings-lang-${l}`);
+        if (btn) btn.classList.toggle('active', lang === l);
+    });
+}
+
+// ---- 档案：名字编辑 ----
+function settingsToggleNameEdit(who) {
+    const nameEl = document.getElementById(`settings-${who}-name`);
+    const inputEl = document.getElementById(`settings-${who}-name-input`);
+    const isEditing = inputEl.style.display !== 'none';
+    if (isEditing) { settingsSaveName(who); return; }
+    inputEl.value = nameEl.textContent;
+    nameEl.style.display = 'none';
+    inputEl.style.display = 'block';
+    inputEl.focus();
+    inputEl.select();
+}
+
+function settingsSaveName(who) {
+    const nameEl = document.getElementById(`settings-${who}-name`);
+    const inputEl = document.getElementById(`settings-${who}-name-input`);
+    const newName = inputEl.value.trim();
+    inputEl.style.display = 'none';
+    nameEl.style.display = '';
+    if (!newName) return;
+    if (who === 'ryven') {
+        applyNewNickname(newName); // 复用既有改名系统：会自动插系统消息+触发 Ryven 反应
+    } else {
+        nameEl.textContent = newName;
+        localStorage.setItem('ryven-nory-name', newName);
+        showToast('✧ 已儲存');
     }
+}
+
+// ---- 档案：头像切换/放大 ----
+function settingsCycleAvatar(who) {
+    const key = who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven';
+    const current = localStorage.getItem(key) || (who === 'nory' ? '🐻' : '💚');
+    const idx = SETTINGS_AVATAR_OPTIONS.indexOf(current);
+    const next = SETTINGS_AVATAR_OPTIONS[(idx + 1 + SETTINGS_AVATAR_OPTIONS.length) % SETTINGS_AVATAR_OPTIONS.length];
+    localStorage.setItem(key, next);
+    document.getElementById(`settings-${who}-avatar`).textContent = next;
+}
+
+function settingsOpenAvatarLightbox(who) {
+    const emoji = document.getElementById(`settings-${who}-avatar`).textContent;
+    document.getElementById('settings-avatar-lightbox-emoji').textContent = emoji;
+    document.getElementById('settings-avatar-lightbox').classList.add('show');
+}
+function settingsCloseAvatarLightbox() {
+    document.getElementById('settings-avatar-lightbox').classList.remove('show');
+}
+
+// ---- 接口管理：展开/测试/断开 ----
+function settingsToggleInterface(id) {
+    const card = document.getElementById(`settings-iface-card-${id}`);
+    const edit = document.getElementById(`settings-iface-edit-${id}`);
+    const isOpen = edit.classList.toggle('open');
+    card.classList.toggle('open', isOpen);
+}
+
+async function settingsTestInterface(id) {
+    const keyInput = document.getElementById(`settings-iface-key-${id}`);
+    const key = keyInput.value.trim();
+    if (!key) { showToast('✧ 先填個 API Key'); return; }
+
+    if (id !== 'elevenlabs') {
+        showToast('🐚 功能開發中');
+        return;
+    }
+
+    showToast('✧ 測試連接中…');
+    try {
+        const res = await fetch('https://ryven.homes/relay/tts/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+            body: JSON.stringify({ key })
+        });
+        if (!res.ok) throw new Error('bad status');
+        const ifaces = settingsGetInterfaces();
+        ifaces[id] = { key };
+        settingsSaveInterfaces(ifaces);
+        renderSettingsPage();
+        showToast('✧ 連接成功');
+    } catch(e) {
+        showToast('🌙 連接失敗，稍後再試');
+    }
+}
+
+function settingsDisconnectInterface(id) {
+    const ifaces = settingsGetInterfaces();
+    delete ifaces[id];
+    settingsSaveInterfaces(ifaces);
+    document.getElementById(`settings-iface-key-${id}`).value = '';
+    renderSettingsPage();
+    showToast('✧ 已斷開');
+}
+
+// ---- 偏好：主题/字体/语言 ----
+function settingsSetTheme(mode) {
+    const isLight = mode === 'light';
+    document.body.classList.toggle('light', isLight);
+    localStorage.setItem('ryven-theme', isLight ? 'light' : 'dark');
+    renderSettingsPage();
+}
+
+function settingsSetFont(font) {
+    localStorage.setItem('ryven-pref-font', font);
+    renderSettingsPage();
+}
+
+function settingsSetLang(lang) {
+    localStorage.setItem('ryven-pref-lang', lang);
+    renderSettingsPage();
 }
   
   function showToast(msg) {
