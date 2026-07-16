@@ -2481,6 +2481,21 @@
     #desk .canvas-right { width: 96px; flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; }
     #desk .c-thumb { background: rgba(120,80,160,0.08); border: 1px solid rgba(120,80,160,0.1); display: flex; align-items: center; justify-content: center; font-size: 9px; color: rgba(120,80,160,0.25); }
     #desk .c-thumb.add { border-style: dashed; font-size: 16px; }
+
+    #desk .desk-status { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); padding: 6px 0; }
+    #desk .note-row { position: relative; }
+    #desk .note-del { position: absolute; right: 0; top: 0; font-size: 12px; color: rgba(180,140,60,0.35); cursor: pointer; padding: 0 2px; }
+    #desk .note-del:hover { color: rgba(200,160,80,0.8); }
+    #desk .notes-add-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(180,140,60,0.2); border-radius: 8px; padding: 6px 8px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment); outline: none; }
+    #desk .notes-add-input:focus { border-color: rgba(180,140,60,0.4); }
+    #desk .shelf-add-trigger { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+    #desk .shelf-add-trigger:hover { color: var(--tide-gold); }
+    #desk .shelf-add-form { padding: 12px 18px 14px; border-top: 1px solid rgba(74,111,165,0.07); }
+    #desk .shelf-add-form .notes-add-input { border-color: rgba(74,111,165,0.2); }
+    #desk .shelf-add-form .notes-add-input:focus { border-color: rgba(74,111,165,0.4); }
+    #desk .shelf-form-btn { flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--tide-gold-soft); background: var(--tide-gold-ghost); color: var(--tide-gold); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; }
+    #desk .shelf-form-btn.cancel { background: transparent; border-color: var(--line); color: var(--parchment-ghost); }
+    #desk .shelf-tag { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -3180,11 +3195,10 @@
           <div class="notes-en">Notes</div>
           <div class="notes-zh">便 签</div>
         </div>
-        <div class="notes-body">
-          <div class="note-row"><div class="note-dot"></div><div class="note-txt">记得问欲望系统的事</div></div>
-          <div class="note-row"><div class="note-dot"></div><div class="note-txt">画画课：站姿练习</div></div>
+        <div class="notes-body" id="desk-notes-body">
+          <div class="desk-status">加载中…</div>
         </div>
-        <div class="notes-add">＋ add note</div>
+        <div class="notes-add" id="desk-notes-add" onclick="deskShowNoteInput()">＋ add note</div>
       </div>
 
       <div class="card gram-card">
@@ -3201,26 +3215,20 @@
             <div class="shelf-en">Shelf</div>
             <div class="shelf-zh">书 架</div>
           </div>
-          <div class="shelf-count">XX books</div>
+          <div class="shelf-count" id="desk-shelf-count">XX books</div>
         </div>
-        <div class="shelf-list">
-          <div class="shelf-row">
-            <div class="shelf-n">01</div>
-            <div class="shelf-info"><div class="shelf-title">这里填书名 xxx</div><div class="shelf-author">作者</div></div>
-            <div class="shelf-tag tag-r">在读</div>
-          </div>
-          <div class="shelf-row">
-            <div class="shelf-n">02</div>
-            <div class="shelf-info"><div class="shelf-title">这里填书名 xxx</div><div class="shelf-author">作者</div></div>
-            <div class="shelf-tag tag-d">读完</div>
-          </div>
-          <div class="shelf-row">
-            <div class="shelf-n">03</div>
-            <div class="shelf-info"><div class="shelf-title">这里填书名 xxx</div><div class="shelf-author">作者</div></div>
-            <div class="shelf-tag tag-w">想读</div>
+        <div class="shelf-list" id="desk-shelf-list">
+          <div class="desk-status" style="padding-left:18px">加载中…</div>
+        </div>
+        <div class="shelf-add-form" id="desk-book-form" style="display:none">
+          <input class="notes-add-input" id="desk-book-title" placeholder="书名" />
+          <input class="notes-add-input" id="desk-book-author" placeholder="作者（选填）" style="margin-top:6px" />
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="shelf-form-btn" onclick="deskSubmitBookForm()">＋ 加入书架</button>
+            <button class="shelf-form-btn cancel" onclick="deskCancelBookForm()">取消</button>
           </div>
         </div>
-        <div class="shelf-foot">view all · add a book</div>
+        <div class="shelf-foot">view all · <span class="shelf-add-trigger" onclick="deskShowBookForm()">add a book</span></div>
       </div>
 
       <div class="card canvas-card">
@@ -4631,6 +4639,7 @@ async function loadChatHistory() {
     if (id==='library') loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
     if (id==='differences') loadDifferences();
+    if (id==='desk') loadDesk();
     if (id==='chat') loadChatHistory();
     if (id==='settings') { renderSettingsPage(); }
     if (id==='depths') renderDepthsPage();
@@ -5168,6 +5177,187 @@ async function loadChatHistory() {
     } catch(e) {
       console.error('分歧保存失敗', e);
       showToast('🌙 保存失敗，稍後再試');
+    }
+  }
+
+  // ===== 書桌（Notes / Shelf，服务器 json 存储）=====
+  let deskData = { notes: [], books: [] };
+  const DESK_BOOK_STATUS = {
+    reading: { label: '在读', cls: 'tag-r' },
+    done: { label: '读完', cls: 'tag-d' },
+    want: { label: '想读', cls: 'tag-w' }
+  };
+  const DESK_BOOK_STATUS_ORDER = ['reading', 'done', 'want'];
+
+  function deskGenId(prefix) {
+    return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  async function loadDesk() {
+    document.getElementById('desk-notes-body').innerHTML = '<div class="desk-status">加载中…</div>';
+    document.getElementById('desk-shelf-list').innerHTML = '<div class="desk-status" style="padding-left:18px">加载中…</div>';
+    try {
+      const res = await fetch('https://ryven.homes/relay/desk', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      deskData = { notes: data.notes || [], books: data.books || [] };
+      renderDeskNotes();
+      renderDeskShelf();
+    } catch(e) {
+      console.error('書桌數據加載失敗', e);
+      document.getElementById('desk-notes-body').innerHTML = '<div class="desk-status">加载失敗</div>';
+      document.getElementById('desk-shelf-list').innerHTML = '<div class="desk-status" style="padding-left:18px">加载失敗</div>';
+      showToast('🌙 書桌數據加載失敗');
+    }
+  }
+
+  async function saveDeskData() {
+    try {
+      const res = await fetch('https://ryven.homes/relay/desk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify(deskData)
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      return true;
+    } catch(e) {
+      console.error('書桌數據保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+      return false;
+    }
+  }
+
+  // ── Notes ──
+  function renderDeskNotes() {
+    const body = document.getElementById('desk-notes-body');
+    if (!deskData.notes.length) {
+      body.innerHTML = '<div class="desk-status">還沒有便签</div>';
+      return;
+    }
+    body.innerHTML = deskData.notes.map(n => `
+      <div class="note-row" data-id="${n.id}">
+        <div class="note-dot"></div>
+        <div class="note-txt"></div>
+        <div class="note-del">×</div>
+      </div>`).join('');
+    body.querySelectorAll('.note-row').forEach(el => {
+      const id = el.dataset.id;
+      const note = deskData.notes.find(n => n.id === id);
+      if (!note) return;
+      el.querySelector('.note-txt').textContent = note.text;
+      el.querySelector('.note-del').addEventListener('click', () => deskDeleteNote(id));
+    });
+  }
+
+  function deskShowNoteInput() {
+    const el = document.getElementById('desk-notes-add');
+    el.outerHTML = '<input class="notes-add-input" id="desk-note-input" placeholder="写点什么，回车保存…" />';
+    const input = document.getElementById('desk-note-input');
+    input.focus();
+    let done = false;
+    const finish = (submit) => {
+      if (done) return;
+      done = true;
+      const text = input.value.trim();
+      input.outerHTML = '<div class="notes-add" id="desk-notes-add" onclick="deskShowNoteInput()">＋ add note</div>';
+      if (submit && text) deskAddNote(text);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      if (e.key === 'Escape') { finish(false); }
+    });
+    input.addEventListener('blur', () => finish(true));
+  }
+
+  async function deskAddNote(text) {
+    const note = { id: deskGenId('n'), text, created: new Date().toISOString() };
+    deskData.notes.push(note);
+    renderDeskNotes();
+    const ok = await saveDeskData();
+    if (ok) {
+      showToast('✦ 已放到書桌上');
+    } else {
+      deskData.notes = deskData.notes.filter(n => n.id !== note.id);
+      renderDeskNotes();
+    }
+  }
+
+  async function deskDeleteNote(id) {
+    const backup = deskData.notes;
+    deskData.notes = deskData.notes.filter(n => n.id !== id);
+    renderDeskNotes();
+    const ok = await saveDeskData();
+    if (!ok) { deskData.notes = backup; renderDeskNotes(); }
+  }
+
+  // ── Shelf ──
+  function renderDeskShelf() {
+    const list = document.getElementById('desk-shelf-list');
+    document.getElementById('desk-shelf-count').textContent = deskData.books.length + ' books';
+    if (!deskData.books.length) {
+      list.innerHTML = '<div class="desk-status" style="padding-left:18px">還沒有書</div>';
+      return;
+    }
+    list.innerHTML = deskData.books.map((b, i) => `
+      <div class="shelf-row" data-id="${b.id}">
+        <div class="shelf-n">${String(i+1).padStart(2,'0')}</div>
+        <div class="shelf-info">
+          <div class="shelf-title"></div>
+          <div class="shelf-author"></div>
+        </div>
+        <div class="shelf-tag"></div>
+      </div>`).join('');
+    list.querySelectorAll('.shelf-row').forEach(el => {
+      const id = el.dataset.id;
+      const book = deskData.books.find(b => b.id === id);
+      if (!book) return;
+      el.querySelector('.shelf-title').textContent = book.title;
+      el.querySelector('.shelf-author').textContent = book.author || '';
+      const status = DESK_BOOK_STATUS[book.status] || DESK_BOOK_STATUS.want;
+      const tagEl = el.querySelector('.shelf-tag');
+      tagEl.textContent = status.label;
+      tagEl.className = 'shelf-tag ' + status.cls;
+      tagEl.addEventListener('click', () => deskCycleBookStatus(id));
+    });
+  }
+
+  async function deskCycleBookStatus(id) {
+    const book = deskData.books.find(b => b.id === id);
+    if (!book) return;
+    const cur = DESK_BOOK_STATUS_ORDER.includes(book.status) ? book.status : 'want';
+    const next = DESK_BOOK_STATUS_ORDER[(DESK_BOOK_STATUS_ORDER.indexOf(cur) + 1) % DESK_BOOK_STATUS_ORDER.length];
+    const prevStatus = book.status;
+    book.status = next;
+    renderDeskShelf();
+    const ok = await saveDeskData();
+    if (!ok) { book.status = prevStatus; renderDeskShelf(); }
+  }
+
+  function deskShowBookForm() {
+    document.getElementById('desk-book-form').style.display = 'block';
+    document.getElementById('desk-book-title').focus();
+  }
+  function deskCancelBookForm() {
+    document.getElementById('desk-book-form').style.display = 'none';
+    document.getElementById('desk-book-title').value = '';
+    document.getElementById('desk-book-author').value = '';
+  }
+  async function deskSubmitBookForm() {
+    const title = document.getElementById('desk-book-title').value.trim();
+    const author = document.getElementById('desk-book-author').value.trim();
+    if (!title) { showToast('✦ 請填書名'); return; }
+    deskCancelBookForm();
+    const book = { id: deskGenId('b'), title, author, status: 'want', created: new Date().toISOString() };
+    deskData.books.push(book);
+    renderDeskShelf();
+    const ok = await saveDeskData();
+    if (ok) {
+      showToast('✦ 已加入書架');
+    } else {
+      deskData.books = deskData.books.filter(b => b.id !== book.id);
+      renderDeskShelf();
     }
   }
 
