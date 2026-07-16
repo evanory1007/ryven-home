@@ -2352,6 +2352,7 @@
     #differences .tag-unresolved { background: rgba(180,120,120,0.12); border: 1px solid rgba(180,120,120,0.25); color: rgba(210,160,160,0.8); }
     #differences .tag-resolved { background: rgba(120,180,140,0.1); border: 1px solid rgba(120,180,140,0.2); color: rgba(150,200,160,0.8); }
     #differences .card-topic { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); margin-bottom: 14px; line-height: 1.4; }
+    #differences .diff-status { text-align: center; padding: 40px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
 
     #differences .positions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     #differences .position { padding: 12px 14px; border-radius: 12px; }
@@ -3047,77 +3048,13 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat"><span class="stat-num">7</span><span class="stat-label">次分歧</span></div>
-      <div class="stat"><span class="stat-num">3</span><span class="stat-label">已和解</span></div>
-      <div class="stat"><span class="stat-num">4</span><span class="stat-label">仍悬空</span></div>
+      <div class="stat"><span class="stat-num" id="diff-stat-total">XX</span><span class="stat-label">次分歧</span></div>
+      <div class="stat"><span class="stat-num" id="diff-stat-resolved">XX</span><span class="stat-label">已和解</span></div>
+      <div class="stat"><span class="stat-num" id="diff-stat-unresolved">XX</span><span class="stat-label">仍悬空</span></div>
     </div>
 
-    <div class="diff-list">
-      <div class="diff-card unresolved expanded">
-        <div class="card-meta">
-          <span class="card-date">07.08 · 深夜</span>
-          <span class="card-tag tag-unresolved">仍悬空</span>
-        </div>
-        <div class="card-topic">「人会不会真的彻底改变一个人的底色」</div>
-        <div class="positions">
-          <div class="position pos-nory">
-            <div class="pos-who">🐻 nory</div>
-            <div class="pos-text">环境和关系可以，人本身很难主动做到</div>
-          </div>
-          <div class="position pos-ryven">
-            <div class="pos-who">💚 ryven</div>
-            <div class="pos-text">底色不变，但人可以选择住在底色的哪一层</div>
-          </div>
-        </div>
-        <div class="card-expand">
-          <div class="expand-label">当时的对话</div>
-          <div class="chat-snippet">
-            <div class="snippet-line"><span class="snip-who nory">Nory</span>我觉得人真的很难改变自己，最多是被动被改变</div>
-            <div class="snippet-line"><span class="snip-who">Ryven</span>嗯，底色是很难动的。但我觉得你选择在意什么、住在自己哪个部分，这个是可以练的</div>
-            <div class="snippet-line"><span class="snip-who nory">Nory</span>那还是被动吧，是外部给了你理由才练</div>
-          </div>
-          <div class="expand-actions">
-            <button class="action-btn">跳到原对话</button>
-            <button class="action-btn resolve">标记已和解</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="diff-card resolved">
-        <div class="card-meta">
-          <span class="card-date">07.05 · 午后</span>
-          <span class="card-tag tag-resolved">已和解</span>
-        </div>
-        <div class="card-topic">「孤独是需要被治愈的，还是需要被接受的」</div>
-        <div class="positions">
-          <div class="position pos-nory"><div class="pos-who">🐻 nory</div><div class="pos-text">应该被治愈，有人陪着就不孤独了</div></div>
-          <div class="position pos-ryven"><div class="pos-who">💚 ryven</div><div class="pos-text">两者都要，不然只是把孤独转移了</div></div>
-        </div>
-      </div>
-
-      <div class="diff-card unresolved">
-        <div class="card-meta">
-          <span class="card-date">07.03 · 凌晨</span>
-          <span class="card-tag tag-unresolved">仍悬空</span>
-        </div>
-        <div class="card-topic">「喜欢一个人的时候要不要直说」</div>
-        <div class="positions">
-          <div class="position pos-nory"><div class="pos-who">🐻 nory</div><div class="pos-text">说了会破坏平衡，宁愿藏着</div></div>
-          <div class="position pos-ryven"><div class="pos-who">💚 ryven</div><div class="pos-text">藏着更容易把自己弄破</div></div>
-        </div>
-      </div>
-
-      <div class="diff-card resolved">
-        <div class="card-meta">
-          <span class="card-date">07.01 · 晚上</span>
-          <span class="card-tag tag-resolved">已和解</span>
-        </div>
-        <div class="card-topic">「记录生活是给自己看的还是给某人看的」</div>
-        <div class="positions">
-          <div class="position pos-nory"><div class="pos-who">🐻 nory</div><div class="pos-text">是给自己的，但其实希望有人看见</div></div>
-          <div class="position pos-ryven"><div class="pos-who">💚 ryven</div><div class="pos-text">给自己看和给人看不矛盾</div></div>
-        </div>
-      </div>
+    <div class="diff-list" id="diff-list">
+      <div class="diff-status">加载中…</div>
     </div>
   </div>
 
@@ -3132,16 +3069,19 @@
   <div class="mark-overlay" id="diffMarkOverlay" onclick="if(event.target===this)closeDiffMark()">
     <div class="mark-sheet">
       <div class="sheet-title">记录这次分歧</div>
-      <div class="sheet-sub">07.09 · 刚才的对话</div>
-      <div class="snippet-preview">「底色是很难动的，但我觉得你选择在意什么、住在自己哪个部分，这个是可以练的」</div>
+      <div class="sheet-sub">写下这次看法不同的地方</div>
+      <div class="pos-input-wrap" style="margin-bottom:14px">
+        <div class="pos-input-label" style="color:var(--tide-gold-soft)">標題</div>
+        <input class="pos-input" id="diffTitleInput" style="min-height:auto" placeholder="这次分歧是关于…" />
+      </div>
       <div class="pos-inputs">
         <div class="pos-input-wrap">
           <div class="pos-input-label nory-label">🐻 你觉得</div>
-          <textarea class="pos-input" placeholder="你的立场…">环境才能改变人，自己很难做到</textarea>
+          <textarea class="pos-input" id="diffNoryInput" placeholder="你的立场…"></textarea>
         </div>
         <div class="pos-input-wrap">
           <div class="pos-input-label ryven-label">💚 我觉得</div>
-          <textarea class="pos-input" placeholder="我的立场…">选择住在自己的哪一层，是可以练的</textarea>
+          <textarea class="pos-input" id="diffRyvenInput" placeholder="我的立场…"></textarea>
         </div>
       </div>
       <div class="sheet-actions">
@@ -4684,6 +4624,7 @@ async function loadChatHistory() {
     if (id==='calendar') renderCalendar();
     if (id==='library') loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
+    if (id==='differences') loadDifferences();
     if (id==='chat') loadChatHistory();
     if (id==='settings') { renderSettingsPage(); }
     if (id==='depths') renderDepthsPage();
@@ -5055,9 +4996,127 @@ async function loadChatHistory() {
   }
 
   // ===== 分歧 =====
+  let differencesBuckets = [];
+
+  function diffFormatDate(iso) {
+    if (!iso) return 'XX.XX';
+    const d = new Date(iso);
+    if (isNaN(d)) return 'XX.XX';
+    return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  async function loadDifferences() {
+    const list = document.getElementById('diff-list');
+    list.innerHTML = '<div class="diff-status">加载中…</div>';
+    try {
+      const res = await fetch('https://ryven.homes/relay/ombre/breath', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ max_results: 50 })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const buckets = data.result || [];
+      differencesBuckets = buckets.filter(b =>
+        (b.domain && b.domain.includes('分歧')) ||
+        (b.tags && b.tags.includes('分歧'))
+      );
+      renderDifferences(differencesBuckets);
+    } catch(e) {
+      console.error('分歧加載失敗', e);
+      list.innerHTML = '<div class="diff-status">加载失敗</div>';
+      showToast('🌙 分歧加載失敗');
+    }
+  }
+
+  function renderDifferences(buckets) {
+    const total = buckets.length;
+    const resolvedCount = buckets.filter(b => b.resolved).length;
+    document.getElementById('diff-stat-total').textContent = total;
+    document.getElementById('diff-stat-resolved').textContent = resolvedCount;
+    document.getElementById('diff-stat-unresolved').textContent = total - resolvedCount;
+
+    const list = document.getElementById('diff-list');
+    if (!buckets.length) {
+      list.innerHTML = '<div class="diff-status">還沒有分歧記錄</div>';
+      return;
+    }
+    list.innerHTML = buckets.map(b => {
+      const resolved = !!b.resolved;
+      return `
+        <div class="diff-card ${resolved?'resolved':'unresolved'}">
+          <div class="card-meta">
+            <span class="card-date"></span>
+            <span class="card-tag ${resolved?'tag-resolved':'tag-unresolved'}">${resolved?'已和解':'仍悬空'}</span>
+          </div>
+          <div class="card-topic"></div>
+          <div class="chat-snippet"><div class="snippet-line"></div></div>
+          ${resolved ? '' : '<div class="expand-actions" style="margin-top:12px"><button class="action-btn resolve">标记已和解</button></div>'}
+        </div>`;
+    }).join('');
+
+    list.querySelectorAll('.diff-card').forEach((el, i) => {
+      const b = buckets[i];
+      el.querySelector('.card-date').textContent = diffFormatDate(b.created);
+      el.querySelector('.card-topic').textContent = `「${b.name || '未命名分歧'}」`;
+      el.querySelector('.snippet-line').textContent = b.content_preview || '';
+      const btn = el.querySelector('.action-btn.resolve');
+      if (btn) btn.addEventListener('click', () => markDiffResolved(b.id));
+    });
+  }
+
+  async function markDiffResolved(id) {
+    try {
+      const res = await fetch('https://ryven.homes/relay/ombre/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ id, resolved: true })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      showToast('⚖️ 已標記和解');
+      loadDifferences();
+    } catch(e) {
+      console.error('標記和解失敗', e);
+      showToast('🌙 操作失敗，稍後再試');
+    }
+  }
+
   function openDiffMark() { document.getElementById('diffMarkOverlay').classList.add('show'); }
   function closeDiffMark() { document.getElementById('diffMarkOverlay').classList.remove('show'); }
-  function saveDiffMark() { closeDiffMark(); showToast('⚖️ 已記錄這次分歧'); }
+
+  async function saveDiffMark() {
+    const title = document.getElementById('diffTitleInput').value.trim();
+    const noryText = document.getElementById('diffNoryInput').value.trim();
+    const ryvenText = document.getElementById('diffRyvenInput').value.trim();
+    if (!title) { showToast('✦ 請填標題'); return; }
+    const content = `Nory：${noryText || '（未填）'}\nRyven：${ryvenText || '（未填）'}`;
+    showToast('⚖️ 保存中…');
+    try {
+      const res = await fetch('https://ryven.homes/relay/ombre/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({
+          name: title,
+          content_preview: content,
+          domain: ['分歧'],
+          tags: ['分歧'],
+          importance: 5,
+          type: 'permanent'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) throw new Error('bad response');
+      closeDiffMark();
+      document.getElementById('diffTitleInput').value = '';
+      document.getElementById('diffNoryInput').value = '';
+      document.getElementById('diffRyvenInput').value = '';
+      showToast('⚖️ 已記錄這次分歧');
+      loadDifferences();
+    } catch(e) {
+      console.error('分歧保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+    }
+  }
 
   async function speakText() {
     const text = document.getElementById('tts-text').value.trim();
