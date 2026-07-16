@@ -2791,26 +2791,26 @@
         </div>
       </div>
       <div class="card-lib-count">
-        海裡養著 <strong class="TODO">XX</strong> 只珍珠，本月新添 <strong class="TODO">XX</strong> 只。
+        海裡養著 <strong id="memlib-count">XX</strong> 只珍珠，本月新添 <strong id="memlib-new-month">XX</strong> 只。
       </div>
       <div class="card-lib-stats">
         <div class="card-lib-stat">
-          <div class="card-lib-stat-top"><span class="em">🪸</span><span class="num TODO">XX</span></div>
+          <div class="card-lib-stat-top"><span class="em">🪸</span><span class="num" id="memlib-pinned">XX</span></div>
           <span class="lbl">pinned</span>
         </div>
         <div class="card-lib-stat">
-          <div class="card-lib-stat-top"><span class="em">🐠</span><span class="num TODO">XX</span></div>
+          <div class="card-lib-stat-top"><span class="em">🐠</span><span class="num" id="memlib-recent">XX</span></div>
           <span class="lbl">recent</span>
         </div>
         <div class="card-lib-stat">
-          <div class="card-lib-stat-top"><span class="em">🐚</span><span class="num TODO">XX</span></div>
+          <div class="card-lib-stat-top"><span class="em">🐚</span><span class="num" id="memlib-quiet">XX</span></div>
           <span class="lbl">quiet</span>
         </div>
       </div>
       <div>
         <div class="card-lib-latest-lbl">最新一顆</div>
-        <div class="card-lib-latest-title TODO">这里填 xxx</div>
-        <div class="card-lib-latest-meta TODO">这里填 xxx</div>
+        <div class="card-lib-latest-title" id="memlib-latest-title">加载中…</div>
+        <div class="card-lib-latest-meta" id="memlib-latest-meta"></div>
       </div>
       <a href="javascript:void(0)" class="card-cta" onclick="goTo('library')">走進海裡</a>
     </div>
@@ -4621,6 +4621,7 @@ async function loadChatHistory() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0,0);
+    if (id==='memory') loadMemoryLibraryCard();
     if (id==='calendar') renderCalendar();
     if (id==='library') loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
@@ -4777,6 +4778,53 @@ async function loadChatHistory() {
       console.error('記憶庫加載失敗', e);
       allGrid.innerHTML = '<div class="lib-status">加载失敗</div>';
       showToast('🌙 記憶庫加載失敗');
+    }
+  }
+
+  function memlibDaysSince(iso) {
+    if (!iso) return Infinity;
+    const d = new Date(iso);
+    if (isNaN(d)) return Infinity;
+    return (Date.now() - d.getTime()) / 86400000;
+  }
+
+  async function loadMemoryLibraryCard() {
+    fetchOmbreCount(); // 順帶把 memlib-count 更新成真實總數
+    try {
+      const res = await fetch('https://ryven.homes/relay/ombre/breath', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ max_results: 50 })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const buckets = data.result || [];
+
+      const thisMonth = buckets.filter(b => {
+        const d = new Date(b.created);
+        return !isNaN(d) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      }).length;
+      document.getElementById('memlib-new-month').textContent = thisMonth;
+
+      const pinned = buckets.filter(b => b.pinned);
+      const notPinned = buckets.filter(b => !b.pinned);
+      const recent = notPinned.filter(b => memlibDaysSince(b.last_active || b.created) <= 7);
+      const quiet = notPinned.filter(b => memlibDaysSince(b.last_active || b.created) > 7);
+      document.getElementById('memlib-pinned').textContent = pinned.length;
+      document.getElementById('memlib-recent').textContent = recent.length;
+      document.getElementById('memlib-quiet').textContent = quiet.length;
+
+      if (buckets.length) {
+        const latest = buckets.slice().sort((a,b) => new Date(b.created) - new Date(a.created))[0];
+        document.getElementById('memlib-latest-title').textContent = latest.name || '未命名';
+        document.getElementById('memlib-latest-meta').textContent = libFormatDate(latest.created);
+      } else {
+        document.getElementById('memlib-latest-title').textContent = '還沒有記憶';
+        document.getElementById('memlib-latest-meta').textContent = '';
+      }
+    } catch(e) {
+      console.error('Library 卡數據加載失敗', e);
+      document.getElementById('memlib-latest-title').textContent = '加载失敗';
     }
   }
 
@@ -6156,6 +6204,10 @@ async function fetchOmbreCount() {
       libCountEl.textContent = data.count + ' 顆';
       libCountEl.dataset.fromCount = '1';
     }
+
+    // memory 頁 Library 卡的總數也用同一份數據
+    const memlibCountEl = document.getElementById('memlib-count');
+    if (memlibCountEl && data.count != null) memlibCountEl.textContent = data.count;
   } catch(e) {
     console.error('Ombre 記憶總數獲取失敗', e);
   }
