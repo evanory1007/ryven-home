@@ -4589,14 +4589,18 @@ async function loadChatHistory() {
     const data = await res.json();
     const messages = data.messages || [];
     if (messages.length > 0) {
-      console.log('[调试] 第一条历史消息完整内容：', messages[0]);
       document.getElementById('chat-messages').innerHTML = '';
       lastMsgDateKey = null;
       chatHistory = [];
-      for (const msg of messages) {
+      const estimateBase = Date.now();
+      for (let idx = 0; idx < messages.length; idx++) {
+        const msg = messages[idx];
         // 修复前泄漏进relay的改名指令文本（实际文案是"用户刚刚把你的名字改成了..."），历史数据里可能还留着，过滤掉不渲染成气泡
         if (msg.content && msg.content.includes('用户刚刚把你的名字改成了')) continue;
-        const msgTime = msg.timestamp || msg.created_at;
+        // 旧数据没存 timestamp：按在数组里的位置从现在往前推算，每条间隔1分钟，
+        // 至少保证时间递增、不会全堆在同一刻；有真实 timestamp 的正常消息不受影响
+        const realTime = msg.timestamp || msg.created_at;
+        const msgTime = realTime || (estimateBase - (messages.length - 1 - idx) * 60000);
         if (msg.role === 'assistant' || msg.role === 'ryven') {
           // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框
           const segments = splitIntoSentences(msg.content);
