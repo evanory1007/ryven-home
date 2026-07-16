@@ -526,6 +526,7 @@
     #memory .diff-count { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.25em; color: var(--tide-gold); text-transform: uppercase; padding: 3px 10px; border: 1px solid var(--tide-gold-soft); border-radius: 20px; }
     #memory .diff-quote { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-dim); padding-left: 30px; line-height: 1.5; opacity: 0.85; }
     #memory .diff-quote-time { font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 9px; letter-spacing: 0.15em; color: var(--parchment-ghost); opacity: 0.55; margin-left: 6px; }
+    #memory .diff-stats-mini { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.1em; color: var(--parchment-ghost); opacity: 0.6; padding-left: 30px; margin-top: 4px; }
 
     /* 3 · 日記 */
     #memory .card-diary { padding: 24px 22px 20px; }
@@ -2836,11 +2837,12 @@
         <span class="diff-em">🪞</span>
         <span class="diff-name">Differences</span>
         <span class="diff-en-inline">分 歧</span>
-        <span class="diff-count"><span class="TODO">XX</span> 條</span>
+        <span class="diff-count"><span id="memdiff-count">XX</span> 條</span>
       </div>
       <div class="diff-quote">
-        「<span class="TODO">这里填 xxx</span>」<span class="diff-quote-time TODO">XX · XX · XX:XX</span>
+        「<span id="memdiff-latest-title">这里填 xxx</span>」<span class="diff-quote-time" id="memdiff-latest-meta">XX · XX · XX:XX</span>
       </div>
+      <div class="diff-stats-mini" id="memdiff-stats-mini"></div>
     </div>
 
     <!-- ═══ 3 · 日記 ═══ -->
@@ -2880,10 +2882,10 @@
         <div class="card-cn">書 桌</div>
       </div>
       <div class="desk-row">
-        <div class="desk-em-num"><span class="em">📸</span><span class="g TODO">XX</span></div>
+        <div class="desk-em-num"><span class="em">📸</span><span class="g" id="memdesk-notes-count">XX</span></div>
         <div class="desk-mid">
           <div class="desk-lbl">張碎片纸</div>
-          <div class="desk-tags"><span class="desk-tag TODO">XX</span></div>
+          <div class="desk-tags"><span class="desk-tag" id="memdesk-books-count">XX 本書</span></div>
         </div>
       </div>
       <div class="card-cta" onclick="goTo('desk')" style="cursor:pointer">翻一翻</div>
@@ -4634,7 +4636,7 @@ async function loadChatHistory() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0,0);
-    if (id==='memory') loadMemoryLibraryCard();
+    if (id==='memory') { loadMemoryLibraryCard(); loadMemoryDiffCard(); loadMemoryDeskCard(); }
     if (id==='calendar') renderCalendar();
     if (id==='library') loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
@@ -5067,6 +5069,10 @@ async function loadChatHistory() {
     return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
   }
 
+  function isDiffBucket(b) {
+    return (b.domain && b.domain.includes('分歧')) || (b.tags && b.tags.includes('分歧'));
+  }
+
   async function loadDifferences() {
     const list = document.getElementById('diff-list');
     list.innerHTML = '<div class="diff-status">加载中…</div>';
@@ -5079,15 +5085,55 @@ async function loadChatHistory() {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       const buckets = data.result || [];
-      differencesBuckets = buckets.filter(b =>
-        (b.domain && b.domain.includes('分歧')) ||
-        (b.tags && b.tags.includes('分歧'))
-      );
+      differencesBuckets = buckets.filter(isDiffBucket);
       renderDifferences(differencesBuckets);
     } catch(e) {
       console.error('分歧加載失敗', e);
       list.innerHTML = '<div class="diff-status">加载失敗</div>';
       showToast('🌙 分歧加載失敗');
+    }
+  }
+
+  function diffQuoteTimeFormat(iso) {
+    if (!iso) return 'XX · XX · XX:XX';
+    const d = new Date(iso);
+    if (isNaN(d)) return 'XX · XX · XX:XX';
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${d.getMonth()+1} · ${d.getDate()} · ${hh}:${mm}`;
+  }
+
+  // memory 頁 Differences 小卡：只讀，不影響 differencesBuckets/#differences 頁自己的狀態
+  async function loadMemoryDiffCard() {
+    try {
+      const res = await fetch('https://ryven.homes/relay/ombre/breath', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ max_results: 50 })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const buckets = (data.result || []).filter(isDiffBucket);
+
+      document.getElementById('memdiff-count').textContent = buckets.length;
+
+      const resolvedCount = buckets.filter(b => b.resolved).length;
+      const unresolvedCount = buckets.length - resolvedCount;
+      document.getElementById('memdiff-stats-mini').textContent = buckets.length
+        ? `${unresolvedCount} 仍悬空 · ${resolvedCount} 已和解`
+        : '';
+
+      if (buckets.length) {
+        const latest = buckets.slice().sort((a,b) => new Date(b.created) - new Date(a.created))[0];
+        document.getElementById('memdiff-latest-title').textContent = latest.name || '未命名';
+        document.getElementById('memdiff-latest-meta').textContent = diffQuoteTimeFormat(latest.created);
+      } else {
+        document.getElementById('memdiff-latest-title').textContent = '還沒有分歧記錄';
+        document.getElementById('memdiff-latest-meta').textContent = '';
+      }
+    } catch(e) {
+      console.error('Differences 卡數據加載失敗', e);
+      document.getElementById('memdiff-latest-title').textContent = '加载失敗';
     }
   }
 
@@ -5226,6 +5272,23 @@ async function loadChatHistory() {
       console.error('書桌數據保存失敗', e);
       showToast('🌙 保存失敗，稍後再試');
       return false;
+    }
+  }
+
+  // memory 頁 Desk 小卡：只讀，不影響 deskData/#desk 頁自己的狀態
+  async function loadMemoryDeskCard() {
+    try {
+      const res = await fetch('https://ryven.homes/relay/desk', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const notes = data.notes || [];
+      const books = data.books || [];
+      document.getElementById('memdesk-notes-count').textContent = notes.length;
+      document.getElementById('memdesk-books-count').textContent = books.length + ' 本書';
+    } catch(e) {
+      console.error('Desk 卡數據加載失敗', e);
     }
   }
 
