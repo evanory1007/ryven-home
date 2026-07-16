@@ -4589,6 +4589,7 @@ async function loadChatHistory() {
     const data = await res.json();
     const messages = data.messages || [];
     if (messages.length > 0) {
+      console.log('[调试] 第一条历史消息完整内容：', messages[0]);
       document.getElementById('chat-messages').innerHTML = '';
       lastMsgDateKey = null;
       chatHistory = [];
