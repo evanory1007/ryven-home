@@ -626,43 +626,7 @@
     .cal-day:hover:not(.empty) { color:var(--white); border-color:rgba(201,168,76,0.3); }
     .cal-day.today { color:var(--gold); border-color:rgba(201,168,76,0.5); background:rgba(201,168,76,0.08); }
     .cal-day.has-note::after { content:''; position:absolute; bottom:3px; width:4px;height:4px; border-radius:50%; background:var(--gold); opacity:0.7; }
-    .cal-day.selected { background:rgba(201,168,76,0.2); border-color:var(--gold); color:var(--white); }
     .cal-day.empty { cursor:default; }
-
-    .diary-area { margin-top:16px; padding-top:16px; border-top:1px solid rgba(201,168,76,0.15); }
-    .diary-date-label { font-family:'Playfair Display',serif; font-size:14px; font-style:italic; color:var(--gold); margin-bottom:12px; }
-    .diary-textarea { width:100%; background:transparent; border:none; border-bottom:1px solid rgba(201,168,76,0.2); padding:8px 0; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:17px; line-height:1.8; outline:none; resize:none; min-height:100px; }
-    .diary-textarea::placeholder { color:rgba(168,152,128,0.35); font-style:italic; }
-    .diary-save-btn { margin-top:12px; padding:8px 20px; background:transparent; border:1px solid rgba(201,168,76,0.3); border-radius:16px; color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:13px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; }
-    .diary-save-btn:hover { background:rgba(201,168,76,0.1); }
-
-    .mood-btn {
-      width: 40px; height: 40px;
-      background: rgba(26,31,58,0.6);
-      border: 1px solid rgba(201,168,76,0.15);
-      border-radius: 50%;
-      font-size: 20px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .mood-btn:hover { border-color: rgba(201,168,76,0.4); transform: scale(1.1); }
-    .mood-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.2); transform: scale(1.15); }
-
-    /* ===== 書桌 ===== */
-    .desk-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
-    .desk-note { background:linear-gradient(135deg,rgba(46,74,158,0.18),rgba(26,31,58,0.35)); border:1px solid rgba(201,168,76,0.15); border-radius:16px; padding:20px; cursor:pointer; transition:all 0.3s; }
-    .desk-note:hover { border-color:rgba(201,168,76,0.35); transform:translateY(-2px); }
-    .desk-note-tag { font-family:'Cormorant Garamond',serif; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); opacity:0.7; margin-bottom:8px; }
-    .desk-note-content { font-family:'Cormorant Garamond',serif; font-size:15px; color:var(--white); line-height:1.6; }
-    .desk-note-date { font-size:11px; color:var(--silver-dim); margin-top:8px; opacity:0.6; }
-    .new-note-btn { grid-column:span 2; display:flex; align-items:center; justify-content:center; gap:8px; padding:16px; background:transparent; border:1px dashed rgba(201,168,76,0.25); border-radius:16px; color:var(--silver-dim); font-family:'Cormorant Garamond',serif; font-size:14px; cursor:pointer; transition:all 0.2s; }
-    .new-note-btn:hover { border-color:rgba(201,168,76,0.4); color:var(--gold); }
-
-    /* 書桌新增表单 */
-    .note-form { background:linear-gradient(135deg,rgba(46,74,158,0.12),rgba(26,31,58,0.25)); border:1px solid rgba(201,168,76,0.2); border-radius:20px; padding:20px; margin-bottom:16px; display:none; }
-    .note-form.show { display:block; }
-    .note-form-row { display:flex; gap:8px; margin-bottom:10px; }
 
     /* ===== 音乐/TTS ===== */
     .tts-textarea { width:100%; background:rgba(26,31,58,0.6); border:1px solid rgba(201,168,76,0.2); border-radius:12px; padding:14px 16px; color:var(--white); font-family:'Cormorant Garamond',serif; font-size:17px; outline:none; transition:border-color 0.2s; resize:none; min-height:120px; line-height:1.7; }
@@ -2497,6 +2461,118 @@
     #desk .shelf-form-btn { flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--tide-gold-soft); background: var(--tide-gold-ghost); color: var(--tide-gold); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; }
     #desk .shelf-form-btn.cancel { background: transparent; border-color: var(--line); color: var(--parchment-ghost); }
     #desk .shelf-tag { cursor: pointer; }
+
+    /* ══════════════════════ 日記 (#diary) ══════════════════════ */
+    #diary .page { max-width: 480px; margin: 0 auto; padding: 0 18px 120px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
+    #diary .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 16px; position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, rgba(10,14,31,0.95) 0%, transparent 100%); backdrop-filter: blur(8px); }
+    #diary .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); }
+    #diary .head-center { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    #diary .head-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 20px; color: var(--parchment); }
+    #diary .head-sub { font-size: 9px; letter-spacing: 0.2em; color: var(--tide-gold-soft); text-transform: uppercase; }
+
+    #diary .month-nav { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 10px 0 18px; }
+    #diary .month-arrow { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; color: var(--parchment-ghost); transition: all 0.2s; }
+    #diary .month-arrow:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #diary .month-label { font-family: 'Cormorant Garamond', serif; font-size: 17px; letter-spacing: 0.18em; color: var(--parchment-dim); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; text-decoration-color: var(--tide-gold-ghost); }
+
+    #diary .stats-row { display: flex; justify-content: center; margin-bottom: 28px; background: rgba(26,31,58,0.3); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    #diary .stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 3px; border-right: 1px solid var(--line); }
+    #diary .stat-item:last-child { border-right: none; }
+    #diary .stat-num { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; color: var(--parchment); }
+    #diary .stat-num.TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
+    #diary .stat-label { font-size: 9px; letter-spacing: 0.12em; color: var(--parchment-ghost); text-transform: uppercase; }
+
+    #diary .date-divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 18px; }
+    #diary .date-divider::before, #diary .date-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+    #diary .date-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--tide-gold-soft); letter-spacing: 0.1em; white-space: nowrap; }
+
+    #diary .diary-card { margin-bottom: 20px; position: relative; transition: box-shadow 0.4s; }
+    #diary .diary-card.jump-highlight { box-shadow: 0 0 0 2px var(--tide-gold-soft), 0 0 24px rgba(201,168,76,0.25); border-radius: 6px; }
+    #diary .envelope { background: linear-gradient(160deg, rgba(36,48,96,0.32), rgba(15,20,40,0.6)); border: 1px solid rgba(201,168,76,0.12); border-radius: 4px 4px 6px 6px; overflow: hidden; position: relative; transition: border-color 0.2s, box-shadow 0.2s; }
+    #diary .diary-card:hover .envelope { border-color: var(--tide-gold-soft); box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
+    #diary .diary-card.nory .envelope { border-left: 2px solid rgba(201,168,76,0.4); }
+    #diary .diary-card.ryven .envelope { border-left: 2px solid rgba(109,184,160,0.4); }
+    #diary .envelope-flap { position: relative; height: 44px; overflow: hidden; }
+    #diary .envelope-flap::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%; background: linear-gradient(160deg, rgba(201,168,76,0.06) 0%, transparent 60%); }
+    #diary .envelope-flap::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent); }
+    #diary .diary-card.ryven .envelope-flap::before { background: linear-gradient(160deg, rgba(109,184,160,0.06) 0%, transparent 60%); }
+    #diary .diary-card.ryven .envelope-flap::after { background: linear-gradient(90deg, transparent, rgba(109,184,160,0.2), transparent); }
+    #diary .flap-inner { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 0; position: relative; z-index: 1; }
+    #diary .env-avatar { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(201,168,76,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px; background: rgba(10,14,31,0.65); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    #diary .diary-card.ryven .env-avatar { border-color: rgba(109,184,160,0.25); }
+    #diary .env-meta { display: flex; flex-direction: column; gap: 2px; }
+    #diary .diary-card.nory .env-meta { align-items: flex-end; }
+    #diary .diary-card.ryven .env-meta { align-items: flex-start; }
+    #diary .env-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--tide-gold); }
+    #diary .diary-card.ryven .env-name { color: var(--tide-green); }
+    #diary .env-time { font-size: 10px; color: var(--parchment-ghost); letter-spacing: 0.05em; }
+    #diary .env-actions { display: flex; gap: 4px; position: absolute; top: 10px; }
+    #diary .diary-card.nory .env-actions { right: 14px; flex-direction: row-reverse; }
+    #diary .env-btn { font-size: 11px; color: var(--parchment-ghost); cursor: pointer; padding: 3px 6px; border-radius: 6px; transition: all 0.2s; }
+    #diary .env-btn:hover { color: var(--tide-gold); background: var(--tide-gold-ghost); }
+    #diary .env-btn.del:hover { color: var(--danger); background: rgba(196,122,122,0.08); }
+    #diary .letter-paper { padding: 10px 16px 12px; position: relative; }
+    #diary .letter-paper::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(180deg, transparent 0px, transparent 27px, rgba(201,168,76,0.04) 27px, rgba(201,168,76,0.04) 28px); pointer-events: none; }
+    #diary .mood-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 10px; letter-spacing: 0.08em; margin: 0 5px 10px 0; background: rgba(201,168,76,0.1); border: 1px solid var(--tide-gold-ghost); color: rgba(201,168,76,0.75); position: relative; }
+    #diary .letter-text { font-family: 'Cormorant Garamond', serif; font-size: 15.5px; line-height: 1.8; color: var(--parchment-dim); margin-bottom: 10px; position: relative; white-space: pre-wrap; }
+    #diary .nory-sign { display: flex; justify-content: flex-start; margin-top: 4px; }
+    #diary .nory-sign-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: rgba(201,168,76,0.35); letter-spacing: 0.08em; }
+    #diary .wax-seal { display: flex; justify-content: flex-end; padding-right: 4px; margin-top: 4px; position: relative; }
+    #diary .wax-circle { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(109,184,160,0.5), rgba(46,74,120,0.4)); border: 1px solid rgba(109,184,160,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(109,184,160,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.08); }
+
+    #diary .env-comments { border-top: 1px solid rgba(201,168,76,0.07); padding: 10px 16px 14px; background: rgba(8,12,24,0.35); }
+    #diary .comments-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--parchment-ghost); cursor: pointer; transition: color 0.2s; user-select: none; }
+    #diary .comments-toggle:hover { color: var(--parchment-dim); }
+    #diary .comments-list { margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
+    #diary .comment-item { display: flex; gap: 8px; }
+    #diary .comment-ava { width: 22px; height: 22px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; background: rgba(26,31,58,0.7); border: 1px solid var(--line); flex-shrink: 0; margin-top: 1px; }
+    #diary .comment-name { font-size: 10px; color: var(--tide-gold-soft); margin-bottom: 2px; }
+    #diary .comment-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--parchment-ghost); line-height: 1.55; }
+    #diary .comment-input-row { display: flex; gap: 8px; margin-top: 10px; }
+    #diary .comment-input { flex: 1; background: rgba(15,20,40,0.6); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; font-size: 12px; color: var(--parchment); outline: none; font-family: 'DM Sans', sans-serif; }
+    #diary .comment-input::placeholder { color: var(--parchment-ghost); }
+    #diary .comment-input:focus { border-color: var(--tide-gold-soft); }
+    #diary .comment-send { width: 32px; height: 32px; border-radius: 50%; background: var(--tide-gold-ghost); border: 1px solid rgba(201,168,76,0.22); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--tide-gold); flex-shrink: 0; transition: all 0.2s; }
+    #diary .comment-send:hover { background: rgba(201,168,76,0.2); }
+
+    #diary .empty-diary { text-align: center; padding: 48px 20px; }
+    #diary .empty-icon { font-size: 32px; margin-bottom: 10px; }
+    #diary .empty-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-ghost); }
+    #diary .diary-status { text-align: center; padding: 40px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
+
+    #diary .fab { position: fixed; bottom: 32px; right: 24px; width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, rgba(201,168,76,0.28), rgba(201,168,76,0.12)); border: 1px solid rgba(201,168,76,0.45); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.35); transition: all 0.2s; z-index: 20; color: var(--tide-gold); }
+    #diary .fab:hover { transform: scale(1.08); }
+
+    #diary .compose-overlay { position: fixed; inset: 0; background: rgba(6,10,24,0.82); backdrop-filter: blur(14px); z-index: 30; display: none; align-items: flex-end; justify-content: center; }
+    #diary .compose-overlay.open { display: flex; }
+    #diary .compose-sheet { width: 100%; max-width: 480px; background: linear-gradient(180deg, var(--sea-2), var(--sea-1)); border-top: 1px solid var(--line); border-radius: 24px 24px 0 0; padding: 6px 20px 44px; }
+    #diary .compose-handle { width: 36px; height: 3px; border-radius: 2px; background: rgba(248,242,232,0.12); margin: 10px auto 16px; }
+    #diary .compose-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    #diary .compose-close { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; color: var(--parchment-ghost); }
+    #diary .mood-label-text { font-size: 10px; letter-spacing: 0.18em; color: var(--parchment-ghost); text-transform: uppercase; margin-bottom: 10px; }
+    #diary .mood-select-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+    #diary .mood-opt { padding: 5px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--parchment-ghost); transition: all 0.2s; user-select: none; }
+    #diary .mood-opt.active { background: var(--tide-gold-ghost); border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #diary .mood-opt.mood-add { border-style: dashed; color: rgba(201,168,76,0.4); }
+    #diary .mood-opt.mood-add:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); background: rgba(201,168,76,0.06); }
+    #diary .compose-textarea { width: 100%; background: rgba(15,20,40,0.5); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; font-family: 'Cormorant Garamond', serif; font-size: 15px; line-height: 1.75; color: var(--parchment); outline: none; min-height: 130px; resize: none; margin-bottom: 12px; }
+    #diary .compose-textarea::placeholder { color: var(--parchment-ghost); }
+    #diary .compose-textarea:focus { border-color: var(--tide-gold-soft); }
+    #diary .compose-tools { display: flex; align-items: center; justify-content: space-between; }
+    #diary .compose-tool { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--parchment-ghost); cursor: pointer; padding: 7px 12px; border: 1px solid var(--line); border-radius: 20px; transition: all 0.2s; }
+    #diary .compose-tool:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #diary .compose-submit { padding: 10px 22px; background: linear-gradient(135deg, rgba(201,168,76,0.22), rgba(201,168,76,0.1)); border: 1px solid rgba(201,168,76,0.35); border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--tide-gold); cursor: pointer; letter-spacing: 0.08em; }
+
+    #diary .envelope-cover { display: flex; flex-direction: column; align-items: stretch; animation: diarySlideUp 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+    @keyframes diarySlideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    #diary .envelope-cover-body { display: flex; flex-direction: column; align-items: center; padding: 20px 20px 36px; gap: 14px; }
+    #diary .envelope-cover-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+    #diary .wax-seal-big { margin-top: 8px; cursor: pointer; transition: transform 0.2s; }
+    #diary .wax-seal-big:hover { transform: scale(1.1); }
+    #diary .wax-big-circle { width: 42px; height: 42px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, rgba(201,168,76,0.55), rgba(120,80,20,0.4)); border: 1.5px solid rgba(201,168,76,0.5); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: rgba(248,242,232,0.9); box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.1); letter-spacing: 0; }
+    #diary .letter-content { display: none; }
+    #diary .letter-content.open { display: block; animation: diaryUnfold 0.4s cubic-bezier(0.22,1,0.36,1) forwards; }
+    @keyframes diaryUnfold { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
@@ -2872,7 +2948,7 @@
           <div class="diary-date TODO">XX · XX</div>
         </div>
       </div>
-      <div class="card-cta">看全部日記</div>
+      <div class="card-cta" onclick="goTo('diary')" style="cursor:pointer">看全部日記</div>
     </div>
 
     <!-- ═══ Desk (最小，接真实数据) ═══ -->
@@ -3124,30 +3200,89 @@
         <button class="cal-nav" onclick="changeMonth(1)">›</button>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
-      <div class="diary-area" id="diary-area" style="display:none">
-        <div class="diary-date-label" id="diary-date-label"></div>
+    </div>
+  </div>
+</div>
 
-        <!-- 心情選擇 -->
-        <div style="margin-bottom:14px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);opacity:0.7;margin-bottom:10px;">今天的心情</div>
-          <div id="mood-picker" style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button onclick="selectMood('😊')" class="mood-btn" data-mood="😊">😊</button>
-            <button onclick="selectMood('💚')" class="mood-btn" data-mood="💚">💚</button>
-            <button onclick="selectMood('😢')" class="mood-btn" data-mood="😢">😢</button>
-            <button onclick="selectMood('😴')" class="mood-btn" data-mood="😴">😴</button>
-            <button onclick="selectMood('🤔')" class="mood-btn" data-mood="🤔">🤔</button>
-            <button onclick="selectMood('😡')" class="mood-btn" data-mood="😡">😡</button>
-            <button onclick="selectMood('✨')" class="mood-btn" data-mood="✨">✨</button>
-            <button onclick="selectMood('🌊')" class="mood-btn" data-mood="🌊">🌊</button>
+<!-- 日記 -->
+<div class="screen" id="diary">
+  <div class="page">
+    <div class="head">
+      <div class="head-back" onclick="goTo('memory')">‹</div>
+      <div class="head-center">
+        <div class="head-title">日記</div>
+        <div class="head-sub">our little archive</div>
+      </div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="month-nav">
+      <div class="month-arrow" onclick="diaryShiftMonth(-1)">‹</div>
+      <div class="month-label" id="diary-month-label" onclick="goTo('calendar')">2026 · 07</div>
+      <div class="month-arrow" onclick="diaryShiftMonth(1)">›</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-num" id="diary-stat-nory">0</div><div class="stat-label">你寫了</div></div>
+      <div class="stat-item"><div class="stat-num TODO" id="diary-stat-ryven">XX</div><div class="stat-label">我寫了</div></div>
+      <div class="stat-item"><div class="stat-num" id="diary-stat-total">0</div><div class="stat-label">共 篇</div></div>
+    </div>
+
+    <div id="diary-feed">
+      <div class="diary-status">加载中…</div>
+    </div>
+  </div>
+
+  <div class="fab" onclick="diaryOpenCompose()">✦</div>
+
+  <div class="compose-overlay" id="diaryComposeOverlay" onclick="diaryCloseOnBg(event)">
+    <div class="compose-sheet" id="diaryComposeSheet">
+
+      <!-- 信封封面（第一阶段） -->
+      <div class="envelope-cover" id="diaryEnvelopeCover">
+        <div class="envelope-cover-flap">
+          <svg width="100%" height="80" viewBox="0 0 480 80" preserveAspectRatio="none">
+            <path d="M0 0 L240 60 L480 0" stroke="rgba(201,168,76,0.3)" stroke-width="1.5" fill="rgba(201,168,76,0.05)"/>
+          </svg>
+        </div>
+        <div class="envelope-cover-body">
+          <div class="envelope-cover-title" id="diary-compose-date-label"></div>
+          <div class="wax-seal-big" onclick="diaryOpenEnvelope()">
+            <div class="wax-big-circle">R</div>
           </div>
         </div>
+      </div>
 
-        <textarea class="diary-textarea" id="diary-textarea" placeholder="今天發生了什麼… 🌊"></textarea>
-        <div style="display:flex;gap:8px;margin-top:12px;">
-          <button class="diary-save-btn" style="flex:1" onclick="saveDiary()">✦ 儲存</button>
-          <button class="diary-save-btn" style="flex:1;border-color:rgba(201,168,76,0.5);color:var(--gold)" onclick="saveDiaryToMemory()">💭 存入記憶庫</button>
+      <!-- 信纸内容（第二阶段） -->
+      <div class="letter-content" id="diaryLetterContent">
+        <div class="compose-handle"></div>
+        <div class="compose-head">
+          <div style="flex:1"></div>
+          <div class="compose-close" onclick="diaryCloseCompose()">×</div>
+        </div>
+
+        <div class="mood-label-text">今天的心情</div>
+        <div class="mood-select-grid" id="diaryMoodGrid">
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🌊 还好</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">☀️ 开心</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🌧 沉沉的</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🐚 平静</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🌸 甜甜的</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🌙 想你</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">⚡ 烦躁</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🫧 飘飘的</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">🔥 亢奋</div>
+          <div class="mood-opt" onclick="this.classList.toggle('active')">❄️ 冷冷的</div>
+          <div class="mood-opt mood-add" onclick="diaryAddMood()">＋ 添加</div>
+        </div>
+
+        <textarea class="compose-textarea" id="diaryComposeTextarea" placeholder="今天想说什么…"></textarea>
+        <div class="compose-tools">
+          <div class="compose-tool" onclick="showToast('🐚 功能開發中')">📸 從相册選圖</div>
+          <button class="compose-submit" onclick="diarySubmitCompose()">✦ 發布</button>
         </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -4544,7 +4679,6 @@
   document.getElementById('day-count').textContent = dayCount;
   document.getElementById('day-suffix').textContent = suffix;
 
-  const API_BASE = 'https://ryven.homes/api';
   // 会话 ID 持久化
   // 登录 & 身份管理
 let sessionId = 'nory';
@@ -4638,6 +4772,7 @@ async function loadChatHistory() {
     window.scrollTo(0,0);
     if (id==='memory') { loadMemoryLibraryCard(); loadMemoryDiffCard(); loadMemoryDeskCard(); }
     if (id==='calendar') renderCalendar();
+    if (id==='diary') renderDiaryFeed();
     if (id==='library') loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
     if (id==='differences') loadDifferences();
@@ -4657,11 +4792,10 @@ async function loadChatHistory() {
   // ===== 記憶庫 =====
   // 记忆后台（写入/搜索/浏览已存记忆）已整块移除——之后单独做一个记忆管理入口，这轮不挪到任何地方
 
-  // ===== 日曆 =====
-  let calYear=now.getFullYear(), calMonth=now.getMonth(), selectedDate=null;
+  // ===== 日曆（純月曆視圖，點日期跳去 #diary） =====
+  let calYear=now.getFullYear(), calMonth=now.getMonth();
   const diaryData = JSON.parse(localStorage.getItem('ryven-diary')||'{}');
   const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const monthsCN=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
 
   function renderCalendar() {
     document.getElementById('cal-month-label').textContent=`${monthNames[calMonth]} ${calYear}`;
@@ -4672,74 +4806,242 @@ async function loadChatHistory() {
     for(let i=0;i<firstDay;i++) html+=`<div class="cal-day empty"></div>`;
     for(let d=1;d<=daysInMonth;d++){
       const key=`${calYear}-${calMonth}-${d}`;
-      const entry = diaryData[key];
-      const hasNote = !!entry;
-      const mood = entry && typeof entry === 'object' ? entry.mood : '';
-      html+=`<div class="cal-day ${key===todayKey?'today':''} ${hasNote?'has-note':''} ${selectedDate===key?'selected':''}" onclick="selectDay(${d})">${d}${mood ? `<span style="position:absolute;bottom:1px;right:2px;font-size:9px;line-height:1">${mood}</span>` : ''}</div>`;
+      const entry = diaryNormalizeEntry(diaryData[key]);
+      const mood = entry && entry.moods[0] ? entry.moods[0] : '';
+      html+=`<div class="cal-day ${key===todayKey?'today':''} ${entry?'has-note':''}" onclick="calendarJumpToDay(${d})">${d}${mood ? `<span style="position:absolute;bottom:1px;right:2px;font-size:9px;line-height:1">${mood}</span>` : ''}</div>`;
     }
     document.getElementById('cal-grid').innerHTML=html;
-  }
-
-  let selectedMood = '';
-
-  function selectMood(emoji) {
-    selectedMood = emoji;
-    document.querySelectorAll('.mood-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.mood === emoji);
-    });
-  }
-
-  function selectDay(d) {
-    selectedDate=`${calYear}-${calMonth}-${d}`;
-    renderCalendar();
-    document.getElementById('diary-area').style.display='block';
-    document.getElementById('diary-date-label').textContent=`${calYear}年 ${monthsCN[calMonth]} ${d}日 ✦`;
-    const entry = diaryData[selectedDate] || {};
-    document.getElementById('diary-textarea').value = typeof entry === 'string' ? entry : (entry.text || '');
-    selectedMood = typeof entry === 'object' ? (entry.mood || '') : '';
-    document.querySelectorAll('.mood-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.mood === selectedMood);
-    });
   }
 
   function changeMonth(dir) {
     calMonth+=dir;
     if(calMonth<0){calMonth=11;calYear--;}
     if(calMonth>11){calMonth=0;calYear++;}
-    selectedDate=null;
-    document.getElementById('diary-area').style.display='none';
     renderCalendar();
   }
 
-  function saveDiary() {
-    if(!selectedDate) return;
-    const text=document.getElementById('diary-textarea').value.trim();
-    if(text || selectedMood) {
-      diaryData[selectedDate] = { text, mood: selectedMood };
-    } else {
-      delete diaryData[selectedDate];
+  // 點日曆某天：goTo('diary') 之後交給 diaryJumpToDay() 決定滾動到已有信封還是打開寫日記彈窗
+  function calendarJumpToDay(d) {
+    const dayKey = `${calYear}-${calMonth}-${d}`;
+    goTo('diary');
+    diaryJumpToDay(dayKey);
+  }
+
+  // ===== 日記（信封 feed，數據複用 diaryData / localStorage） =====
+  let diaryViewYear = now.getFullYear(), diaryViewMonth = now.getMonth();
+  let diaryComposeTargetKey = null;
+  const DIARY_WEEKDAYS = ['日','一','二','三','四','五','六'];
+
+  function diaryKeyFor(year, month0, day) { return `${year}-${month0}-${day}`; }
+  function diaryKeyParts(key) {
+    const [y, m, d] = key.split('-').map(Number);
+    return { year: y, month: m, day: d };
+  }
+
+  // 兼容三種歷史形態：純字符串 / {text,mood} / {text,moods}
+  function diaryNormalizeEntry(entry) {
+    if (!entry) return null;
+    if (typeof entry === 'string') return { text: entry, moods: [] };
+    if (Array.isArray(entry.moods)) return { text: entry.text || '', moods: entry.moods };
+    return { text: entry.text || '', moods: entry.mood ? [entry.mood] : [] };
+  }
+
+  function diarySaveEntry(dayKey, text, moods) {
+    diaryData[dayKey] = { text, moods };
+    localStorage.setItem('ryven-diary', JSON.stringify(diaryData));
+  }
+
+  function diaryDeleteEntry(dayKey) {
+    delete diaryData[dayKey];
+    localStorage.setItem('ryven-diary', JSON.stringify(diaryData));
+  }
+
+  function diaryShortDate(year, month0, day) {
+    return `${String(month0+1).padStart(2,'0')}.${String(day).padStart(2,'0')}`;
+  }
+  function diaryFullDateLabel(year, month0, day) {
+    const wd = new Date(year, month0, day).getDay();
+    return `${month0+1}月${day}日 · 周${DIARY_WEEKDAYS[wd]}`;
+  }
+
+  function diaryShiftMonth(dir) {
+    diaryViewMonth += dir;
+    if (diaryViewMonth < 0) { diaryViewMonth = 11; diaryViewYear--; }
+    if (diaryViewMonth > 11) { diaryViewMonth = 0; diaryViewYear++; }
+    renderDiaryFeed();
+  }
+
+  function renderDiaryFeed() {
+    document.getElementById('diary-month-label').textContent = `${diaryViewYear} · ${String(diaryViewMonth+1).padStart(2,'0')}`;
+
+    const keysThisMonth = Object.keys(diaryData).filter(k => {
+      const p = diaryKeyParts(k);
+      return p.year === diaryViewYear && p.month === diaryViewMonth && diaryNormalizeEntry(diaryData[k]);
+    }).sort((a,b) => diaryKeyParts(b).day - diaryKeyParts(a).day);
+
+    document.getElementById('diary-stat-nory').textContent = keysThisMonth.length;
+    document.getElementById('diary-stat-total').textContent = keysThisMonth.length;
+
+    const feed = document.getElementById('diary-feed');
+    if (!keysThisMonth.length) {
+      feed.innerHTML = '<div class="empty-diary"><div class="empty-icon">🐚</div><div class="empty-text">還沒有日記，寫下第一篇吧</div></div>';
+      return;
     }
-    localStorage.setItem('ryven-diary',JSON.stringify(diaryData));
-    renderCalendar();
-    showToast('✦ 已儲存');
+
+    feed.innerHTML = keysThisMonth.map(key => `
+      <div class="date-divider"><div class="date-text"></div></div>
+      <div class="diary-card nory" data-daykey="${key}">
+        <div class="envelope">
+          <div class="envelope-flap">
+            <div class="flap-inner">
+              <div class="env-avatar">🐻</div>
+              <div class="env-meta">
+                <div class="env-name">Nory</div>
+                <div class="env-time"></div>
+              </div>
+            </div>
+            <div class="env-actions">
+              <div class="env-btn edit">改</div>
+              <div class="env-btn del">刪</div>
+            </div>
+          </div>
+          <div class="letter-paper">
+            <div class="mood-tags"></div>
+            <div class="letter-text"></div>
+            <div class="nory-sign"><div class="nory-sign-text">— Nory</div></div>
+          </div>
+          <div class="env-comments">
+            <div class="comments-toggle">💬 查看留言</div>
+            <div class="comments-list"></div>
+            <div class="comment-input-row">
+              <input class="comment-input" placeholder="留句话…" />
+              <div class="comment-send">➤</div>
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+
+    feed.querySelectorAll('.diary-card').forEach(el => {
+      const key = el.dataset.daykey;
+      const p = diaryKeyParts(key);
+      const entry = diaryNormalizeEntry(diaryData[key]);
+      const divider = el.previousElementSibling;
+      if (divider && divider.classList.contains('date-divider')) {
+        divider.querySelector('.date-text').textContent = diaryFullDateLabel(p.year, p.month, p.day);
+      }
+      el.querySelector('.env-time').textContent = diaryShortDate(p.year, p.month, p.day);
+      el.querySelector('.letter-text').textContent = entry.text;
+      const tagsEl = el.querySelector('.mood-tags');
+      tagsEl.innerHTML = entry.moods.map(() => '<span class="mood-tag"></span>').join('');
+      tagsEl.querySelectorAll('.mood-tag').forEach((tagEl, i) => { tagEl.textContent = entry.moods[i]; });
+
+      el.querySelector('.comments-toggle').addEventListener('click', function() { diaryToggleComments(this); });
+      el.querySelector('.comment-send').addEventListener('click', () => showToast('🐚 功能開發中'));
+      el.querySelector('.env-btn.edit').addEventListener('click', () => diaryOpenCompose(key));
+      el.querySelector('.env-btn.del').addEventListener('click', () => diaryConfirmDelete(key));
+    });
   }
 
-  async function saveDiaryToMemory() {
-    if(!selectedDate) return;
-    const text = document.getElementById('diary-textarea').value.trim();
+  function diaryToggleComments(el) {
+    const list = el.nextElementSibling;
+    const open = list.style.display === 'flex';
+    list.style.display = open ? 'none' : 'flex';
+  }
+
+  function diaryConfirmDelete(key) {
+    if (!confirm('確定要刪除這篇日記嗎？')) return;
+    diaryDeleteEntry(key);
+    renderDiaryFeed();
+    renderCalendar();
+    showToast('已刪除');
+  }
+
+  function diaryHighlightEntry(dayKey) {
+    const el = document.querySelector(`#diary-feed .diary-card[data-daykey="${dayKey}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('jump-highlight');
+    setTimeout(() => el.classList.remove('jump-highlight'), 1800);
+  }
+
+  // 從 #calendar 點某天跳過來：有日記就滾過去高亮，沒有就直接打開寫日記彈窗（帶著那一天的日期）
+  function diaryJumpToDay(dayKey) {
+    const p = diaryKeyParts(dayKey);
+    diaryViewYear = p.year; diaryViewMonth = p.month;
+    renderDiaryFeed();
+    const entry = diaryNormalizeEntry(diaryData[dayKey]);
+    if (entry) {
+      diaryHighlightEntry(dayKey);
+    } else {
+      diaryOpenCompose(dayKey);
+    }
+  }
+
+  // ── 寫日記彈窗 ──
+  function diaryOpenCompose(dayKey) {
+    diaryComposeTargetKey = dayKey || diaryKeyFor(now.getFullYear(), now.getMonth(), now.getDate());
+    const p = diaryKeyParts(diaryComposeTargetKey);
+    document.getElementById('diary-compose-date-label').textContent = `${p.year}年${p.month+1}月${p.day}日`;
+
+    const entry = diaryNormalizeEntry(diaryData[diaryComposeTargetKey]);
+    document.getElementById('diaryComposeTextarea').value = entry ? entry.text : '';
+    document.querySelectorAll('#diaryMoodGrid .mood-opt:not(.mood-add)').forEach(opt => {
+      opt.classList.toggle('active', !!entry && entry.moods.includes(opt.textContent.trim()));
+    });
+
+    const cover = document.getElementById('diaryEnvelopeCover');
+    cover.style.display = 'flex';
+    cover.style.opacity = '1';
+    cover.style.transform = 'none';
+    document.getElementById('diaryLetterContent').classList.remove('open');
+    document.getElementById('diaryComposeOverlay').classList.add('open');
+  }
+
+  function diaryOpenEnvelope() {
+    const cover = document.getElementById('diaryEnvelopeCover');
+    const letter = document.getElementById('diaryLetterContent');
+    cover.style.transition = 'opacity 0.3s, transform 0.3s';
+    cover.style.opacity = '0';
+    cover.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      cover.style.display = 'none';
+      letter.classList.add('open');
+    }, 300);
+  }
+
+  function diaryCloseCompose() {
+    document.getElementById('diaryComposeOverlay').classList.remove('open');
+    document.getElementById('diaryComposeTextarea').value = '';
+    document.querySelectorAll('#diaryMoodGrid .mood-opt').forEach(opt => opt.classList.remove('active'));
+    diaryComposeTargetKey = null;
+  }
+  function diaryCloseOnBg(e) { if (e.target === e.currentTarget) diaryCloseCompose(); }
+
+  function diaryAddMood() {
+    const name = prompt('输入自定义情绪（emoji + 文字）：', '🌈 ');
+    if (!name || !name.trim()) return;
+    const grid = document.getElementById('diaryMoodGrid');
+    const addBtn = grid.querySelector('.mood-add');
+    const opt = document.createElement('div');
+    opt.className = 'mood-opt active';
+    opt.textContent = name.trim();
+    opt.onclick = () => opt.classList.toggle('active');
+    grid.insertBefore(opt, addBtn);
+  }
+
+  function diarySubmitCompose() {
+    const text = document.getElementById('diaryComposeTextarea').value.trim();
     if (!text) { showToast('🌊 請先寫點什麼'); return; }
-    const mood = selectedMood ? selectedMood + ' ' : '';
-    const label = document.getElementById('diary-date-label').textContent.replace(' ✦','');
-    const value = `${mood}${text}`;
-    try {
-      const res = await fetch(`${API_BASE}/remember`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({key: `日記·${label}`, value})
-      });
-      if (!res.ok) throw new Error();
-      saveDiary();
-      showToast('💭 已存入記憶庫');
-    } catch { showToast('🌙 存入失敗'); }
+    const moods = Array.from(document.querySelectorAll('#diaryMoodGrid .mood-opt.active:not(.mood-add)')).map(el => el.textContent.trim());
+    const key = diaryComposeTargetKey;
+    diarySaveEntry(key, text, moods);
+    diaryCloseCompose();
+    const p = diaryKeyParts(key);
+    diaryViewYear = p.year; diaryViewMonth = p.month;
+    renderDiaryFeed();
+    renderCalendar();
+    showToast('✦ 已發布');
+    diaryHighlightEntry(key);
   }
 
   // ===== 記憶庫 =====
