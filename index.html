@@ -1341,6 +1341,17 @@
     .img-thumb.selected::after { content: '✓'; position: absolute; inset: 0; background: color-mix(in srgb, var(--tide-gold) 30%, transparent); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--tide-gold); }
     .sheet-cancel { width: 100%; padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--tide-gold); opacity: 0.7; font-family: 'Cormorant Garamond', serif; font-size: 14px; cursor: pointer; }
 
+    /* ─── 貼紙托盘 ─── */
+    .sticker-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; max-height: 320px; overflow-y: auto; }
+    .sticker-thumb { aspect-ratio: 1; border-radius: 12px; overflow: hidden; cursor: pointer; position: relative; border: 1px solid var(--line); background: rgba(26,31,58,0.4); transition: border-color 0.2s, transform 0.2s; }
+    .sticker-thumb:hover { border-color: var(--tide-gold-soft); transform: translateY(-2px); }
+    .sticker-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sticker-thumb.sticker-add { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--tide-gold-soft); border-style: dashed; }
+    .sticker-thumb.sticker-add:hover { color: var(--tide-gold); border-color: var(--tide-gold-soft); }
+    .sticker-del { position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(10,14,31,0.75); color: rgba(248,242,232,0.6); font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, background 0.2s; }
+    .sticker-del:hover { color: var(--danger); background: rgba(10,14,31,0.9); }
+    .sticker-status { grid-column: span 4; text-align: center; padding: 30px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
+
     /* ─── 语音气泡 ─── */
     .voice-bubble { display: flex; align-items: center; gap: 9px; padding: 10px 14px; min-width: 110px; }
     .voice-play { width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--tide-gold) 18%, transparent); border: 1px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--tide-gold); flex-shrink: 0; cursor: pointer; transition: background 0.2s; }
@@ -3782,6 +3793,7 @@
       </div>
 
       <div class="chat-inputbar-row">
+        <button class="chat-input-add" title="貼紙" onclick="stickerOpenTray()">🐟</button>
         <button class="chat-input-add" title="發送圖片" onclick="showSheet()">📎</button>
         <textarea class="chat-input" id="chat-input" placeholder="和 Ryven 說話…" rows="1"
           onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
@@ -3810,6 +3822,19 @@
           <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80" alt=""></div>
         </div>
         <button class="sheet-cancel" onclick="hideSheet()">取消</button>
+      </div>
+    </div>
+
+    <!-- ═══ 貼紙托盘 ═══ -->
+    <div class="sheet-overlay" id="sticker-sheet" onclick="if(event.target===this)stickerCloseTray()">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">貼紙</div>
+        <div class="sticker-grid" id="sticker-grid">
+          <div class="sticker-status">加载中…</div>
+        </div>
+        <input type="file" id="sticker-file-input" accept="image/*" style="display:none" onchange="stickerHandleFileSelect(event)" />
+        <button class="sheet-cancel" onclick="stickerCloseTray()">取消</button>
       </div>
     </div>
 
@@ -6406,6 +6431,128 @@ async function loadChatHistory() {
       chatMessagesEl.appendChild(wrap);
       chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     }, 180);
+  }
+
+  // ===== 貼紙 =====
+  let stickerList = [];
+
+  function stickerOpenTray() {
+    document.getElementById('sticker-sheet').classList.add('show');
+    stickerLoadList();
+  }
+  function stickerCloseTray() {
+    document.getElementById('sticker-sheet').classList.remove('show');
+  }
+
+  async function stickerLoadList() {
+    const grid = document.getElementById('sticker-grid');
+    grid.innerHTML = '<div class="sticker-status">加载中…</div>';
+    try {
+      const res = await fetch('https://ryven.homes/relay/stickers', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      stickerList = data.stickers || [];
+      stickerRenderGrid();
+    } catch(e) {
+      console.error('貼紙列表加載失敗', e);
+      grid.innerHTML = '<div class="sticker-status">加载失敗</div>';
+    }
+  }
+
+  function stickerRenderGrid() {
+    const grid = document.getElementById('sticker-grid');
+    grid.innerHTML = '';
+    stickerList.forEach(url => {
+      const thumb = document.createElement('div');
+      thumb.className = 'sticker-thumb';
+      thumb.innerHTML = '<img alt=""><div class="sticker-del">×</div>';
+      thumb.querySelector('img').src = url;
+      thumb.querySelector('img').addEventListener('click', () => stickerSend(url));
+      thumb.querySelector('.sticker-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        stickerDelete(url);
+      });
+      grid.appendChild(thumb);
+    });
+    const addCell = document.createElement('div');
+    addCell.className = 'sticker-thumb sticker-add';
+    addCell.textContent = '＋';
+    addCell.onclick = stickerTriggerUpload;
+    grid.appendChild(addCell);
+  }
+
+  function stickerTriggerUpload() {
+    document.getElementById('sticker-file-input').click();
+  }
+
+  async function stickerHandleFileSelect(e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('🌊 請選擇圖片文件'); return; }
+    showToast('🐟 上傳中…');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('https://ryven.homes/relay/upload/sticker', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+        body: formData
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      if (data.url) stickerList.push(data.url);
+      stickerRenderGrid();
+      showToast('🐟 已添加貼紙');
+    } catch(err) {
+      console.error('貼紙上傳失敗', err);
+      showToast('🌙 上傳失敗，稍後再試');
+    }
+  }
+
+  async function stickerDelete(url) {
+    if (!confirm('確定要刪除這張貼紙嗎？')) return;
+    const backup = stickerList;
+    stickerList = stickerList.filter(u => u !== url);
+    stickerRenderGrid();
+    try {
+      const res = await fetch('https://ryven.homes/relay/sticker', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ url })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+    } catch(e) {
+      console.error('貼紙刪除失敗', e);
+      showToast('🌙 刪除失敗，稍後再試');
+      stickerList = backup;
+      stickerRenderGrid();
+    }
+  }
+
+  function stickerSend(url) {
+    stickerCloseTray();
+    const stickerNow = new Date();
+    maybeInsertDateDivider(stickerNow);
+    const time = stickerNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
+    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
+    const continued = prevRow && prevRow.classList.contains('from-me');
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap';
+    wrap.innerHTML = `
+      <div class="msg-row from-me${continued ? ' continued' : ''}">
+        <div class="msg-avatar-sm">🐻</div>
+        <div class="msg-col">
+          <div class="img-bubble"><img alt=""><div class="img-overlay">🔍</div></div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+    wrap.querySelector('.img-bubble img').src = url;
+    chatMessagesEl.appendChild(wrap);
+    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   }
 
   // ===== 语音气泡 波形 =====
