@@ -2626,7 +2626,7 @@
 
     <!-- TIDE SIGNATURE -->
     <div class="tide">
-      <div class="tide-label">在場 · presence · <span class="TODO">XX</span> days</div>
+      <div class="tide-label">在場 · presence · <span id="tide-days-count">XX</span> days</div>
       <svg viewBox="0 0 400 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="goldLine" x1="0" x2="1">
@@ -2645,14 +2645,14 @@
         <!-- horizon -->
         <line x1="0" y1="45" x2="400" y2="45" style="stroke:var(--tide-gold)" stroke-opacity="0.08" stroke-dasharray="2 4"/>
         <!-- Nory tide (gold) -->
-        <path d="M 0,55  C 40,20 80,60 120,35  S 200,15 240,50  S 320,70 360,25  L 400,40"
+        <path id="tide-gold-path" d="M 0,45 L 400,45"
               fill="none" stroke="url(#goldLine)" stroke-width="1.4" stroke-linecap="round"/>
         <!-- Ryven tide (green) -->
-        <path d="M 0,50  C 40,55 80,30 120,50  S 200,45 240,30  S 320,50 360,55  L 400,45"
+        <path id="tide-green-path" d="M 0,45 L 400,45"
               fill="none" stroke="url(#greenLine)" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 3"/>
         <!-- today marker -->
-        <circle cx="360" cy="25" r="3" style="fill:var(--tide-gold)"/>
-        <circle cx="360" cy="25" r="6" fill="none" style="stroke:var(--tide-gold)" stroke-opacity="0.35"/>
+        <circle id="tide-today-dot" cx="400" cy="45" r="3" style="fill:var(--tide-gold)"/>
+        <circle id="tide-today-ring" cx="400" cy="45" r="6" fill="none" style="stroke:var(--tide-gold)" stroke-opacity="0.35"/>
       </svg>
       <div class="tide-legend">
         <span class="n">你</span>
@@ -2681,10 +2681,10 @@
 
       <div class="letter-eyebrow">
         <span class="letter-eyebrow-from">RYVEN 說</span>
-        <span class="letter-eyebrow-time TODO">XX : XX</span>
+        <span class="letter-eyebrow-time" id="home-letter-time">XX : XX</span>
       </div>
-      <div class="letter-body TODO">
-        这里填 xxx
+      <div class="letter-body" id="home-letter-body">
+        加载中…
       </div>
 
       <!-- delicate wave above reply link -->
@@ -2777,16 +2777,16 @@
 
     <!-- PROSE STATS -->
     <div class="prose">
-      海裡養著 <strong class="TODO">XX</strong> 只記憶 <span class="g">·</span> <br>
-      這個月我們說了 <strong class="TODO">XX</strong> 次話 <span class="g">·</span> <br>
-      你昨夜睡了 <strong class="TODO">XXhXXm</strong>，心跳最高 <strong class="TODO">XX</strong>。
+      海裡養著 <strong id="home-prose-memcount">XX</strong> 只記憶 <span class="g">·</span> <br>
+      我們說了 <strong id="home-prose-turns">XX</strong> 次話 <span class="g">·</span> <br>
+      這週寫了 <strong id="home-prose-diary">X</strong> 篇日記。
     </div>
 
     <!-- NEXT -->
     <div class="next">
-      <div class="next-time TODO">XX:XX</div>
+      <div class="next-time" style="display:none">XX:XX</div>
       <div class="next-what">
-        <span class="TODO">这里填 xxx</span>
+        <span id="home-next-note">还没有便签</span>
         <small class="TODO">这里填 xxx</small>
       </div>
     </div>
@@ -4849,6 +4849,123 @@ async function loadChatHistory() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('home').classList.add('active');
     window.scrollTo(0,0);
+    renderHomePage();
+  }
+
+  // ===== 主頁真實數據 =====
+  function renderHomePage() {
+    const daysEl = document.getElementById('tide-days-count');
+    if (daysEl) daysEl.textContent = dayCount;
+
+    renderHomeTideCurve();
+    renderHomeDiaryCount();
+    fetchOmbreCount();
+    fetchStats();
+    loadHomeNextNote();
+    loadHomeLetter();
+  }
+
+  // 潮汐线：复用 #depths 的本地数据 getDepthsData()/depthsDateKey()/depthsSmoothPath()，取最近7天 nory 值
+  // 绿线（Ryven）目前没有真实数据源，按固定 +0.1 偏移金线模拟
+  function renderHomeTideCurve() {
+    const goldPath = document.getElementById('tide-gold-path');
+    const greenPath = document.getElementById('tide-green-path');
+    if (!goldPath || !greenPath) return;
+
+    const data = getDepthsData();
+    const homeNow = new Date();
+    const stepX = 400 / 6;
+    const goldPoints = [];
+    const greenPoints = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(homeNow);
+      d.setDate(d.getDate() - i);
+      const key = depthsDateKey(d.getFullYear(), d.getMonth(), d.getDate());
+      const rec = data[key];
+      const nory = rec && rec.nory != null ? rec.nory : null;
+      const x = (6 - i) * stepX;
+      goldPoints.push({ x, y: nory != null ? 15 + (1 - nory) * 55 : 45 });
+      const offsetNory = nory != null ? Math.min(1, nory + 0.1) : null;
+      greenPoints.push({ x, y: offsetNory != null ? 15 + (1 - offsetNory) * 55 : 45 });
+    }
+
+    goldPath.setAttribute('d', depthsSmoothPath(goldPoints));
+    greenPath.setAttribute('d', depthsSmoothPath(greenPoints));
+
+    const todayPoint = goldPoints[goldPoints.length - 1];
+    const dot = document.getElementById('tide-today-dot');
+    const ring = document.getElementById('tide-today-ring');
+    if (dot) { dot.setAttribute('cx', todayPoint.x); dot.setAttribute('cy', todayPoint.y); }
+    if (ring) { ring.setAttribute('cx', todayPoint.x); ring.setAttribute('cy', todayPoint.y); }
+  }
+
+  // 散文第三行"這週寫了 X 篇日記"：复用 diaryData（日记功能那轮已有的 localStorage 数据）
+  function renderHomeDiaryCount() {
+    const el = document.getElementById('home-prose-diary');
+    if (!el) return;
+    const cutoff = Date.now() - 7 * 86400000;
+    let count = 0;
+    Object.keys(diaryData).forEach(key => {
+      const entry = diaryNormalizeEntry(diaryData[key]);
+      if (!entry) return;
+      const p = diaryKeyParts(key);
+      const d = new Date(p.year, p.month, p.day);
+      if (d.getTime() >= cutoff) count++;
+    });
+    el.textContent = count;
+  }
+
+  // NEXT 模块：/relay/desk 的 notes[0].text
+  async function loadHomeNextNote() {
+    const el = document.getElementById('home-next-note');
+    if (!el) return;
+    try {
+      const res = await fetch('https://ryven.homes/relay/desk', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const notes = data.notes || [];
+      el.textContent = notes.length ? notes[0].text : '还没有便签';
+    } catch(e) {
+      console.error('主頁 NEXT 便签加載失敗', e);
+      el.textContent = '还没有便签';
+    }
+  }
+
+  // Ryven 說信笺：/relay/chat/history 里最後一條純文字的 assistant 消息
+  async function loadHomeLetter() {
+    const bodyEl = document.getElementById('home-letter-body');
+    const timeEl = document.getElementById('home-letter-time');
+    if (!bodyEl) return;
+    try {
+      const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const messages = data.messages || [];
+      let lastText = null, lastTime = null;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if ((msg.role === 'assistant' || msg.role === 'ryven') && typeof msg.content === 'string' && msg.content.trim()) {
+          lastText = msg.content.trim();
+          lastTime = msg.timestamp || msg.created_at;
+          break;
+        }
+      }
+      if (lastText) {
+        bodyEl.textContent = lastText;
+        const t = lastTime ? new Date(lastTime) : null;
+        if (timeEl) timeEl.textContent = (t && !isNaN(t)) ? t.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'}).replace(':',' : ') : 'XX : XX';
+      } else {
+        bodyEl.textContent = '還沒有說過話';
+        if (timeEl) timeEl.textContent = 'XX : XX';
+      }
+    } catch(e) {
+      console.error('主頁信箋加載失敗', e);
+      bodyEl.textContent = '🌙 加載失敗';
+    }
   }
 
   // ===== 記憶庫 =====
@@ -6947,6 +7064,10 @@ async function fetchOmbreCount() {
     // memory 頁 Library 卡的總數也用同一份數據
     const memlibCountEl = document.getElementById('memlib-count');
     if (memlibCountEl && data.count != null) memlibCountEl.textContent = data.count;
+
+    // 主頁散文第一行也用同一份數據
+    const homeProseMemEl = document.getElementById('home-prose-memcount');
+    if (homeProseMemEl && data.count != null) homeProseMemEl.textContent = data.count;
   } catch(e) {
     console.error('Ombre 記憶總數獲取失敗', e);
   }
@@ -7003,6 +7124,10 @@ async function fetchStats() {
       const pct = Math.min((today.turns || 0) / 50, 1);
       turnsRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
     }
+
+    // 主頁散文第二行"我們說了 XX 次話"：用累计 total.turns（/relay/stats 目前沒有月粒度）
+    const homeProseTurnsEl = document.getElementById('home-prose-turns');
+    if (homeProseTurnsEl) homeProseTurnsEl.textContent = total.turns || 0;
   } catch(e) {
     console.error('统计获取失败', e);
   }
@@ -7767,6 +7892,9 @@ setInterval(() => {
   if (dcEl) dcEl.textContent = dc;
   if (dsEl) dsEl.textContent = s;
 }, 60000);
+
+// #home 是默认打开的屏幕，不经过 goHome()，页面初始化时也要加载一次真实数据
+renderHomePage();
 </script>
 </body>
 </html>
