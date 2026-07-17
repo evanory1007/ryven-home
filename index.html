@@ -4749,6 +4749,39 @@ if (isLoggedIn) {
   document.getElementById('login-overlay').classList.add('hidden');
 }
 
+// content 是 anthropic image content block 数组时，从里面抠出一个能直接塞进 <img src> 的地址
+function extractImageSrc(block) {
+  if (!block || !block.source) return '';
+  if (block.source.type === 'base64') return `data:${block.source.media_type};base64,${block.source.data}`;
+  if (block.source.type === 'url') return block.source.url;
+  return '';
+}
+
+// 图片消息渲染成气泡，role 是 'user' 或 'assistant'/'ryven' 都行；跟 addMessage() 一样处理日期分隔线/连续气泡/真实时间戳
+function renderImageBubble(role, src, timestampMs) {
+  const msgDate = timestampMs ? new Date(timestampMs) : new Date();
+  maybeInsertDateDivider(msgDate);
+  const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+  const isMe = role === 'user';
+  const sideClass = isMe ? 'from-me' : 'from-ryven';
+  const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
+  const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
+  const continued = prevRow && prevRow.classList.contains(sideClass);
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap';
+  wrap.innerHTML = `
+    <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
+      <div class="msg-avatar-sm">${isMe ? '🐻' : '💚'}</div>
+      <div class="msg-col">
+        <div class="img-bubble"><img alt=""><div class="img-overlay">🔍</div></div>
+        <div class="msg-time">${time}</div>
+      </div>
+    </div>`;
+  wrap.querySelector('.img-bubble img').src = src;
+  chatMessagesEl.appendChild(wrap);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
 async function loadChatHistory() {
   try {
     const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
@@ -4765,12 +4798,16 @@ async function loadChatHistory() {
       for (let idx = 0; idx < messages.length; idx++) {
         const msg = messages[idx];
         // 修复前泄漏进relay的改名指令文本（实际文案是"用户刚刚把你的名字改成了..."），历史数据里可能还留着，过滤掉不渲染成气泡
-        if (msg.content && msg.content.includes('用户刚刚把你的名字改成了')) continue;
+        if (typeof msg.content === 'string' && msg.content.includes('用户刚刚把你的名字改成了')) continue;
         // 旧数据没存 timestamp：按在数组里的位置从现在往前推算，每条间隔1分钟，
         // 至少保证时间递增、不会全堆在同一刻；有真实 timestamp 的正常消息不受影响
         const realTime = msg.timestamp || msg.created_at;
         const msgTime = realTime || (estimateBase - (messages.length - 1 - idx) * 60000);
-        if (msg.role === 'assistant' || msg.role === 'ryven') {
+        // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
+        const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
+        if (imageBlock) {
+          renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime);
+        } else if (msg.role === 'assistant' || msg.role === 'ryven') {
           // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框
           const segments = splitIntoSentences(msg.content);
           if (segments.length === 0) {
@@ -6412,24 +6449,7 @@ async function loadChatHistory() {
     const src = thumb.querySelector('img').src;
     setTimeout(() => {
       hideSheet();
-      const imgNow = new Date();
-      maybeInsertDateDivider(imgNow);
-      const time = imgNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
-      const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
-      const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
-      const continued = prevRow && prevRow.classList.contains('from-me');
-      const wrap = document.createElement('div');
-      wrap.className = 'msg-wrap';
-      wrap.innerHTML = `
-        <div class="msg-row from-me${continued ? ' continued' : ''}">
-          <div class="msg-avatar-sm">🐻</div>
-          <div class="msg-col">
-            <div class="img-bubble"><img src="${src}" alt=""><div class="img-overlay">🔍</div></div>
-            <div class="msg-time">${time}</div>
-          </div>
-        </div>`;
-      chatMessagesEl.appendChild(wrap);
-      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+      renderImageBubble('user', src);
     }, 180);
   }
 
@@ -6532,27 +6552,33 @@ async function loadChatHistory() {
     }
   }
 
-  function stickerSend(url) {
+  async function stickerSend(url) {
+    if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
     stickerCloseTray();
-    const stickerNow = new Date();
-    maybeInsertDateDivider(stickerNow);
-    const time = stickerNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
-    const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
-    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
-    const continued = prevRow && prevRow.classList.contains('from-me');
-    const wrap = document.createElement('div');
-    wrap.className = 'msg-wrap';
-    wrap.innerHTML = `
-      <div class="msg-row from-me${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm">🐻</div>
-        <div class="msg-col">
-          <div class="img-bubble"><img alt=""><div class="img-overlay">🔍</div></div>
-          <div class="msg-time">${time}</div>
-        </div>
-      </div>`;
-    wrap.querySelector('.img-bubble img').src = url;
-    chatMessagesEl.appendChild(wrap);
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    renderImageBubble('user', url);
+    msgCount++;
+
+    try {
+      // 贴纸图片转 base64，构造成 anthropic image content block 格式
+      const imgRes = await fetch(url);
+      if (!imgRes.ok) throw new Error('sticker fetch failed ' + imgRes.status);
+      const blob = await imgRes.blob();
+      const mediaType = blob.type || 'image/png';
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const imageContent = [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } }
+      ];
+      chatHistory.push({ role: 'user', content: imageContent });
+      await requestRyvenReply(imageContent);
+    } catch(e) {
+      console.error('貼紙轉發AI失敗', e);
+      showToast('🌙 貼紙已發送，但轉給 Ryven 失敗了');
+    }
   }
 
   // ===== 语音气泡 波形 =====
@@ -6719,6 +6745,12 @@ async function loadChatHistory() {
     addMessage('user', text);
     chatHistory.push({role:'user', content:text});
     msgCount++;
+    await requestRyvenReply(text);
+  }
+
+  // 流式接收 Ryven 回复 + 渲染 + 存历史。调用前 chatHistory 里必须已经 push 好这次的 user 消息，
+  // userContentForSave 是存进 /relay/chat/save 的那条 user content（文字发送传字符串，贴纸发送传 content block 数组）
+  async function requestRyvenReply(userContentForSave) {
     pendingReplyCount++;
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
@@ -6859,7 +6891,7 @@ async function loadChatHistory() {
         msgCount++;
               // 保存到服务器
         const toSave = [
-          { role: 'user', content: text },
+          { role: 'user', content: userContentForSave },
           { role: 'assistant', content: fullText }
         ];
         fetch(`https://ryven.homes/relay/chat/save`, {
