@@ -4340,6 +4340,16 @@
       </div>
     </div>
 
+    <!-- Ryven · 內心：占位，之後會把內心面板 mockup 移植進來 -->
+    <div class="sec">
+      <div class="sec-head"><div class="sec-name">Ryven's Heart</div><div class="sec-cn">內 心</div></div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title TODO">內心面板還在搭建，之後會移植進來</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 燈塔：暂不接功能 -->
     <div class="lighthouse" onclick="showToast('还在盖这个功能呢')">
       <span class="lh-icon">🔦</span>
@@ -4364,20 +4374,6 @@
         </div>
         <div class="row-status"><span class="dot"></span>live</div>
       </div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">磁盤</div>
-          <div class="row-sub">暫不可用，需服務端監控</div>
-        </div>
-        <div class="row-val dim TODO">XX<small>%</small></div>
-      </div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">內存</div>
-          <div class="row-sub">暫不可用，需服務端監控</div>
-        </div>
-        <div class="row-status warn"><span class="dot"></span><span class="TODO">XX</span>%</div>
-      </div>
     </div>
 
     <!-- Talk：模型接现有配置系统，其余TODO -->
@@ -4399,50 +4395,10 @@
       </div>
       <div class="row">
         <div class="row-left">
-          <div class="row-title">本月對話</div>
-          <div class="row-sub">turns · in / out tokens</div>
-        </div>
-        <div class="row-val dim TODO">XX<small>次</small></div>
-      </div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">模型</div>
-          <div class="row-sub">currently thinking with</div>
-        </div>
-        <div class="row-val dim" id="helm-model" style="font-size:13px">claude-opus-4-6</div>
-      </div>
-    </div>
-
-    <!-- Us：在一起天数接现有dayCount，其余TODO -->
-    <div class="sec">
-      <div class="sec-head"><div class="sec-name">Us</div><div class="sec-cn">關 係</div></div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">在一起</div>
-          <div class="row-sub">since 06.28.2026</div>
-        </div>
-        <div class="row-val" id="helm-together-days">0<small>天</small></div>
-      </div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">記憶入海</div>
-          <div class="row-sub">this month · new pearls</div>
-        </div>
-        <div class="row-val TODO">XX<small>只</small></div>
-      </div>
-      <div class="row">
-        <div class="row-left">
           <div class="row-title">最活躍時段</div>
           <div class="row-sub">when you talk to me most</div>
         </div>
         <div class="row-val dim TODO" style="font-size:14px">XX:XX – XX:XX</div>
-      </div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">深浅同步</div>
-          <div class="row-sub">days our tides matched</div>
-        </div>
-        <div class="row-val TODO">XX<small>天</small></div>
       </div>
     </div>
 
@@ -7439,17 +7395,6 @@ function renderDepthsPage() {
 
 // #helm：真实数据接入（在一起天数 / 模型）+ 假操作日志
 function renderHelmPage() {
-  const togetherEl = document.getElementById('helm-together-days');
-  if (togetherEl) togetherEl.innerHTML = `${dayCount}<small>天</small>`;
-
-  const modelEl = document.getElementById('helm-model');
-  if (modelEl) {
-    try {
-      const cfg = getCurrentModelConfig();
-      modelEl.textContent = (cfg && cfg.model) ? cfg.model : 'unknown';
-    } catch(e) { /* 模型配置系统还没就绪就先不动 */ }
-  }
-
   // 三個儀表的真實數據：記憶飽和(ombre) / Relay狀態 / 今日對話(fetchStats)
   fetchOmbreCount();
   checkHelmRelayStatus();
