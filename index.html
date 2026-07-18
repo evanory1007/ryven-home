@@ -7584,7 +7584,7 @@ function renderHeartDrive(data) {
   });
 }
 
-// 念頭池：thoughts 數組項目字段名不確定，兼容 字符串 / {text|content} / {type:'fixed'|fixed|pinned} 這幾種可能形態
+// 念頭池：text 字段存文字，kind 字段判斷類型（"flit"=閃念，"fixation"=執念）
 function renderHeartThoughts(data) {
   const thoughts = data.thoughts || [];
   const wrap = document.getElementById('heart-pool-wrap');
@@ -7595,10 +7595,9 @@ function renderHeartThoughts(data) {
   }
   wrap.innerHTML = thoughts.map(() => '<span class="heart-thought-pill"></span>').join('');
   wrap.querySelectorAll('.heart-thought-pill').forEach((el, i) => {
-    const t = thoughts[i];
-    const text = typeof t === 'string' ? t : (t.text || t.content || '');
-    const isFixed = typeof t === 'object' && t !== null && (t.type === 'fixed' || t.fixed === true || t.pinned === true);
-    el.textContent = text;
+    const t = thoughts[i] || {};
+    const isFixed = t.kind === 'fixation';
+    el.textContent = t.text || '';
     el.classList.add(isFixed ? 'fixed' : 'flash');
   });
 }
