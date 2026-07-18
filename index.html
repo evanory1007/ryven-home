@@ -7576,7 +7576,8 @@ function renderHeartDrive(data) {
 
   list.querySelectorAll('.heart-drive-row').forEach((el, i) => {
     const k = keys[i];
-    const val = Math.max(0, Math.min(100, drive[k] || 0));
+    // /relay/desire/state 返回的 drive 值是 0~1 的小数，要乘以100才是百分比
+    const val = Math.max(0, Math.min(100, (drive[k] || 0) * 100));
     el.querySelector('.heart-drive-em').textContent = driveEmoji[k] || '•';
     el.querySelector('.heart-drive-name').textContent = driveNames[k] || k;
     el.querySelector('.heart-drive-fill').style.width = val + '%';
