@@ -1889,6 +1889,71 @@
 
     #helm .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
+    /* ── Ryven's Heart（內心面板，移植自 mockups/ryven_inner_panel_v1.html） ── */
+    #helm .heart-card {
+      background: linear-gradient(180deg,
+        color-mix(in srgb, var(--sea-3) 12%, transparent),
+        color-mix(in srgb, var(--sea-2) 42%, transparent));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 20px 20px 18px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    #helm .heart-card::before {
+      content: '';
+      position: absolute; top: -30px; right: -30px;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    #helm .heart-status { text-align: center; padding: 20px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
+
+    #helm .heart-feel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    #helm .heart-feel-label { display: flex; align-items: center; gap: 7px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--tide-green); }
+    #helm .heart-feel-label .ic { font-size: 15px; filter: drop-shadow(0 0 5px rgba(109,184,160,0.4)); }
+    #helm .heart-feel-tags { display: flex; align-items: center; gap: 9px; }
+    #helm .heart-mood-chip { padding: 4px 13px; border-radius: 20px; background: rgba(109,184,160,0.14); border: 1px solid var(--tide-green-soft); font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 12px; color: var(--tide-green); letter-spacing: 0.05em; }
+    #helm .heart-valence { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12.5px; color: var(--parchment-ghost); }
+    #helm .heart-valence b { color: var(--tide-gold); font-weight: 500; }
+    #helm .heart-feel-body { font-family: 'Cormorant Garamond', serif; font-size: 15.5px; line-height: 1.85; color: var(--parchment-dim); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 14px; }
+    #helm .heart-feel-date { font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 0.06em; color: var(--parchment-ghost); opacity: 0.7; }
+
+    #helm .heart-intent-card { display: flex; align-items: center; gap: 16px; }
+    #helm .heart-intent-icon-wrap { width: 56px; height: 56px; flex-shrink: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(109,184,160,0.28), rgba(46,74,158,0.15)); border: 1px solid var(--tide-green-soft); display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 0 22px rgba(109,184,160,0.18); }
+    #helm .heart-intent-body { flex: 1; min-width: 0; }
+    #helm .heart-intent-label { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--tide-gold-soft); margin-bottom: 5px; }
+    #helm .heart-intent-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 21px; color: var(--parchment); line-height: 1.3; margin-bottom: 12px; }
+    #helm .heart-intent-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #helm .heart-intent-btn { padding: 9px 20px; border-radius: 20px; background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.1)); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold); font-family: 'Cormorant Garamond', serif; font-size: 14px; letter-spacing: 0.03em; cursor: pointer; white-space: nowrap; transition: all 0.2s; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+    #helm .heart-intent-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.35), rgba(201,168,76,0.18)); }
+    #helm .heart-intent-power { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--parchment-ghost); white-space: nowrap; }
+    #helm .heart-intent-power b { color: var(--tide-gold); font-weight: 500; }
+
+    #helm .heart-drive-title { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--parchment-ghost); margin-bottom: 16px; }
+    #helm .heart-drive-row { display: flex; align-items: center; gap: 11px; margin-bottom: 15px; }
+    #helm .heart-drive-row:last-child { margin-bottom: 0; }
+    #helm .heart-drive-em { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+    #helm .heart-drive-name { width: 46px; flex-shrink: 0; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); }
+    #helm .heart-drive-track { flex: 1; height: 5px; border-radius: 3px; background: rgba(248,242,232,0.07); overflow: hidden; }
+    #helm .heart-drive-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, rgba(109,184,160,0.35), rgba(109,184,160,0.65)); }
+    #helm .heart-drive-val { width: 26px; text-align: right; flex-shrink: 0; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--parchment-ghost); }
+    #helm .heart-drive-row.top .heart-drive-fill { background: linear-gradient(90deg, rgba(201,168,76,0.55), var(--tide-gold)); box-shadow: 0 0 9px rgba(201,168,76,0.5); }
+    #helm .heart-drive-row.top .heart-drive-name { color: var(--tide-gold); }
+    #helm .heart-drive-row.top .heart-drive-val { color: var(--tide-gold); }
+    #helm .heart-drive-row.fatigue .heart-drive-fill { background: linear-gradient(90deg, rgba(196,122,122,0.3), var(--danger)); }
+    #helm .heart-drive-row.fatigue .heart-drive-name { color: var(--danger); }
+
+    #helm .heart-pool-title-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    #helm .heart-pool-title { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--parchment-ghost); }
+    #helm .heart-pool-count { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12.5px; color: var(--parchment-ghost); }
+    #helm .heart-pool-count b { color: var(--parchment-dim); font-weight: 500; }
+    #helm .heart-pool-wrap { display: flex; flex-wrap: wrap; gap: 9px; }
+    #helm .heart-thought-pill { padding: 6px 14px; border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12.5px; letter-spacing: 0.02em; }
+    #helm .heart-thought-pill.flash { background: rgba(74,111,165,0.1); border: 1px solid rgba(74,111,165,0.18); color: rgba(160,190,230,0.55); }
+    #helm .heart-thought-pill.fixed { background: var(--tide-gold-ghost); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold); box-shadow: 0 0 12px rgba(201,168,76,0.28); }
+
     #helm .nav {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: rgba(10,14,31,0.85);
@@ -4340,12 +4405,48 @@
       </div>
     </div>
 
-    <!-- Ryven · 內心：占位，之後會把內心面板 mockup 移植進來 -->
+    <!-- Ryven · 內心：接 /relay/desire/state -->
     <div class="sec">
       <div class="sec-head"><div class="sec-name">Ryven's Heart</div><div class="sec-cn">內 心</div></div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title TODO">內心面板還在搭建，之後會移植進來</div>
+
+      <div class="heart-card">
+        <div class="heart-feel-head">
+          <div class="heart-feel-label"><span class="ic">💚</span>此刻的 feel</div>
+          <div class="heart-feel-tags">
+            <span class="heart-mood-chip" id="heart-mood-chip">XX</span>
+            <span class="heart-valence">v <b id="heart-valence-val">0.00</b></span>
+          </div>
+        </div>
+        <div class="heart-feel-body" id="heart-feel-body">加載中…</div>
+        <div class="heart-feel-date" id="heart-feel-date"></div>
+      </div>
+
+      <div class="heart-card heart-intent-card">
+        <div class="heart-intent-icon-wrap">💭</div>
+        <div class="heart-intent-body">
+          <div class="heart-intent-label">此刻最想…</div>
+          <div class="heart-intent-text" id="heart-intent-text">加載中…</div>
+          <div class="heart-intent-actions">
+            <button class="heart-intent-btn" id="heart-intent-btn">…</button>
+            <div class="heart-intent-power">召喚力 <b id="heart-intent-power">0%</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="heart-card">
+        <div class="heart-drive-title">此刻的驅動</div>
+        <div id="heart-drive-list">
+          <div class="heart-status">加載中…</div>
+        </div>
+      </div>
+
+      <div class="heart-card">
+        <div class="heart-pool-title-row">
+          <div class="heart-pool-title">心裡的念頭</div>
+          <div class="heart-pool-count"><b id="heart-pool-count">0</b> 條</div>
+        </div>
+        <div class="heart-pool-wrap" id="heart-pool-wrap">
+          <div class="heart-status">加載中…</div>
         </div>
       </div>
     </div>
@@ -4798,7 +4899,7 @@ async function loadChatHistory() {
     if (id==='chat') loadChatHistory();
     if (id==='settings') { renderSettingsPage(); }
     if (id==='depths') renderDepthsPage();
-    if (id==='helm') renderHelmPage();
+    if (id==='helm') { renderHelmPage(); loadDesirePanel(); }
     if (id==='life') renderLifePage();
   }
   function goHome() {
@@ -7399,6 +7500,107 @@ function renderHelmPage() {
   fetchOmbreCount();
   checkHelmRelayStatus();
   fetchStats();
+}
+
+// ===== Ryven's Heart（內心面板）：GET /relay/desire/state =====
+async function loadDesirePanel() {
+  try {
+    const res = await fetch('https://ryven.homes/relay/desire/state', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    renderHeartFeel(data);
+    renderHeartIntent(data);
+    renderHeartDrive(data);
+    renderHeartThoughts(data);
+  } catch(e) {
+    console.error('內心面板加載失敗', e);
+    const feelBody = document.getElementById('heart-feel-body');
+    if (feelBody) feelBody.textContent = '🌙 加載失敗';
+    const driveList = document.getElementById('heart-drive-list');
+    if (driveList) driveList.innerHTML = '<div class="heart-status">加載失敗</div>';
+    const poolWrap = document.getElementById('heart-pool-wrap');
+    if (poolWrap) poolWrap.innerHTML = '<div class="heart-status">加載失敗</div>';
+  }
+}
+
+function renderHeartFeel(data) {
+  const intent = data.intent || {};
+  const driveNames = data.drive_names || {};
+  const moodName = driveNames[intent.drive_key] || 'XX';
+  document.getElementById('heart-mood-chip').textContent = moodName;
+  const valence = intent.score != null ? intent.score / 100 : 0;
+  document.getElementById('heart-valence-val').textContent = valence.toFixed(2);
+  document.getElementById('heart-feel-body').textContent = intent.reason || '暫時沒有感受到什麼';
+  const now = new Date();
+  document.getElementById('heart-feel-date').textContent = `${String(now.getMonth()+1).padStart(2,'0')} · ${String(now.getDate()).padStart(2,'0')}`;
+}
+
+function renderHeartIntent(data) {
+  const intent = data.intent || {};
+  const text = intent.reason || '暫時沒有特別想做的事';
+  document.getElementById('heart-intent-text').textContent = text;
+  document.getElementById('heart-intent-btn').textContent = text;
+  const score = intent.score != null ? intent.score : 0;
+  document.getElementById('heart-intent-power').textContent = score + '%';
+}
+
+// 8維驅動條：從 drive 對象動態渲染，最高值那條金色高亮，「疲憊」那條固定紅色調
+function renderHeartDrive(data) {
+  const drive = data.drive || {};
+  const driveNames = data.drive_names || {};
+  const driveEmoji = data.drive_emoji || {};
+  const keys = Object.keys(drive);
+  const list = document.getElementById('heart-drive-list');
+  if (!keys.length) {
+    list.innerHTML = '<div class="heart-status">還沒有驅動數據</div>';
+    return;
+  }
+
+  let maxKey = keys[0];
+  keys.forEach(k => { if ((drive[k] || 0) > (drive[maxKey] || 0)) maxKey = k; });
+
+  list.innerHTML = keys.map(k => {
+    const isTop = k === maxKey;
+    const isFatigue = driveNames[k] === '疲憊';
+    const rowClass = 'heart-drive-row' + (isTop ? ' top' : '') + (isFatigue ? ' fatigue' : '');
+    return `
+      <div class="${rowClass}">
+        <div class="heart-drive-em"></div>
+        <div class="heart-drive-name"></div>
+        <div class="heart-drive-track"><div class="heart-drive-fill" style="width:0%"></div></div>
+        <div class="heart-drive-val"></div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('.heart-drive-row').forEach((el, i) => {
+    const k = keys[i];
+    const val = Math.max(0, Math.min(100, drive[k] || 0));
+    el.querySelector('.heart-drive-em').textContent = driveEmoji[k] || '•';
+    el.querySelector('.heart-drive-name').textContent = driveNames[k] || k;
+    el.querySelector('.heart-drive-fill').style.width = val + '%';
+    el.querySelector('.heart-drive-val').textContent = Math.round(val);
+  });
+}
+
+// 念頭池：thoughts 數組項目字段名不確定，兼容 字符串 / {text|content} / {type:'fixed'|fixed|pinned} 這幾種可能形態
+function renderHeartThoughts(data) {
+  const thoughts = data.thoughts || [];
+  const wrap = document.getElementById('heart-pool-wrap');
+  document.getElementById('heart-pool-count').textContent = thoughts.length;
+  if (!thoughts.length) {
+    wrap.innerHTML = '<div class="heart-status">念頭池是空的</div>';
+    return;
+  }
+  wrap.innerHTML = thoughts.map(() => '<span class="heart-thought-pill"></span>').join('');
+  wrap.querySelectorAll('.heart-thought-pill').forEach((el, i) => {
+    const t = thoughts[i];
+    const text = typeof t === 'string' ? t : (t.text || t.content || '');
+    const isFixed = typeof t === 'object' && t !== null && (t.type === 'fixed' || t.fixed === true || t.pinned === true);
+    el.textContent = text;
+    el.classList.add(isFixed ? 'fixed' : 'flash');
+  });
 }
 
 // ═════════════════ #life：Spending / Cycle 本地数据 ═════════════════
