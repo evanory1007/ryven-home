@@ -4898,7 +4898,7 @@ async function loadChatHistory() {
     if (id==='desk') loadDesk();
     if (id==='chat') loadChatHistory();
     if (id==='settings') { renderSettingsPage(); }
-    if (id==='depths') renderDepthsPage();
+    if (id==='depths') loadDepthsPage();
     if (id==='helm') { renderHelmPage(); loadDesirePanel(); }
     if (id==='life') renderLifePage();
   }
@@ -4910,10 +4910,12 @@ async function loadChatHistory() {
   }
 
   // ===== 主頁真實數據 =====
-  function renderHomePage() {
+  async function renderHomePage() {
     const daysEl = document.getElementById('tide-days-count');
     if (daysEl) daysEl.textContent = dayCount;
 
+    await migrateDepthsDataIfNeeded();
+    await loadDepthsFromServer();
     renderHomeTideCurve();
     renderHomeDiaryCount();
     fetchOmbreCount();
@@ -7314,12 +7316,70 @@ async function fetchStats() {
   }
 }
 
-// #depths：月份标签 + 31天点阵（JS循环生成，示例心情数据待接入真实记录）
-// ═════════════════ #depths：情緒潮汐本地数据（增删改查，不锁死） ═════════════════
+// #depths：月份标签 + 31天点阵（JS循环生成）
+// ═════════════════ #depths：情緒潮汐數據，已從 localStorage 遷移到服務器（/relay/depths） ═════════════════
+// depthsDataCache 是內存緩存：loadDepthsFromServer() 拉一次填進來，getDepthsData() 之後都同步讀這份緩存，
+// 這樣 depthsSetMood()/depthsDeleteEdit() 這些既有的同步渲染鏈路不用整個改成 async
+let depthsDataCache = {};
+
 function getDepthsData() {
-  try { return JSON.parse(localStorage.getItem('depths-data')) || {}; } catch(e) { return {}; }
+  return depthsDataCache || {};
 }
-function saveDepthsData(data) { localStorage.setItem('depths-data', JSON.stringify(data)); }
+
+// 本地立刻更新緩存（保證馬上重繪UI），同時把整份數據 POST 到服務器持久化
+function saveDepthsData(data) {
+  depthsDataCache = data;
+  saveDepthsToServer(data);
+}
+
+async function loadDepthsFromServer() {
+  try {
+    const res = await fetch('https://ryven.homes/relay/depths', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    depthsDataCache = data.data || data || {};
+  } catch(e) {
+    console.error('深淺數據加載失敗', e);
+    if (!depthsDataCache) depthsDataCache = {};
+  }
+  return depthsDataCache;
+}
+
+async function saveDepthsToServer(data) {
+  try {
+    const res = await fetch('https://ryven.homes/relay/depths', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+  } catch(e) {
+    console.error('深淺數據保存失敗', e);
+    showToast('🌙 保存失敗，稍後再試');
+  }
+}
+
+// 一次性遷移：本地還有舊數據就存去服務器，成功後清掉 localStorage；之後 localStorage 裡不會再有值，這個函數自然就不再做事
+let depthsMigrationDone = false;
+async function migrateDepthsDataIfNeeded() {
+  if (depthsMigrationDone) return;
+  depthsMigrationDone = true;
+  let legacy = null;
+  try { legacy = JSON.parse(localStorage.getItem('depths-data')); } catch(e) { legacy = null; }
+  if (!legacy || typeof legacy !== 'object' || Object.keys(legacy).length === 0) return;
+  await saveDepthsToServer(legacy);
+  depthsDataCache = legacy;
+  localStorage.removeItem('depths-data');
+}
+
+async function loadDepthsPage() {
+  await migrateDepthsDataIfNeeded();
+  await loadDepthsFromServer();
+  renderDepthsPage();
+}
+
 function depthsDateKey(year, month, day) { return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; }
 function depthsTodayKey() { const n = new Date(); return depthsDateKey(n.getFullYear(), n.getMonth(), n.getDate()); }
 function depthsFormatDateLabel(key) { const [y, m, d] = key.split('-').map(Number); return `${m}月${d}日`; }
