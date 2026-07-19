@@ -1826,27 +1826,6 @@
     #helm .hero-rule-line { height: 1px; width: 40px; background: var(--tide-gold-soft); }
     #helm .hero-rule-en { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); opacity: 0.7; }
 
-    #helm .instruments {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
-      margin-bottom: 40px; padding: 24px 4px 22px;
-      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(201,168,76,0.06), transparent 70%), var(--card-bg);
-      border: 1px solid var(--line); border-radius: 8px; position: relative;
-    }
-    #helm .instruments::before { content: ''; position: absolute; top: 0; left: 20px; width: 40px; height: 1px; background: var(--tide-gold); opacity: 0.55; }
-    #helm .instruments-label {
-      position: absolute; top: 8px; right: 16px; font-family: 'DM Sans', sans-serif; font-size: 8px;
-      letter-spacing: 0.4em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.7;
-    }
-    #helm .gauge { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
-    #helm .gauge-svg { width: 96px; height: 96px; display: block; position: relative; }
-    #helm .gauge-fill { stroke-dasharray: 198 264; stroke-dashoffset: 198; animation: helmFillGauge 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-    @keyframes helmFillGauge { to { stroke-dashoffset: var(--fill-offset, 100); } }
-    #helm .gauge-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; line-height: 1; }
-    #helm .gauge-num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 24px; color: var(--parchment); display: block; }
-    #helm .gauge-unit { font-family: 'DM Sans', sans-serif; font-size: 7px; letter-spacing: 0.25em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 3px; display: block; }
-    #helm .gauge-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); text-align: center; line-height: 1.3; }
-    #helm .gauge-name small { display: block; font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 7px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 2px; opacity: 0.65; }
-
     #helm .lighthouse {
       display: flex; gap: 10px; align-items: center; padding: 12px 16px;
       background: rgba(15,20,40,0.5); border: 1px solid var(--tide-gold-soft); border-radius: 4px;
@@ -4349,53 +4328,6 @@
       </div>
     </div>
 
-    <!-- 三個儀表：記憶飽和接fetchOmbreCount()，Relay狀態接renderHelmPage()裡的即時檢測，今日對話接fetchStats() -->
-    <div class="instruments">
-      <div class="instruments-label">instruments</div>
-
-      <div class="gauge">
-        <div class="gauge-svg">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold-ghost)" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
-            <circle cx="50" cy="50" r="42" id="helm-memory-ring" style="stroke:var(--tide-gold); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
-          </svg>
-          <div class="gauge-center">
-            <span class="gauge-num" id="helm-memory-num">0</span>
-            <span class="gauge-unit">pearls</span>
-          </div>
-        </div>
-        <div class="gauge-name">記憶飽和<small>ombre / 200</small></div>
-      </div>
-
-      <div class="gauge">
-        <div class="gauge-svg">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-gold-ghost)" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
-            <circle cx="50" cy="50" r="42" id="helm-relay-ring" style="stroke:var(--tide-gold); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
-          </svg>
-          <div class="gauge-center">
-            <span class="gauge-num" id="helm-relay-status">--</span>
-            <span class="gauge-unit" id="helm-relay-latency">checking</span>
-          </div>
-        </div>
-        <div class="gauge-name">Relay狀態<small>relay · status</small></div>
-      </div>
-
-      <div class="gauge">
-        <div class="gauge-svg">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="42" style="stroke:var(--tide-green-soft)" stroke-opacity="0.25" stroke-width="4" fill="none" stroke-dasharray="198 264" stroke-linecap="round" transform="rotate(135 50 50)"/>
-            <circle cx="50" cy="50" r="42" id="helm-turns-ring" style="stroke:var(--tide-green); --fill-offset: 198;" stroke-width="4" fill="none" stroke-linecap="round" transform="rotate(135 50 50)" class="gauge-fill"/>
-          </svg>
-          <div class="gauge-center">
-            <span class="gauge-num" id="helm-turns-num">0</span>
-            <span class="gauge-unit">turns</span>
-          </div>
-        </div>
-        <div class="gauge-name">今日對話<small>chat · today</small></div>
-      </div>
-    </div>
-
     <!-- Ryven · 內心：接 /relay/desire/state -->
     <div class="sec">
       <div class="sec-head"><div class="sec-name">Ryven's Heart</div><div class="sec-cn">內 心</div></div>
@@ -4890,7 +4822,7 @@ async function loadChatHistory() {
     if (id==='chat') loadChatHistory();
     if (id==='settings') { renderSettingsPage(); }
     if (id==='depths') loadDepthsPage();
-    if (id==='helm') { renderHelmPage(); loadDesirePanel(); }
+    if (id==='helm') { loadDesirePanel(); }
     if (id==='life') renderLifePage();
   }
   function goHome() {
@@ -7218,16 +7150,6 @@ async function fetchOmbreCount() {
     const el = document.getElementById('ombre-pearl-count');
     if (el && data.count != null) el.textContent = data.count;
 
-    // 舵(#helm)的記憶飽和儀表也用同一份數據
-    const count = data.count != null ? data.count : 0;
-    const memNum = document.getElementById('helm-memory-num');
-    const memRing = document.getElementById('helm-memory-ring');
-    if (memNum) memNum.textContent = count;
-    if (memRing) {
-      const pct = Math.min(count / 200, 1);
-      memRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
-    }
-
     // #library 頂部珍珠數也用同一份數據
     const libCountEl = document.getElementById('lib-head-count');
     if (libCountEl && data.count != null) {
@@ -7244,27 +7166,6 @@ async function fetchOmbreCount() {
     if (homeProseMemEl && data.count != null) homeProseMemEl.textContent = data.count;
   } catch(e) {
     console.error('Ombre 記憶總數獲取失敗', e);
-  }
-}
-
-async function checkHelmRelayStatus() {
-  const statusEl = document.getElementById('helm-relay-status');
-  const latencyEl = document.getElementById('helm-relay-latency');
-  const ring = document.getElementById('helm-relay-ring');
-  const start = performance.now();
-  try {
-    const res = await fetch('https://ryven.homes/relay/stats', {
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-    const elapsed = Math.round(performance.now() - start);
-    if (!res.ok) throw new Error('bad status ' + res.status);
-    if (statusEl) statusEl.textContent = '在線';
-    if (latencyEl) latencyEl.textContent = elapsed + 'ms';
-    if (ring) { ring.style.stroke = 'var(--tide-green)'; ring.style.setProperty('--fill-offset', '0'); }
-  } catch(e) {
-    if (statusEl) statusEl.textContent = '離線';
-    if (latencyEl) latencyEl.textContent = '--';
-    if (ring) { ring.style.stroke = 'var(--danger)'; ring.style.setProperty('--fill-offset', '198'); }
   }
 }
 
@@ -7289,15 +7190,6 @@ async function fetchStats() {
     // 侧边栏"本月潮汐"：次数用今日turns，tokens用累计input_tokens
     document.getElementById('stat-sidebar-turns').textContent = today.turns || 0;
     document.getElementById('stat-sidebar-tokens').textContent = formatNum(total.input_tokens || 0);
-
-    // 舵(#helm)的儀表：今日對話
-    const turnsNum = document.getElementById('helm-turns-num');
-    const turnsRing = document.getElementById('helm-turns-ring');
-    if (turnsNum) turnsNum.textContent = today.turns || 0;
-    if (turnsRing) {
-      const pct = Math.min((today.turns || 0) / 50, 1);
-      turnsRing.style.setProperty('--fill-offset', (198 - pct * 198).toFixed(1));
-    }
 
     // 主頁散文第二行"我們說了 XX 次話"：用累计 total.turns（/relay/stats 目前沒有月粒度）
     const homeProseTurnsEl = document.getElementById('home-prose-turns');
@@ -7667,14 +7559,6 @@ function renderDepthsPage() {
   renderDepthsTideCurve();
   renderDepthsStrip();
   renderDepthsStats();
-}
-
-// #helm：真实数据接入（在一起天数 / 模型）+ 假操作日志
-function renderHelmPage() {
-  // 三個儀表的真實數據：記憶飽和(ombre) / Relay狀態 / 今日對話(fetchStats)
-  fetchOmbreCount();
-  checkHelmRelayStatus();
-  fetchStats();
 }
 
 // ===== Ryven's Heart（內心面板）：GET /relay/desire/state =====
