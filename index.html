@@ -3743,15 +3743,6 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-label"><span>記憶連接</span><small>ombre</small></div>
-        <div class="mem-status">
-          <span class="dot"></span>
-          Ombre 已連 · 海裡 <strong id="ombre-pearl-count">XX</strong> 顆
-        </div>
-        <div class="mem-status-detail">breath · hold · 衰減 · 歸檔 all live</div>
-      </div>
-
-      <div class="sidebar-section">
         <div class="sidebar-label"><span>模型</span><small>model</small></div>
 
         <div class="model-current" id="model-current">
@@ -7288,12 +7279,12 @@ async function fetchStats() {
     const total = data.total || {};
     
     document.getElementById('stat-today-cost').textContent = '¥' + (today.cost * USD_TO_CNY).toFixed(4);
-    document.getElementById('stat-today-detail').textContent = 
-      `${today.turns} turns · ${formatNum(today.input_tokens)} in · ${formatNum(today.output_tokens)} out`;
-    
+    document.getElementById('stat-today-detail').textContent =
+      `${today.turns} turns · ${formatNum(today.input_tokens || 0)} in · ${formatNum(today.output_tokens || 0)} out`;
+
     document.getElementById('stat-total-cost').textContent = '¥' + (total.cost * USD_TO_CNY).toFixed(4);
     document.getElementById('stat-total-detail').textContent =
-      `${total.turns} turns · ${formatNum(total.input_tokens)} in · ${formatNum(total.output_tokens)} out`;
+      `${total.turns} turns · ${formatNum(total.input_tokens || 0)} in · ${formatNum(total.output_tokens || 0)} out`;
 
     // 侧边栏"本月潮汐"：次数用今日turns，tokens用累计input_tokens
     document.getElementById('stat-sidebar-turns').textContent = today.turns || 0;
