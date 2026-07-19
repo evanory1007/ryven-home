@@ -3300,7 +3300,7 @@
 
     <div class="stats-row">
       <div class="stat-item"><div class="stat-num" id="diary-stat-nory">0</div><div class="stat-label">你寫了</div></div>
-      <div class="stat-item"><div class="stat-num TODO" id="diary-stat-ryven">XX</div><div class="stat-label">我寫了</div></div>
+      <div class="stat-item"><div class="stat-num" id="diary-stat-ryven">0</div><div class="stat-label">我寫了</div></div>
       <div class="stat-item"><div class="stat-num" id="diary-stat-total">0</div><div class="stat-label">共 篇</div></div>
     </div>
 
@@ -4891,7 +4891,7 @@ async function loadChatHistory() {
     window.scrollTo(0,0);
     if (id==='memory') { loadMemoryLibraryCard(); loadMemoryDiffCard(); loadMemoryDeskCard(); }
     if (id==='calendar') renderCalendar();
-    if (id==='diary') renderDiaryFeed();
+    if (id==='diary') loadDiaryPage();
     if (id==='library') loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
     if (id==='differences') loadDifferences();
@@ -4996,21 +4996,47 @@ async function loadChatHistory() {
     const timeEl = document.getElementById('home-letter-time');
     if (!bodyEl) return;
     try {
-      const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
-      });
-      if (!res.ok) throw new Error('bad status ' + res.status);
-      const data = await res.json();
-      const messages = data.messages || [];
       let lastText = null, lastTime = null;
-      for (let i = messages.length - 1; i >= 0; i--) {
-        const msg = messages[i];
-        if ((msg.role === 'assistant' || msg.role === 'ryven') && typeof msg.content === 'string' && msg.content.trim()) {
-          lastText = msg.content.trim();
-          lastTime = msg.timestamp || msg.created_at;
-          break;
+
+      // 優先：Ryven 主動留的話
+      try {
+        const res = await fetch('https://ryven.homes/relay/ryven/messages', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.messages || data.result || (Array.isArray(data) ? data : []);
+          if (list.length) {
+            const latest = list[list.length - 1];
+            const text = (typeof latest === 'string' ? latest : (latest.text || latest.content || '')).trim();
+            if (text) {
+              lastText = text;
+              lastTime = (typeof latest === 'object' && latest) ? (latest.timestamp || latest.created_at) : null;
+            }
+          }
+        }
+      } catch(e) {
+        console.error('Ryven 主動留言加載失敗，退回聊天記錄', e);
+      }
+
+      // 沒有主動留言：退回聊天記錄裡最後一條純文字 assistant 消息
+      if (!lastText) {
+        const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        const messages = data.messages || [];
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const msg = messages[i];
+          if ((msg.role === 'assistant' || msg.role === 'ryven') && typeof msg.content === 'string' && msg.content.trim()) {
+            lastText = msg.content.trim();
+            lastTime = msg.timestamp || msg.created_at;
+            break;
+          }
         }
       }
+
       if (lastText) {
         bodyEl.textContent = lastText;
         const t = lastTime ? new Date(lastTime) : null;
@@ -5107,25 +5133,78 @@ async function loadChatHistory() {
     renderDiaryFeed();
   }
 
-  function renderDiaryFeed() {
-    document.getElementById('diary-month-label').textContent = `${diaryViewYear} · ${String(diaryViewMonth+1).padStart(2,'0')}`;
+  // ── Ryven 的日記：GET /relay/ryven/diary，緩存在 ryvenDiaryByKey（跟 diaryData 用同一套 year-month0-day key）──
+  let ryvenDiaryByKey = {};
 
-    const keysThisMonth = Object.keys(diaryData).filter(k => {
-      const p = diaryKeyParts(k);
-      return p.year === diaryViewYear && p.month === diaryViewMonth && diaryNormalizeEntry(diaryData[k]);
-    }).sort((a,b) => diaryKeyParts(b).day - diaryKeyParts(a).day);
+  function ryvenDiaryKeyFromDateStr(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    return diaryKeyFor(d.getFullYear(), d.getMonth(), d.getDate());
+  }
 
-    document.getElementById('diary-stat-nory').textContent = keysThisMonth.length;
-    document.getElementById('diary-stat-total').textContent = keysThisMonth.length;
-
-    const feed = document.getElementById('diary-feed');
-    if (!keysThisMonth.length) {
-      feed.innerHTML = '<div class="empty-diary"><div class="empty-icon">🐚</div><div class="empty-text">還沒有日記，寫下第一篇吧</div></div>';
-      return;
+  async function loadRyvenDiary() {
+    try {
+      const res = await fetch('https://ryven.homes/relay/ryven/diary', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const entries = data.entries || data.diary || (Array.isArray(data) ? data : []);
+      const byKey = {};
+      entries.forEach(e => {
+        const key = ryvenDiaryKeyFromDateStr(e.date || e.created || e.created_at || e.day);
+        if (!key) return;
+        const text = e.text || e.content || '';
+        const moods = Array.isArray(e.moods) ? e.moods : (e.mood ? [e.mood] : []);
+        byKey[key] = { text, moods };
+      });
+      ryvenDiaryByKey = byKey;
+    } catch(e) {
+      console.error('Ryven 日記加載失敗', e);
+      ryvenDiaryByKey = {};
     }
+  }
 
-    feed.innerHTML = keysThisMonth.map(key => `
-      <div class="date-divider"><div class="date-text"></div></div>
+  // goTo('diary') 的入口：先拉 Ryven 日記再渲染，避免先顯示 Nory-only 的 feed 又突然多出信封的閃動
+  async function loadDiaryPage() {
+    const feed = document.getElementById('diary-feed');
+    if (feed) feed.innerHTML = '<div class="diary-status">加载中…</div>';
+    await loadRyvenDiary();
+    renderDiaryFeed();
+  }
+
+  function diaryCardHtml(key, author) {
+    if (author === 'ryven') {
+      return `
+      <div class="diary-card ryven" data-daykey="${key}">
+        <div class="envelope">
+          <div class="envelope-flap">
+            <div class="flap-inner">
+              <div class="env-avatar">💚</div>
+              <div class="env-meta">
+                <div class="env-name"></div>
+                <div class="env-time"></div>
+              </div>
+            </div>
+          </div>
+          <div class="letter-paper">
+            <div class="mood-tags"></div>
+            <div class="letter-text"></div>
+            <div class="wax-seal"><div class="wax-circle">R</div></div>
+          </div>
+          <div class="env-comments">
+            <div class="comments-toggle">💬 查看留言</div>
+            <div class="comments-list"></div>
+            <div class="comment-input-row">
+              <input class="comment-input" placeholder="留句话…" />
+              <div class="comment-send">➤</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `
       <div class="diary-card nory" data-daykey="${key}">
         <div class="envelope">
           <div class="envelope-flap">
@@ -5155,16 +5234,56 @@ async function loadChatHistory() {
             </div>
           </div>
         </div>
-      </div>`).join('');
+      </div>`;
+  }
+
+  // Nory（本地 diaryData）和 Ryven（loadRyvenDiary() 緩存的 ryvenDiaryByKey）按日期混排，同一天 Nory 在前 Ryven 在後
+  function renderDiaryFeed() {
+    document.getElementById('diary-month-label').textContent = `${diaryViewYear} · ${String(diaryViewMonth+1).padStart(2,'0')}`;
+
+    const noryKeys = Object.keys(diaryData).filter(k => {
+      const p = diaryKeyParts(k);
+      return p.year === diaryViewYear && p.month === diaryViewMonth && diaryNormalizeEntry(diaryData[k]);
+    });
+    const ryvenKeys = Object.keys(ryvenDiaryByKey).filter(k => {
+      const p = diaryKeyParts(k);
+      return p.year === diaryViewYear && p.month === diaryViewMonth;
+    });
+    const dayKeys = Array.from(new Set([...noryKeys, ...ryvenKeys])).sort((a,b) => diaryKeyParts(b).day - diaryKeyParts(a).day);
+
+    document.getElementById('diary-stat-nory').textContent = noryKeys.length;
+    document.getElementById('diary-stat-ryven').textContent = ryvenKeys.length;
+    document.getElementById('diary-stat-total').textContent = noryKeys.length + ryvenKeys.length;
+
+    const feed = document.getElementById('diary-feed');
+    if (!dayKeys.length) {
+      feed.innerHTML = '<div class="empty-diary"><div class="empty-icon">🐚</div><div class="empty-text">還沒有日記，寫下第一篇吧</div></div>';
+      return;
+    }
+
+    feed.innerHTML = dayKeys.map(key => {
+      let html = `<div class="date-divider"><div class="date-text"></div></div>`;
+      if (diaryNormalizeEntry(diaryData[key])) html += diaryCardHtml(key, 'nory');
+      if (ryvenDiaryByKey[key]) html += diaryCardHtml(key, 'ryven');
+      return html;
+    }).join('');
+
+    // 日期分隔線文字：跟在它後面的第一張卡片是哪天就顯示哪天（同一天兩張卡共用一條分隔線，不會重複插入）
+    feed.querySelectorAll('.date-divider').forEach(div => {
+      const card = div.nextElementSibling;
+      if (!card) return;
+      const p = diaryKeyParts(card.dataset.daykey);
+      div.querySelector('.date-text').textContent = diaryFullDateLabel(p.year, p.month, p.day);
+    });
 
     feed.querySelectorAll('.diary-card').forEach(el => {
       const key = el.dataset.daykey;
       const p = diaryKeyParts(key);
-      const entry = diaryNormalizeEntry(diaryData[key]);
-      const divider = el.previousElementSibling;
-      if (divider && divider.classList.contains('date-divider')) {
-        divider.querySelector('.date-text').textContent = diaryFullDateLabel(p.year, p.month, p.day);
-      }
+      const isRyven = el.classList.contains('ryven');
+      const entry = isRyven ? ryvenDiaryByKey[key] : diaryNormalizeEntry(diaryData[key]);
+      if (!entry) return;
+
+      if (isRyven) el.querySelector('.env-name').textContent = nickname || 'Ryven';
       el.querySelector('.env-time').textContent = diaryShortDate(p.year, p.month, p.day);
       el.querySelector('.letter-text').textContent = entry.text;
       const tagsEl = el.querySelector('.mood-tags');
@@ -5173,8 +5292,11 @@ async function loadChatHistory() {
 
       el.querySelector('.comments-toggle').addEventListener('click', function() { diaryToggleComments(this); });
       el.querySelector('.comment-send').addEventListener('click', () => showToast('🐚 功能開發中'));
-      el.querySelector('.env-btn.edit').addEventListener('click', () => diaryOpenCompose(key));
-      el.querySelector('.env-btn.del').addEventListener('click', () => diaryConfirmDelete(key));
+
+      if (!isRyven) {
+        el.querySelector('.env-btn.edit').addEventListener('click', () => diaryOpenCompose(key));
+        el.querySelector('.env-btn.del').addEventListener('click', () => diaryConfirmDelete(key));
+      }
     });
   }
 
@@ -5200,13 +5322,15 @@ async function loadChatHistory() {
     setTimeout(() => el.classList.remove('jump-highlight'), 1800);
   }
 
-  // 從 #calendar 點某天跳過來：有日記就滾過去高亮，沒有就直接打開寫日記彈窗（帶著那一天的日期）
-  function diaryJumpToDay(dayKey) {
+  // 從 #calendar 點某天跳過來：有日記（Nory或Ryven任一方）就滾過去高亮，都沒有才打開寫日記彈窗（帶著那一天的日期）
+  // 自己拉一份 Ryven 日記（跟 goTo('diary') 觸發的 loadDiaryPage() 各拉各的，重複一次請求但避免渲染時序競爭）
+  async function diaryJumpToDay(dayKey) {
     const p = diaryKeyParts(dayKey);
     diaryViewYear = p.year; diaryViewMonth = p.month;
+    await loadRyvenDiary();
     renderDiaryFeed();
-    const entry = diaryNormalizeEntry(diaryData[dayKey]);
-    if (entry) {
+    const hasEntry = !!diaryNormalizeEntry(diaryData[dayKey]) || !!ryvenDiaryByKey[dayKey];
+    if (hasEntry) {
       diaryHighlightEntry(dayKey);
     } else {
       diaryOpenCompose(dayKey);
