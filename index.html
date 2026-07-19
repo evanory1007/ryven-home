@@ -4405,24 +4405,17 @@
       <div class="sec-head"><div class="sec-name">Talk</div><div class="sec-cn">對 話</div></div>
       <div class="row">
         <div class="row-left">
-          <div class="row-title">Cache 命中率</div>
-          <div class="row-sub">暫不可用，需服務端監控</div>
-        </div>
-        <div class="row-val TODO">XX<small>%</small></div>
-      </div>
-      <div class="row">
-        <div class="row-left">
-          <div class="row-title">平均延遲</div>
-          <div class="row-sub">暫不可用，需服務端監控</div>
-        </div>
-        <div class="row-val dim TODO">XX<small>s</small></div>
-      </div>
-      <div class="row">
-        <div class="row-left">
           <div class="row-title">最活躍時段</div>
           <div class="row-sub">when you talk to me most</div>
         </div>
-        <div class="row-val dim TODO" style="font-size:14px">XX:XX – XX:XX</div>
+        <div class="row-val dim" id="helm-active-hours" style="font-size:14px">--</div>
+      </div>
+      <div class="row">
+        <div class="row-left">
+          <div class="row-title">今日心跳</div>
+          <div class="row-sub">ryven's autonomous tick</div>
+        </div>
+        <div class="row-val dim" id="helm-heartbeat" style="font-size:13px">--</div>
       </div>
     </div>
 
@@ -4822,7 +4815,7 @@ async function loadChatHistory() {
     if (id==='chat') loadChatHistory();
     if (id==='settings') { renderSettingsPage(); }
     if (id==='depths') loadDepthsPage();
-    if (id==='helm') { loadDesirePanel(); }
+    if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
   }
   function goHome() {
@@ -7574,6 +7567,7 @@ async function loadDesirePanel() {
     renderHeartIntent(data);
     renderHeartDrive(data);
     renderHeartThoughts(data);
+    renderHelmHeartbeat(data);
   } catch(e) {
     console.error('內心面板加載失敗', e);
     const feelBody = document.getElementById('heart-feel-body');
@@ -7582,6 +7576,51 @@ async function loadDesirePanel() {
     if (driveList) driveList.innerHTML = '<div class="heart-status">加載失敗</div>';
     const poolWrap = document.getElementById('heart-pool-wrap');
     if (poolWrap) poolWrap.innerHTML = '<div class="heart-status">加載失敗</div>';
+    const hbEl = document.getElementById('helm-heartbeat');
+    if (hbEl) hbEl.textContent = '暫不可用';
+  }
+}
+
+function renderHelmHeartbeat(data) {
+  const el = document.getElementById('helm-heartbeat');
+  if (!el) return;
+  if (!data.last_tick) { el.textContent = '尚未心跳'; return; }
+  const d = new Date(data.last_tick);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  el.textContent = `上次 ${hh}:${mm} · 今日${data.ticks_today || 0}次`;
+}
+
+async function loadTalkActiveHours() {
+  const el = document.getElementById('helm-active-hours');
+  if (!el) return;
+  try {
+    const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    const messages = data.messages || [];
+    const hourCounts = new Array(24).fill(0);
+    let counted = 0;
+    messages.forEach(msg => {
+      const ts = msg.timestamp || msg.created_at;
+      if (!ts) return; // 沒真實時間戳的舊數據不計入，避免統計失真
+      hourCounts[new Date(ts).getHours()]++;
+      counted++;
+    });
+    if (!counted) { el.textContent = '暫無數據'; return; }
+    // 滑動2小時窗口找最密集區間
+    let bestStart = 0, bestSum = -1;
+    for (let h = 0; h < 24; h++) {
+      const sum = hourCounts[h] + hourCounts[(h + 1) % 24];
+      if (sum > bestSum) { bestSum = sum; bestStart = h; }
+    }
+    const endHour = (bestStart + 2) % 24;
+    el.textContent = `${String(bestStart).padStart(2,'0')}:00–${String(endHour).padStart(2,'0')}:00`;
+  } catch(e) {
+    console.error('活躍時段統計失敗', e);
+    el.textContent = '暫不可用';
   }
 }
 
