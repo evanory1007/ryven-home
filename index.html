@@ -7510,6 +7510,7 @@ async function loadDesirePanel() {
     });
     if (!res.ok) throw new Error('bad status ' + res.status);
     const data = await res.json();
+    console.log('[调试] drive 数据：', data.drive);
     renderHeartFeel(data);
     renderHeartIntent(data);
     renderHeartDrive(data);
