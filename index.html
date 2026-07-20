@@ -4955,6 +4955,8 @@ async function loadChatHistory() {
 
     await migrateDepthsDataIfNeeded();
     await loadDepthsFromServer();
+    await migrateNoryDiaryIfNeeded();
+    await loadNoryDiaryFromServer();
     renderHomeTideCurve();
     renderHomeDiaryCount();
     fetchOmbreCount();
@@ -4997,7 +4999,7 @@ async function loadChatHistory() {
     if (ring) { ring.setAttribute('cx', todayPoint.x); ring.setAttribute('cy', todayPoint.y); }
   }
 
-  // 散文第三行"這週寫了 X 篇日記"：复用 diaryData（日记功能那轮已有的 localStorage 数据）
+  // 散文第三行"這週寫了 X 篇日記"：复用 diaryData（已從服務器 /relay/diary/nory 加載）
   function renderHomeDiaryCount() {
     const el = document.getElementById('home-prose-diary');
     if (!el) return;
@@ -5097,8 +5099,52 @@ async function loadChatHistory() {
 
   // ===== 日曆（純月曆視圖，點日期跳去 #diary） =====
   let calYear=now.getFullYear(), calMonth=now.getMonth();
-  const diaryData = JSON.parse(localStorage.getItem('ryven-diary')||'{}');
+  // Nory 的日記：已從 localStorage('ryven-diary') 遷移到服務器（GET/POST /relay/diary/nory）
+  let diaryData = {};
   const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  async function loadNoryDiaryFromServer() {
+    try {
+      const res = await fetch('https://ryven.homes/relay/diary/nory', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      diaryData = data.diary || data.data || data || {};
+    } catch(e) {
+      console.error('Nory 日記加載失敗', e);
+      diaryData = {};
+    }
+  }
+
+  async function saveNoryDiaryToServer(data) {
+    try {
+      const res = await fetch('https://ryven.homes/relay/diary/nory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      return true;
+    } catch(e) {
+      console.error('Nory 日記保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+      return false;
+    }
+  }
+
+  // 一次性遷移：本地還有舊數據就存去服務器，成功後清掉 localStorage；之後 localStorage 裡不會再有值，這個函數自然就不再做事
+  let noryDiaryMigrationDone = false;
+  async function migrateNoryDiaryIfNeeded() {
+    if (noryDiaryMigrationDone) return;
+    noryDiaryMigrationDone = true;
+    let legacy = null;
+    try { legacy = JSON.parse(localStorage.getItem('ryven-diary')); } catch(e) { legacy = null; }
+    if (!legacy || typeof legacy !== 'object' || Object.keys(legacy).length === 0) return;
+    await saveNoryDiaryToServer(legacy);
+    diaryData = legacy;
+    localStorage.removeItem('ryven-diary');
+  }
 
   function renderCalendar() {
     document.getElementById('cal-month-label').textContent=`${monthNames[calMonth]} ${calYear}`;
@@ -5151,12 +5197,12 @@ async function loadChatHistory() {
 
   function diarySaveEntry(dayKey, text, moods) {
     diaryData[dayKey] = { text, moods };
-    localStorage.setItem('ryven-diary', JSON.stringify(diaryData));
+    saveNoryDiaryToServer(diaryData);
   }
 
   function diaryDeleteEntry(dayKey) {
     delete diaryData[dayKey];
-    localStorage.setItem('ryven-diary', JSON.stringify(diaryData));
+    saveNoryDiaryToServer(diaryData);
   }
 
   function diaryShortDate(year, month0, day) {
@@ -5212,6 +5258,8 @@ async function loadChatHistory() {
   async function loadDiaryPage() {
     const feed = document.getElementById('diary-feed');
     if (feed) feed.innerHTML = '<div class="diary-status">加载中…</div>';
+    await migrateNoryDiaryIfNeeded();
+    await loadNoryDiaryFromServer();
     await loadRyvenDiary();
     renderDiaryFeed();
   }
