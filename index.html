@@ -6752,6 +6752,7 @@ async function loadChatHistory() {
       let currentBubble = prepareRyvenBubble();
       let currentText = '';
       let fullText = '';
+      let pendingCut = false; // 上一个字符是句末标点，正等下一个字符判断是不是「」）》】这类收尾符号
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -6779,14 +6780,20 @@ async function loadChatHistory() {
               else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) chunk = json.choices[0].delta.content;
               fullText += chunk;
               for (const ch of chunk) {
+                const isClosingMark = /[」』"'）》】]/.test(ch);
+                // 上一个字符是句末标点：这个字符不是收尾符号了，才真正切割；是收尾符号就并入当前气泡继续等下一个字符
+                if (pendingCut && !isClosingMark) {
+                  currentText = '';
+                  currentBubble = prepareRyvenBubble();
+                  pendingCut = false;
+                }
                 currentText += ch;
                 // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append，理由同 sendMessage()
                 currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                 if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
                 if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
-                  // trim后是空的（纯标点/换行，没有真实内容）就不新建气泡，留在当前气泡里继续接
-                  currentText = '';
-                  currentBubble = prepareRyvenBubble();
+                  // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
+                  pendingCut = true;
                 }
               }
               messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -7257,6 +7264,7 @@ async function loadChatHistory() {
         let currentText = '';
         let fullText = '';
         let thinkingText = '';
+        let pendingCut = false; // 上一个字符是句末标点，正等下一个字符判断是不是「」）》】这类收尾符号
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
@@ -7324,15 +7332,21 @@ async function loadChatHistory() {
                         }
                         fullText += chunk;
                         for (const ch of chunk) {
+                            const isClosingMark = /[」』"'）》】]/.test(ch);
+                            // 上一个字符是句末标点：这个字符不是收尾符号了，才真正切割；是收尾符号就并入当前气泡继续等下一个字符
+                            if (pendingCut && !isClosingMark) {
+                                currentText = '';
+                                currentBubble = prepareRyvenBubble();
+                                pendingCut = false;
+                            }
                             currentText += ch;
                             // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append——绝不能appended-then-filled，
                             // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
                             currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                             if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
                             if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
-                                // trim后是空的（纯标点/换行，没有真实内容）就不新建气泡，留在当前气泡里继续接
-                                currentText = '';
-                                currentBubble = prepareRyvenBubble();
+                                // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
+                                pendingCut = true;
                             }
                         }
                         messagesEl.scrollTop = messagesEl.scrollHeight;
