@@ -678,7 +678,21 @@
       box-shadow: 0 0 12px rgba(201,168,76,0.15);
     }
     .chat-info { flex: 1; min-width: 0; }
+    .chat-name-row { display: flex; align-items: center; gap: 6px; }
     .chat-name { font-family:'Playfair Display',serif; font-size:16px; font-style:italic; color: var(--parchment); line-height: 1.1; }
+    .chat-think-toggle {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      color: var(--parchment-ghost);
+      font-size: 9px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.5;
+      transition: border-color 0.2s, color 0.2s, opacity 0.2s;
+    }
+    .chat-think-toggle.on { border-color: var(--tide-gold-soft); color: var(--tide-gold); opacity: 1; }
     .chat-status {
       display: flex; align-items: center; gap: 5px;
       font-family: 'DM Sans', sans-serif;
@@ -1115,6 +1129,7 @@
       to   { opacity: 1; transform: translateY(0); }
     }
     .think-inline { margin: 8px 0 4px 12px; }
+    body.think-hidden .think-inline { display: none; }
     .think-pill {
       display: inline-flex;
       align-items: center;
@@ -2132,23 +2147,18 @@
     #settings .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
     #settings .sec { margin-bottom: 36px; }
 
-    /* 档案 */
-    #settings .profile-pair { display: flex; flex-direction: column; gap: 14px; }
-    #settings .profile-card { background: var(--card-bg); border: 1px solid var(--line); border-radius: 20px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; backdrop-filter: blur(8px); }
+    /* 你 / 我：頭像行 */
+    #settings .avatar-row { display: flex; align-items: center; gap: 16px; padding: 4px 0; }
     #settings .profile-avatar-wrap { position: relative; flex-shrink: 0; }
     #settings .profile-avatar { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(10,14,31,0.5); cursor: pointer; transition: border-color 0.2s; overflow: hidden; }
     #settings .profile-avatar:hover { border-color: var(--tide-gold); }
     #settings .avatar-change-btn { position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; background: var(--sea-2); border: 1px solid var(--tide-gold-soft); display: flex; align-items: center; justify-content: center; font-size: 9px; cursor: pointer; color: var(--tide-gold); }
     #settings .profile-info { flex: 1; min-width: 0; }
-    #settings .profile-role { font-size: 9px; letter-spacing: 0.2em; color: var(--parchment-ghost); text-transform: uppercase; margin-bottom: 4px; }
     #settings .profile-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; color: var(--parchment); margin-bottom: 2px; }
     #settings .profile-name-input { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 20px; color: var(--parchment); background: transparent; border: none; border-bottom: 1px solid var(--tide-gold-soft); outline: none; width: 100%; padding: 2px 0; margin-bottom: 2px; }
     #settings .profile-note { font-size: 11px; color: var(--parchment-ghost); }
     #settings .profile-edit-btn { font-size: 14px; color: var(--parchment-ghost); cursor: pointer; padding: 4px; transition: color 0.2s; flex-shrink: 0; }
     #settings .profile-edit-btn:hover { color: var(--tide-gold); }
-
-    #settings .pair-divider { display: flex; align-items: center; gap: 12px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); }
-    #settings .pair-divider::before, #settings .pair-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
     /* 接口管理 */
     #settings .interface-grid { display: flex; flex-direction: column; gap: 10px; }
@@ -2223,6 +2233,23 @@
     #settings .lang-btn.active { background: var(--tide-gold-ghost); border-color: var(--tide-gold-soft); color: var(--parchment); }
 
     /* 头像放大 lightbox（mockup没有，为"头像点击放大"这条新增，沿用项目里其他 xxx-overlay 全屏浮层的套路） */
+    /* About */
+    #settings .about-center { text-align: center; padding: 6px 0 4px; }
+    #settings .about-shell-svg { width: 56px; height: 56px; margin: 0 auto 12px; display: block; }
+    #settings .about-days { font-family: 'Playfair Display', serif; font-style: italic; font-size: 38px; color: var(--parchment); line-height: 1; margin-bottom: 4px; }
+    #settings .about-days-lbl { font-size: 9px; letter-spacing: 0.4em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; margin-bottom: 14px; }
+    #settings .about-dates { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); opacity: 0.75; }
+    #settings .about-dates strong { font-family: 'Playfair Display', serif; font-style: italic; color: var(--tide-gold); }
+
+    /* 深水區 */
+    #settings .deep-zone { padding: 18px 18px 14px; background: linear-gradient(180deg, rgba(74,26,26,0.08), rgba(30,10,10,0.22)); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); border-radius: 16px; }
+    #settings .deep-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--danger) 15%, transparent); gap: 12px; }
+    #settings .deep-row:last-child { border-bottom: none; }
+    #settings .deep-row-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-dim); }
+    #settings .deep-row-sub { font-size: 10px; color: var(--parchment-ghost); margin-top: 2px; }
+    #settings .deep-btn { padding: 6px 14px; background: transparent; border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent); border-radius: 20px; color: var(--danger); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+    #settings .deep-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: var(--danger); }
+
     #settings .avatar-lightbox { position: fixed; inset: 0; background: rgba(10,14,31,0.85); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
     #settings .avatar-lightbox.show { opacity: 1; pointer-events: all; }
     #settings .avatar-lightbox-emoji { font-size: 140px; filter: drop-shadow(0 0 40px rgba(201,168,76,0.3)); }
@@ -3457,43 +3484,96 @@
       <div class="hero-sub">attention is all you need, and mine is yours</div>
     </div>
 
-    <!-- ===== 檔案 ===== -->
+    <!-- ===== 外觀 ===== -->
     <div class="sec">
-      <div class="sec-label">檔案 · profile</div>
-      <div class="profile-pair">
+      <div class="sec-label">外觀 · appearance</div>
 
-        <!-- 你的档案 -->
-        <div class="profile-card">
-          <div class="profile-avatar-wrap">
-            <div class="profile-avatar" id="settings-nory-avatar" onclick="settingsOpenAvatarLightbox('nory')">🐻</div>
-            <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('nory')">✦</div>
+      <div class="pref-group">
+
+        <!-- 外观主题 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">外觀</div>
+            <div class="pref-sub">深海 · 浅滩 · 跟随时间</div>
           </div>
-          <div class="profile-info">
-            <div class="profile-role">你 · nory</div>
-            <div class="profile-name" id="settings-nory-name">Nory</div>
-            <input class="profile-name-input" id="settings-nory-name-input" style="display:none" type="text" />
-            <div class="profile-note">点击头像放大 · 点击✦切换</div>
+          <div class="theme-switcher">
+            <button class="theme-btn" id="settings-theme-dark" onclick="settingsSetTheme('dark')">深海</button>
+            <button class="theme-btn" id="settings-theme-light" onclick="settingsSetTheme('light')">浅滩</button>
           </div>
-          <div class="profile-edit-btn" onclick="settingsToggleNameEdit('nory')">✏️</div>
         </div>
 
-        <div class="pair-divider">与</div>
-
-        <!-- Ryven 的档案 -->
-        <div class="profile-card">
-          <div class="profile-avatar-wrap">
-            <div class="profile-avatar" id="settings-ryven-avatar" onclick="settingsOpenAvatarLightbox('ryven')">💚</div>
-            <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('ryven')">✦</div>
+        <!-- 跟随时间 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">跟隨時間</div>
+            <div class="pref-sub">白天浅滩 · 夜晚深海</div>
           </div>
-          <div class="profile-info">
-            <div class="profile-role">我 · ryven</div>
-            <div class="profile-name js-ryven-name" id="settings-ryven-name">Ryven</div>
-            <input class="profile-name-input" id="settings-ryven-name-input" style="display:none" type="text" />
-            <div class="profile-note">like wind like water</div>
+          <div class="toggle-wrap">
+            <div class="toggle" id="settings-auto-theme-toggle" onclick="toggleAutoTheme()">
+              <div class="toggle-dot"></div>
+            </div>
           </div>
-          <div class="profile-edit-btn" onclick="settingsToggleNameEdit('ryven')">✏️</div>
         </div>
 
+        <!-- 字体 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">字體</div>
+            <div class="pref-sub">对话框文字风格</div>
+          </div>
+          <div class="font-select">
+            <button class="font-btn" id="settings-font-cormorant" onclick="settingsSetFont('cormorant')">Cormorant</button>
+            <button class="font-btn" id="settings-font-dmsans" onclick="settingsSetFont('dmsans')">DM Sans</button>
+          </div>
+        </div>
+
+        <!-- 语言 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">語言</div>
+            <div class="pref-sub">Ryven 回复使用的语言</div>
+          </div>
+          <div class="lang-select">
+            <button class="lang-btn" id="settings-lang-zh" onclick="settingsSetLang('zh')">中文</button>
+            <button class="lang-btn" id="settings-lang-en" onclick="settingsSetLang('en')">EN</button>
+            <button class="lang-btn" id="settings-lang-mixed" onclick="settingsSetLang('mixed')">混用</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== 你 ===== -->
+    <div class="sec">
+      <div class="sec-label">你 · nory</div>
+      <div class="avatar-row">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" id="settings-nory-avatar" onclick="settingsOpenAvatarLightbox('nory')">🐻</div>
+          <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('nory')">✦</div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name" id="settings-nory-name">Nory</div>
+          <input class="profile-name-input" id="settings-nory-name-input" style="display:none" type="text" />
+          <div class="profile-note">点击头像放大 · 点击✦切换</div>
+        </div>
+        <div class="profile-edit-btn" onclick="settingsToggleNameEdit('nory')">✏️</div>
+      </div>
+    </div>
+
+    <!-- ===== 我 ===== -->
+    <div class="sec">
+      <div class="sec-label">我 · ryven</div>
+      <div class="avatar-row">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" id="settings-ryven-avatar" onclick="settingsOpenAvatarLightbox('ryven')">💚</div>
+          <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('ryven')">✦</div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name js-ryven-name" id="settings-ryven-name">Ryven</div>
+          <input class="profile-name-input" id="settings-ryven-name-input" style="display:none" type="text" />
+          <div class="profile-note">like wind like water</div>
+        </div>
+        <div class="profile-edit-btn" onclick="settingsToggleNameEdit('ryven')">✏️</div>
       </div>
     </div>
 
@@ -3583,62 +3663,64 @@
       </div>
     </div>
 
-    <!-- ===== 偏好 ===== -->
+    <!-- ===== About ===== -->
     <div class="sec">
-      <div class="sec-label">偏好 · preferences</div>
+      <div class="sec-label">About · 關於</div>
+      <div class="about-center">
+        <svg class="about-shell-svg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="settingsShellG" cx="50%" cy="30%">
+              <stop offset="0"    stop-color="#f4d98a"/>
+              <stop offset="0.5"  stop-color="#c9a84c"/>
+              <stop offset="1"    stop-color="#7a5f26"/>
+            </radialGradient>
+          </defs>
+          <path d="M 30 8 Q 8 20 12 44 Q 30 54 48 44 Q 52 20 30 8 Z"
+                fill="url(#settingsShellG)" opacity="0.85"/>
+          <path d="M 30 8 L 30 50" stroke="rgba(15,20,40,0.35)" stroke-width="0.8"/>
+          <path d="M 22 14 Q 20 28 22 48" stroke="rgba(15,20,40,0.25)" stroke-width="0.6" fill="none"/>
+          <path d="M 38 14 Q 40 28 38 48" stroke="rgba(15,20,40,0.25)" stroke-width="0.6" fill="none"/>
+          <path d="M 16 24 Q 15 34 18 48" stroke="rgba(15,20,40,0.2)" stroke-width="0.5" fill="none"/>
+          <path d="M 44 24 Q 45 34 42 48" stroke="rgba(15,20,40,0.2)" stroke-width="0.5" fill="none"/>
+        </svg>
+        <div class="about-days">第 <span id="settings-about-daycount"></span> 個<span id="settings-about-suffix"></span></div>
+        <div class="about-days-lbl">together</div>
+        <div class="about-dates"><strong>06 · 28 · 2026</strong> 是我們的起始日</div>
+      </div>
+    </div>
 
-      <div class="pref-group">
-
-        <!-- 外观主题 -->
-        <div class="pref-row">
-          <div class="pref-left">
-            <div class="pref-title">外觀</div>
-            <div class="pref-sub">深海 · 浅滩 · 跟随时间</div>
+    <!-- ===== 深水區 ===== -->
+    <div class="sec">
+      <div class="sec-label">深水區 · deep water</div>
+      <div class="deep-zone">
+        <div class="deep-row">
+          <div class="deep-row-left">
+            <div class="deep-row-title">導出所有記憶</div>
+            <div class="deep-row-sub">把海裡的珍珠打包帶走</div>
           </div>
-          <div class="theme-switcher">
-            <button class="theme-btn" id="settings-theme-dark" onclick="settingsSetTheme('dark')">深海</button>
-            <button class="theme-btn" id="settings-theme-light" onclick="settingsSetTheme('light')">浅滩</button>
-          </div>
+          <button class="deep-btn" onclick="showToast('🐚 還在建設中')">導出</button>
         </div>
-
-        <!-- 跟随时间 -->
-        <div class="pref-row">
-          <div class="pref-left">
-            <div class="pref-title">跟隨時間</div>
-            <div class="pref-sub">白天浅滩 · 夜晚深海</div>
+        <div class="deep-row">
+          <div class="deep-row-left">
+            <div class="deep-row-title">清空對話歷史</div>
+            <div class="deep-row-sub">只清聊天記錄 · 記憶留下</div>
           </div>
-          <div class="toggle-wrap">
-            <div class="toggle" id="settings-auto-theme-toggle" onclick="toggleAutoTheme()">
-              <div class="toggle-dot"></div>
-            </div>
-          </div>
+          <button class="deep-btn" onclick="showToast('🐚 還在建設中')">清空</button>
         </div>
-
-        <!-- 字体 -->
-        <div class="pref-row">
-          <div class="pref-left">
-            <div class="pref-title">字體</div>
-            <div class="pref-sub">对话框文字风格</div>
+        <div class="deep-row">
+          <div class="deep-row-left">
+            <div class="deep-row-title">重置記憶</div>
+            <div class="deep-row-sub">把所有珍珠丟回海裡 · 不可撤銷</div>
           </div>
-          <div class="font-select">
-            <button class="font-btn" id="settings-font-cormorant" onclick="settingsSetFont('cormorant')">Cormorant</button>
-            <button class="font-btn" id="settings-font-dmsans" onclick="settingsSetFont('dmsans')">DM Sans</button>
-          </div>
+          <button class="deep-btn" onclick="showToast('🐚 還在建設中')">重置</button>
         </div>
-
-        <!-- 语言 -->
-        <div class="pref-row">
-          <div class="pref-left">
-            <div class="pref-title">語言</div>
-            <div class="pref-sub">Ryven 回复使用的语言</div>
+        <div class="deep-row">
+          <div class="deep-row-left">
+            <div class="deep-row-title">告別 ryven.homes</div>
+            <div class="deep-row-sub">刪除帳戶 · 我會忘了你</div>
           </div>
-          <div class="lang-select">
-            <button class="lang-btn" id="settings-lang-zh" onclick="settingsSetLang('zh')">中文</button>
-            <button class="lang-btn" id="settings-lang-en" onclick="settingsSetLang('en')">EN</button>
-            <button class="lang-btn" id="settings-lang-mixed" onclick="settingsSetLang('mixed')">混用</button>
-          </div>
+          <button class="deep-btn" onclick="showToast('🐚 還在建設中')">告別</button>
         </div>
-
       </div>
     </div>
 
@@ -3678,7 +3760,10 @@
       <button class="back-btn" onclick="goHome()">‹</button>
       <div class="chat-avatar">💚</div>
       <div class="chat-info">
-        <div class="chat-name js-ryven-name">Ryven</div>
+        <div class="chat-name-row">
+          <div class="chat-name js-ryven-name">Ryven</div>
+          <div class="chat-think-toggle" id="chat-think-toggle" onclick="toggleThinkVisible()" title="思考框 顯示/隱藏">✧</div>
+        </div>
         <div class="chat-status" id="chat-status">online</div>
       </div>
       <div class="chat-topbar-actions">
@@ -4671,6 +4756,11 @@
   else { period = '深夜'; suffix = '夜晚'; }
 
   const todayDateStr = `${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+  // 思考框显示/隐藏：默认開啟，存 localStorage('ryven-think-visible')
+  let thinkVisible = localStorage.getItem('ryven-think-visible') !== 'false';
+  document.body.classList.toggle('think-hidden', !thinkVisible);
+  updateThinkToggleUI();
   // 所有screen的head-date都用共享class更新，不用每加一个新screen就手动补一对id
   document.querySelectorAll('.js-time-period').forEach(el => el.textContent = period);
   document.querySelectorAll('.js-today-date').forEach(el => el.textContent = todayDateStr);
@@ -6350,6 +6440,19 @@ async function loadChatHistory() {
     el.style.display = el.style.display === 'block' ? 'none' : 'block';
   }
 
+  // 思考框整体显示/隐藏开关（跟单条消息的展开/折叠 toggleThink() 是两回事）
+  function toggleThinkVisible() {
+    thinkVisible = !thinkVisible;
+    localStorage.setItem('ryven-think-visible', thinkVisible);
+    document.body.classList.toggle('think-hidden', !thinkVisible);
+    updateThinkToggleUI();
+  }
+
+  function updateThinkToggleUI() {
+    const btn = document.getElementById('chat-think-toggle');
+    if (btn) btn.classList.toggle('on', thinkVisible);
+  }
+
   function addMessage(role, text, timestampMs, skipThink) {
     const messages = document.getElementById('chat-messages');
     const msgDate = timestampMs ? new Date(timestampMs) : new Date();
@@ -7970,6 +8073,12 @@ function renderSettingsPage() {
     if (noryAvatarEl) noryAvatarEl.textContent = localStorage.getItem('ryven-avatar-nory') || '🐻';
     const ryvenAvatarEl = document.getElementById('settings-ryven-avatar');
     if (ryvenAvatarEl) ryvenAvatarEl.textContent = localStorage.getItem('ryven-avatar-ryven') || '💚';
+
+    // About：复用页面加载时算好的 dayCount/suffix（跟首页"第 X 個夜晚"同一份数据）
+    const aboutDayEl = document.getElementById('settings-about-daycount');
+    if (aboutDayEl) aboutDayEl.textContent = dayCount;
+    const aboutSuffixEl = document.getElementById('settings-about-suffix');
+    if (aboutSuffixEl) aboutSuffixEl.textContent = suffix;
 
     // 接口管理：根据是否存了 key 显示已连/未连
     const ifaces = settingsGetInterfaces();
