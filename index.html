@@ -2092,13 +2092,41 @@
     #life .moment-del:hover { opacity: 1; color: var(--danger); }
     #life .moment-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment-ghost); text-align: center; padding: 20px 0; opacity: 0.7; }
 
-    /* Wishlist（占位版，内容之后单独一轮再做） */
+    /* Wishlist：GET/POST /relay/wishlist，視覺參照 #desk 的 Notes 便條卡 */
     #life .wish-main {
       background: linear-gradient(180deg, rgba(46,74,158,0.12), rgba(26,31,58,0.4)); border: 1px solid var(--line);
-      border-radius: 6px; padding: 34px 20px; position: relative; text-align: center;
+      border-radius: 6px; padding: 18px 4px 4px; position: relative;
     }
     #life .wish-main::before { content: ''; position: absolute; top: 0; left: 20px; width: 32px; height: 1px; background: var(--tide-gold); opacity: 0.5; }
-    #life .wish-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-ghost); }
+    #life .wish-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-ghost); text-align: center; padding: 16px 0; }
+    #life .wish-status-msg { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); text-align: center; padding: 16px 0; }
+
+    #life .wish-list { display: flex; flex-direction: column; gap: 2px; padding: 0 16px; }
+    #life .wish-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); position: relative; }
+    #life .wish-row:last-child { border-bottom: none; }
+    #life .wish-row-main { flex: 1; min-width: 0; }
+    #life .wish-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--parchment); line-height: 1.4; }
+    #life .wish-row.wish-is-done .wish-title { color: var(--parchment-ghost); text-decoration: line-through; text-decoration-color: rgba(212,197,169,0.35); }
+    #life .wish-desc { font-size: 10px; color: var(--parchment-ghost); opacity: 0.75; margin-top: 3px; line-height: 1.5; }
+    #life .wish-status-tag { font-size: 9px; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 10px; flex-shrink: 0; cursor: pointer; white-space: nowrap; margin-top: 1px; transition: opacity 0.2s; }
+    #life .wish-status-tag:hover { opacity: 0.75; }
+    #life .wish-status-tag.tag-want { background: rgba(248,242,232,0.03); border: 1px solid rgba(248,242,232,0.1); color: var(--parchment-ghost); }
+    #life .wish-status-tag.tag-doing { background: rgba(109,184,160,0.08); border: 1px solid rgba(109,184,160,0.22); color: var(--tide-green); }
+    #life .wish-status-tag.tag-done { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.22); color: var(--tide-gold); }
+    #life .wish-del { font-size: 12px; color: var(--parchment-ghost); opacity: 0.25; cursor: pointer; line-height: 1; padding: 2px; flex-shrink: 0; transition: opacity 0.2s, color 0.2s; }
+    #life .wish-del:hover { opacity: 1; color: var(--danger); }
+
+    #life .wish-add { padding: 12px 16px; font-size: 10px; letter-spacing: 0.1em; color: var(--tide-gold-soft); border-top: 1px dashed var(--line); cursor: pointer; transition: color 0.2s; }
+    #life .wish-add:hover { color: var(--tide-gold); }
+    #life .wish-add-form { padding: 12px 16px 14px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 8px; }
+    #life .wish-add-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment); outline: none; transition: border-color 0.2s; }
+    #life .wish-add-input:focus { border-color: var(--tide-gold-soft); }
+    #life .wish-add-actions { display: flex; justify-content: flex-end; gap: 16px; }
+    #life .wish-add-cancel, #life .wish-add-confirm { font-size: 11px; letter-spacing: 0.05em; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-style: italic; transition: opacity 0.2s; }
+    #life .wish-add-cancel { color: var(--parchment-ghost); }
+    #life .wish-add-cancel:hover { opacity: 0.7; }
+    #life .wish-add-confirm { color: var(--tide-gold); }
+    #life .wish-add-confirm:hover { opacity: 0.75; }
 
     /* Cycle */
     #life .cycle-band { display: flex; height: 40px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; position: relative; }
@@ -4651,14 +4679,17 @@
       </div>
     </div>
 
-    <!-- ═════ 3. WISHLIST · 我們的（占位，之後單獨一輪再做）═════ -->
+    <!-- ═════ 3. WISHLIST · 我們的：GET/POST /relay/wishlist ═════ -->
     <div class="sec">
       <div class="sec-head">
         <div class="sec-name">Our Wishlist <span class="cn">我 們 的</span></div>
         <span class="sec-meta">saving up</span>
       </div>
       <div class="wish-main">
-        <div class="wish-empty">還在規劃中 🐚</div>
+        <div class="wish-list" id="life-wish-list">
+          <div class="wish-status-msg">加载中…</div>
+        </div>
+        <div class="wish-add" id="life-wish-add" onclick="wishShowAddForm()">＋ add wish</div>
       </div>
     </div>
 
@@ -7978,9 +8009,166 @@ function lifeSaveCycleAdjust() {
   showToast('✧ 週期已更新');
 }
 
+// ═════════════════ Wishlist：GET/POST /relay/wishlist ═════════════════
+let wishData = { items: [] };
+const WISH_STATUS = {
+  want:  { label: '想要', cls: 'tag-want' },
+  doing: { label: '進行中', cls: 'tag-doing' },
+  done:  { label: '完成', cls: 'tag-done' }
+};
+const WISH_STATUS_ORDER = ['want', 'doing', 'done'];
+
+function wishGenId() {
+  return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+async function loadWishlist() {
+  const listEl = document.getElementById('life-wish-list');
+  if (listEl) listEl.innerHTML = '<div class="wish-status-msg">加载中…</div>';
+  try {
+    const res = await fetch('https://ryven.homes/relay/wishlist', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    wishData = { items: data.items || data.wishlist || [] };
+    renderWishlist();
+  } catch(e) {
+    console.error('心願清單加載失敗', e);
+    if (listEl) listEl.innerHTML = '<div class="wish-status-msg">加载失敗</div>';
+  }
+}
+
+async function saveWishlist() {
+  try {
+    const res = await fetch('https://ryven.homes/relay/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+      body: JSON.stringify(wishData)
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    return true;
+  } catch(e) {
+    console.error('心願清單保存失敗', e);
+    showToast('🌙 保存失敗，稍後再試');
+    return false;
+  }
+}
+
+function renderWishlist() {
+  const listEl = document.getElementById('life-wish-list');
+  if (!listEl) return;
+  if (!wishData.items.length) {
+    listEl.innerHTML = '<div class="wish-empty">還在規劃中 🐚</div>';
+    return;
+  }
+  listEl.innerHTML = wishData.items.map(w => `
+    <div class="wish-row${w.status === 'done' ? ' wish-is-done' : ''}" data-id="${w.id}">
+      <div class="wish-row-main">
+        <div class="wish-title"></div>
+        <div class="wish-desc" style="display:none"></div>
+      </div>
+      <div class="wish-status-tag" title="點擊切換狀態"></div>
+      <div class="wish-del" title="刪除">×</div>
+    </div>`).join('');
+  listEl.querySelectorAll('.wish-row').forEach(el => {
+    const id = el.dataset.id;
+    const w = wishData.items.find(x => x.id === id);
+    if (!w) return;
+    el.querySelector('.wish-title').textContent = w.title;
+    if (w.desc) {
+      const descEl = el.querySelector('.wish-desc');
+      descEl.textContent = w.desc;
+      descEl.style.display = '';
+    }
+    const info = WISH_STATUS[w.status] || WISH_STATUS.want;
+    const tagEl = el.querySelector('.wish-status-tag');
+    tagEl.textContent = info.label;
+    tagEl.classList.add(info.cls);
+    tagEl.addEventListener('click', () => wishCycleStatus(id));
+    el.querySelector('.wish-del').addEventListener('click', () => wishDeleteItem(id));
+  });
+}
+
+function wishResetAddTrigger() {
+  const form = document.getElementById('life-wish-add-form');
+  if (form) form.outerHTML = '<div class="wish-add" id="life-wish-add" onclick="wishShowAddForm()">＋ add wish</div>';
+}
+
+function wishShowAddForm() {
+  const el = document.getElementById('life-wish-add');
+  if (!el) return;
+  el.outerHTML = `
+    <div class="wish-add-form" id="life-wish-add-form">
+      <input class="wish-add-input" id="life-wish-title-input" placeholder="想要什麼…" maxlength="60" />
+      <input class="wish-add-input" id="life-wish-desc-input" placeholder="備註（可選）" maxlength="120" />
+      <div class="wish-add-actions">
+        <span class="wish-add-cancel" onclick="wishCancelAddForm()">取消</span>
+        <span class="wish-add-confirm" onclick="wishSubmitAddForm()">✦ 保存</span>
+      </div>
+    </div>`;
+  const titleInput = document.getElementById('life-wish-title-input');
+  titleInput.focus();
+  titleInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('life-wish-desc-input').focus(); }
+    if (e.key === 'Escape') wishCancelAddForm();
+  });
+  document.getElementById('life-wish-desc-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); wishSubmitAddForm(); }
+    if (e.key === 'Escape') wishCancelAddForm();
+  });
+}
+
+function wishCancelAddForm() {
+  wishResetAddTrigger();
+}
+
+function wishSubmitAddForm() {
+  const titleInput = document.getElementById('life-wish-title-input');
+  const descInput = document.getElementById('life-wish-desc-input');
+  const title = titleInput ? titleInput.value.trim() : '';
+  const desc = descInput ? descInput.value.trim() : '';
+  wishResetAddTrigger();
+  if (title) wishAddItem(title, desc);
+}
+
+async function wishAddItem(title, desc) {
+  const item = { id: wishGenId(), title, desc: desc || '', status: 'want', created: new Date().toISOString() };
+  wishData.items.push(item);
+  renderWishlist();
+  const ok = await saveWishlist();
+  if (ok) {
+    showToast('✦ 心願已記下');
+  } else {
+    wishData.items = wishData.items.filter(w => w.id !== item.id);
+    renderWishlist();
+  }
+}
+
+async function wishDeleteItem(id) {
+  const backup = wishData.items;
+  wishData.items = wishData.items.filter(w => w.id !== id);
+  renderWishlist();
+  const ok = await saveWishlist();
+  if (!ok) { wishData.items = backup; renderWishlist(); }
+}
+
+async function wishCycleStatus(id) {
+  const w = wishData.items.find(x => x.id === id);
+  if (!w) return;
+  const idx = WISH_STATUS_ORDER.indexOf(w.status);
+  const nextStatus = WISH_STATUS_ORDER[(idx === -1 ? 0 : idx + 1) % WISH_STATUS_ORDER.length];
+  const backup = w.status;
+  w.status = nextStatus;
+  renderWishlist();
+  const ok = await saveWishlist();
+  if (!ok) { w.status = backup; renderWishlist(); }
+}
+
 function renderLifePage() {
   renderLifeMoments();
   renderLifeCycle();
+  loadWishlist();
 }
 
 function addHelmLog(msg, type) {
