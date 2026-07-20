@@ -7125,6 +7125,7 @@ async function loadChatHistory() {
         let currentBubble = prepareRyvenBubble();
         let currentText = '';
         let fullText = '';
+        let thinkingText = '';
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
@@ -7174,6 +7175,14 @@ async function loadChatHistory() {
 
                     try {
                         const json = JSON.parse(payload);
+
+                        if (json.type === 'content_block_delta' && json.delta && json.delta.type === 'thinking_delta') {
+                            thinkingText += json.delta.thinking || '';
+                            const expandEl = document.getElementById(streamThinkId);
+                            if (expandEl) expandEl.innerHTML = `<p>${thinkingText.replace(/\n/g, '<br>')}</p>`;
+                            continue;
+                        }
+
                         let chunk = '';
                         if (json.type === 'content_block_delta' && json.delta && json.delta.text) {
                             chunk = json.delta.text;
