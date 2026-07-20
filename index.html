@@ -2212,15 +2212,17 @@
     #settings .pref-title { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--parchment); margin-bottom: 2px; }
     #settings .pref-sub { font-size: 10px; color: var(--parchment-ghost); }
 
-    #settings .theme-switcher { display: flex; gap: 6px; flex-shrink: 0; }
-    #settings .theme-btn { padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--parchment-dim); transition: all 0.2s; letter-spacing: 0.05em; }
-    #settings .theme-btn.active { background: var(--tide-gold-ghost); border-color: var(--tide-gold-soft); color: var(--tide-gold); }
-
-    #settings .toggle-wrap { display: flex; align-items: center; gap: 8px; }
-    #settings .toggle { width: 40px; height: 22px; border-radius: 11px; background: rgba(248,242,232,0.1); border: 1px solid var(--line); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
-    #settings .toggle.on { background: var(--tide-green-soft); border-color: var(--tide-green-soft); }
-    #settings .toggle-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--parchment-dim); position: absolute; top: 2px; left: 2px; transition: left 0.2s, background 0.2s; }
-    #settings .toggle.on .toggle-dot { left: 20px; background: var(--tide-green); }
+    #settings .pref-row:has(+ .theme-picker) { border-bottom: none; padding-bottom: 6px; }
+    #settings .theme-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 18px 16px; }
+    #settings .theme-opt { padding: 12px 8px 10px; border: 1px solid var(--line); border-radius: 10px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+    #settings .theme-opt.active { border-color: var(--tide-gold); background: rgba(201,168,76,0.06); }
+    #settings .theme-preview { height: 28px; border-radius: 4px; margin-bottom: 8px; border: 1px solid var(--line); }
+    #settings .theme-preview.deep { background: linear-gradient(180deg, #0f1428, #243060); }
+    #settings .theme-preview.shallow { background: linear-gradient(180deg, #f0f3f8, #dce4f0); }
+    #settings .theme-preview.auto { background: linear-gradient(90deg, #dce4f0 0%, #dce4f0 50%, #243060 50%, #0f1428 100%); }
+    #settings .theme-lbl { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); line-height: 1.2; }
+    #settings .theme-opt.active .theme-lbl { color: var(--parchment); }
+    #settings .theme-en { font-family: 'DM Sans', sans-serif; font-size: 7px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 3px; }
 
     #settings .font-select { display: flex; gap: 6px; flex-shrink: 0; }
     #settings .font-btn { padding: 6px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--parchment-dim); transition: all 0.2s; }
@@ -3494,24 +3496,24 @@
         <div class="pref-row">
           <div class="pref-left">
             <div class="pref-title">外觀</div>
-            <div class="pref-sub">深海 · 浅滩 · 跟随时间</div>
-          </div>
-          <div class="theme-switcher">
-            <button class="theme-btn" id="settings-theme-dark" onclick="settingsSetTheme('dark')">深海</button>
-            <button class="theme-btn" id="settings-theme-light" onclick="settingsSetTheme('light')">浅滩</button>
+            <div class="pref-sub">深海 · 浅滩 · 随潮汐</div>
           </div>
         </div>
-
-        <!-- 跟随时间 -->
-        <div class="pref-row">
-          <div class="pref-left">
-            <div class="pref-title">跟隨時間</div>
-            <div class="pref-sub">白天浅滩 · 夜晚深海</div>
+        <div class="theme-picker">
+          <div class="theme-opt" id="settings-theme-dark" onclick="settingsSetTheme('dark')">
+            <div class="theme-preview deep"></div>
+            <div class="theme-lbl">深海</div>
+            <div class="theme-en">deep</div>
           </div>
-          <div class="toggle-wrap">
-            <div class="toggle" id="settings-auto-theme-toggle" onclick="toggleAutoTheme()">
-              <div class="toggle-dot"></div>
-            </div>
+          <div class="theme-opt" id="settings-theme-light" onclick="settingsSetTheme('light')">
+            <div class="theme-preview shallow"></div>
+            <div class="theme-lbl">淺海</div>
+            <div class="theme-en">shallow</div>
+          </div>
+          <div class="theme-opt" id="settings-theme-auto" onclick="settingsSetTheme('auto')">
+            <div class="theme-preview auto"></div>
+            <div class="theme-lbl">隨潮汐</div>
+            <div class="theme-en">by time</div>
           </div>
         </div>
 
@@ -8031,19 +8033,6 @@ function drawTarot() {
 let autoTheme = localStorage.getItem('ryven-auto-theme') === 'true';
 if (autoTheme) applyTimeTheme(); // 页面加载时读取并执行——不用等用户手动点一下才生效
 
-function toggleAutoTheme() {
-    autoTheme = !autoTheme;
-    localStorage.setItem('ryven-auto-theme', autoTheme);
-    updateAutoThemeUI();
-    if (autoTheme) applyTimeTheme();
-}
-
-function updateAutoThemeUI() {
-    const toggle = document.getElementById('settings-auto-theme-toggle');
-    if (!toggle) return;
-    toggle.classList.toggle('on', autoTheme);
-}
-
 function applyTimeTheme() {
     if (!autoTheme) return;
     const h = new Date().getHours();
@@ -8099,9 +8088,10 @@ function renderSettingsPage() {
     const isLight = document.body.classList.contains('light');
     const themeDark = document.getElementById('settings-theme-dark');
     const themeLight = document.getElementById('settings-theme-light');
-    if (themeDark) themeDark.classList.toggle('active', !isLight);
-    if (themeLight) themeLight.classList.toggle('active', isLight);
-    updateAutoThemeUI();
+    const themeAuto = document.getElementById('settings-theme-auto');
+    if (themeDark) themeDark.classList.toggle('active', !autoTheme && !isLight);
+    if (themeLight) themeLight.classList.toggle('active', !autoTheme && isLight);
+    if (themeAuto) themeAuto.classList.toggle('active', autoTheme);
 
     const font = localStorage.getItem('ryven-pref-font') || 'cormorant';
     const fontCormorant = document.getElementById('settings-font-cormorant');
@@ -8211,9 +8201,17 @@ function settingsDisconnectInterface(id) {
 
 // ---- 偏好：主题/字体/语言 ----
 function settingsSetTheme(mode) {
-    const isLight = mode === 'light';
-    document.body.classList.toggle('light', isLight);
-    localStorage.setItem('ryven-theme', isLight ? 'light' : 'dark');
+    if (mode === 'auto') {
+        autoTheme = true;
+        localStorage.setItem('ryven-auto-theme', autoTheme);
+        applyTimeTheme();
+    } else {
+        autoTheme = false;
+        localStorage.setItem('ryven-auto-theme', autoTheme);
+        const isLight = mode === 'light';
+        document.body.classList.toggle('light', isLight);
+        localStorage.setItem('ryven-theme', isLight ? 'light' : 'dark');
+    }
     renderSettingsPage();
 }
 
