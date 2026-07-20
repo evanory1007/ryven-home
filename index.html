@@ -3044,20 +3044,20 @@
           <div class="diary-side-head">
             <span class="diary-em">🪙</span>
             <span class="diary-who">你</span>
-            <span class="diary-count"><span class="TODO">XX</span> 封</span>
+            <span class="diary-count"><span id="memdiary-nory-count">XX</span> 封</span>
           </div>
-          <div class="diary-preview TODO">这里填 xxx</div>
-          <div class="diary-date TODO">XX · XX</div>
+          <div class="diary-preview" id="memdiary-nory-latest-title">加载中…</div>
+          <div class="diary-date" id="memdiary-nory-latest-meta"></div>
         </div>
         <div class="diary-divider"></div>
         <div class="diary-side">
           <div class="diary-side-head">
             <span class="diary-em">🪶</span>
             <span class="diary-who">我</span>
-            <span class="diary-count"><span class="TODO">XX</span> 篇</span>
+            <span class="diary-count"><span id="memdiary-ryven-count">XX</span> 篇</span>
           </div>
-          <div class="diary-preview TODO">这里填 xxx</div>
-          <div class="diary-date TODO">XX · XX</div>
+          <div class="diary-preview" id="memdiary-ryven-latest-title">加载中…</div>
+          <div class="diary-date" id="memdiary-ryven-latest-meta"></div>
         </div>
       </div>
       <div class="card-cta" onclick="goTo('diary')" style="cursor:pointer">看全部日記</div>
@@ -4928,7 +4928,7 @@ async function loadChatHistory() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo(0,0);
-    if (id==='memory') { loadMemoryLibraryCard(); loadMemoryDiffCard(); loadMemoryDeskCard(); }
+    if (id==='memory') { loadMemoryLibraryCard(); loadMemoryDiffCard(); loadMemoryDeskCard(); loadMemoryDiaryCard(); }
     if (id==='calendar') renderCalendar();
     if (id==='diary') loadDiaryPage();
     if (id==='library') loadLibrary();
@@ -6041,6 +6041,58 @@ async function loadChatHistory() {
       document.getElementById('memdesk-books-count').textContent = books.length + ' 本書';
     } catch(e) {
       console.error('Desk 卡數據加載失敗', e);
+    }
+  }
+
+  async function loadMemoryDiaryCard() {
+    // 你（Nory）半邊：複用 loadNoryDiaryFromServer()，跟 #diary 頁共享同一份 diaryData 緩存
+    try {
+      await migrateNoryDiaryIfNeeded();
+      await loadNoryDiaryFromServer();
+      const keys = Object.keys(diaryData);
+      document.getElementById('memdiary-nory-count').textContent = keys.length;
+      if (keys.length) {
+        const sorted = keys.slice().sort((a, b) => {
+          const pa = diaryKeyParts(a), pb = diaryKeyParts(b);
+          return new Date(pb.year, pb.month, pb.day) - new Date(pa.year, pa.month, pa.day);
+        });
+        const p = diaryKeyParts(sorted[0]);
+        const entry = diaryNormalizeEntry(diaryData[sorted[0]]);
+        document.getElementById('memdiary-nory-latest-title').textContent = (entry && entry.text) || '還沒有內容';
+        document.getElementById('memdiary-nory-latest-meta').textContent = diaryShortDate(p.year, p.month, p.day);
+      } else {
+        document.getElementById('memdiary-nory-latest-title').textContent = '還沒有日記';
+        document.getElementById('memdiary-nory-latest-meta').textContent = '';
+      }
+    } catch(e) {
+      console.error('Diary 卡 Nory 數據加載失敗', e);
+      document.getElementById('memdiary-nory-latest-title').textContent = '加载失敗';
+    }
+
+    // 我（Ryven）半邊：GET /relay/ryven/diary
+    try {
+      const res = await fetch('https://ryven.homes/relay/ryven/diary', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const diary = data.diary || {};
+      const keys = Object.keys(diary);
+      document.getElementById('memdiary-ryven-count').textContent = keys.length;
+      if (keys.length) {
+        const sorted = keys.slice().sort((a, b) => new Date(b) - new Date(a));
+        const latestKey = sorted[0];
+        const entry = diary[latestKey];
+        document.getElementById('memdiary-ryven-latest-title').textContent = (entry && entry.text) || '還沒有內容';
+        const d = new Date(latestKey);
+        document.getElementById('memdiary-ryven-latest-meta').textContent = isNaN(d) ? '' : `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+      } else {
+        document.getElementById('memdiary-ryven-latest-title').textContent = '還沒有日記';
+        document.getElementById('memdiary-ryven-latest-meta').textContent = '';
+      }
+    } catch(e) {
+      console.error('Diary 卡 Ryven 數據加載失敗', e);
+      document.getElementById('memdiary-ryven-latest-title').textContent = '加载失敗';
     }
   }
 
