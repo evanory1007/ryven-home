@@ -4904,12 +4904,12 @@ async function loadChatHistory() {
         if (imageBlock) {
           renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime);
         } else if (msg.role === 'assistant' || msg.role === 'ryven') {
-          // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框
+          // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框，thinking内容也只传给第一句
           const segments = splitIntoSentences(msg.content);
           if (segments.length === 0) {
-            addMessage(msg.role, msg.content, msgTime);
+            addMessage(msg.role, msg.content, msgTime, false, msg.thinking);
           } else {
-            segments.forEach((seg, i) => addMessage(msg.role, seg, msgTime, i > 0));
+            segments.forEach((seg, i) => addMessage(msg.role, seg, msgTime, i > 0, i === 0 ? msg.thinking : undefined));
           }
         } else {
           addMessage(msg.role, msg.content, msgTime);
@@ -6587,7 +6587,7 @@ async function loadChatHistory() {
     if (btn) btn.classList.toggle('on', thinkVisible);
   }
 
-  function addMessage(role, text, timestampMs, skipThink) {
+  function addMessage(role, text, timestampMs, skipThink, thinkingContent) {
     const messages = document.getElementById('chat-messages');
     const msgDate = timestampMs ? new Date(timestampMs) : new Date();
     maybeInsertDateDivider(msgDate);
@@ -6595,12 +6595,13 @@ async function loadChatHistory() {
     const isMe = role === 'user';
     const sideClass = isMe ? 'from-me' : 'from-ryven';
 
-    // 每条Ryven回复上方跟一行折叠的思考标签（thinking block 还没接真实数据，先留空壳）
+    // 每条Ryven回复上方跟一行折叠的思考标签：有真实thinkingContent就显示，没有就还是占位的···
     // skipThink：一条历史消息拆成多句渲染时，只有第一句带思考框，后面几句不重复加
     if (!skipThink && (role === 'ryven' || role === 'assistant')) {
       const thinkId = 'think-' + Date.now();
       const thinkRow = document.createElement('div');
       thinkRow.className = 'think-inline';
+      const thinkBody = thinkingContent ? `<p>${thinkingContent.replace(/\n/g, '<br>')}</p>` : `<p style="opacity:0.4">···</p>`;
       thinkRow.innerHTML = `
         <div class="think-pill" onclick="toggleThink('${thinkId}')">
           <span class="think-star">✧</span>
@@ -6608,7 +6609,7 @@ async function loadChatHistory() {
           <span class="think-star">✧</span>
         </div>
         <div class="think-expand" id="${thinkId}">
-          <p style="opacity:0.4">···</p>
+          ${thinkBody}
         </div>
       `;
       messages.appendChild(thinkRow);
@@ -6747,11 +6748,28 @@ async function loadChatHistory() {
 
       const messagesEl = document.getElementById('chat-messages');
 
+      // 思考行（跟 addMessage() 里同款逻辑）
+      const streamThinkId = 'think-' + Date.now();
+      const thinkRow = document.createElement('div');
+      thinkRow.className = 'think-inline';
+      thinkRow.innerHTML = `
+        <div class="think-pill" onclick="toggleThink('${streamThinkId}')">
+          <span class="think-star">✧</span>
+          <span class="think-label">thinking</span>
+          <span class="think-star">✧</span>
+        </div>
+        <div class="think-expand" id="${streamThinkId}">
+          <p style="opacity:0.4">···</p>
+        </div>
+      `;
+      messagesEl.appendChild(thinkRow);
+
       // 逐句流式（跟 sendMessage() 里同款处理）：每收到一个字符就追加，碰到句末标点就换一个新气泡；
       // 新气泡先在内存里准备好，真的收到内容才 appendPendingBubble()，网络延迟时不会露出空气泡
       let currentBubble = prepareRyvenBubble();
       let currentText = '';
       let fullText = '';
+      let thinkingText = '';
       let pendingCut = false; // 上一个字符是句末标点，正等下一个字符判断是不是「」）》】这类收尾符号
 
       const reader = res.body.getReader();
@@ -6774,6 +6792,14 @@ async function loadChatHistory() {
             if (sseEventType === 'memories') { sseEventType = 'message'; continue; }
             try {
               const json = JSON.parse(payload);
+
+              if (json.type === 'content_block_delta' && json.delta && json.delta.type === 'thinking_delta') {
+                thinkingText += json.delta.thinking || '';
+                const expandEl = document.getElementById(streamThinkId);
+                if (expandEl) expandEl.innerHTML = `<p>${thinkingText.replace(/\n/g, '<br>')}</p>`;
+                continue;
+              }
+
               let chunk = '';
               if (json.type === 'content_block_delta' && json.delta && json.delta.text) chunk = json.delta.text;
               else if (json.delta && json.delta.text) chunk = json.delta.text;
@@ -6814,7 +6840,7 @@ async function loadChatHistory() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({ session_id: sessionId, messages: [
-          { role: 'assistant', content: fullText }
+          { role: 'assistant', content: fullText, thinking: thinkingText }
         ]})
       }).catch(() => {});
     } catch(e) {
@@ -7368,7 +7394,7 @@ async function loadChatHistory() {
               // 保存到服务器
         const toSave = [
           { role: 'user', content: userContentForSave },
-          { role: 'assistant', content: fullText }
+          { role: 'assistant', content: fullText, thinking: thinkingText }
         ];
         fetch(`https://ryven.homes/relay/chat/save`, {
           method: 'POST',
