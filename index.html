@@ -5160,11 +5160,12 @@ async function loadChatHistory() {
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
-      const entries = data.entries || data.diary || (Array.isArray(data) ? data : []);
+      const diary = data.diary || {};
       const byKey = {};
-      entries.forEach(e => {
-        const key = ryvenDiaryKeyFromDateStr(e.date || e.created || e.created_at || e.day);
+      Object.keys(diary).forEach(dateKey => {
+        const key = ryvenDiaryKeyFromDateStr(dateKey);
         if (!key) return;
+        const e = diary[dateKey];
         const text = e.text || e.content || '';
         const moods = Array.isArray(e.moods) ? e.moods : (e.mood ? [e.mood] : []);
         byKey[key] = { text, moods };
