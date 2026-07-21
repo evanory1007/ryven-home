@@ -1116,6 +1116,18 @@
       margin-top: 3px;
     }
 
+    /* MiniMax TTS 播放按钮：挂在整条Ryven回复最后一个气泡下面，默认不自动播放 */
+    .tts-play-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 1px solid var(--line); color: var(--parchment-ghost);
+      font-size: 10px; cursor: pointer; margin-top: 5px;
+      transition: border-color 0.2s, color 0.2s, opacity 0.2s;
+    }
+    .tts-play-btn:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    .tts-play-btn.loading { opacity: 0.35; cursor: default; animation: ttsPulse 1.2s ease-in-out infinite; }
+    @keyframes ttsPulse { 0%,100% { opacity: 0.2; } 50% { opacity: 0.5; } }
+
     .typing-indicator { display:none; align-items:center; gap:8px; padding:4px 0; }
     .typing-indicator.show { display:flex; }
     .typing-dots { display:flex; gap:4px; padding:9px 13px; background:linear-gradient(135deg,rgba(46,74,158,0.4),rgba(26,31,58,0.6)); border:1px solid rgba(201,168,76,0.12); border-radius:18px; border-bottom-left-radius:4px; }
@@ -3612,11 +3624,11 @@
       <div class="sec-label">接口 · integrations</div>
       <div class="interface-grid">
 
-        <!-- ElevenLabs -->
+        <!-- MiniMax TTS -->
         <div class="interface-card" id="settings-iface-card-elevenlabs" onclick="settingsToggleInterface('elevenlabs')">
           <div class="interface-icon">🎙</div>
           <div class="interface-info">
-            <div class="interface-name">ElevenLabs</div>
+            <div class="interface-name">MiniMax TTS</div>
             <div class="interface-desc">语音合成</div>
           </div>
           <div class="interface-status">
@@ -6843,6 +6855,8 @@ async function loadChatHistory() {
           { role: 'assistant', content: fullText, thinking: thinkingText }
         ]})
       }).catch(() => {});
+
+      attachTTSButton(currentBubble.wrap, fullText);
     } catch(e) {
       pendingReplyCount = Math.max(0, pendingReplyCount - 1);
       if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
@@ -7221,6 +7235,43 @@ async function loadChatHistory() {
     pending.appended = true;
   }
 
+  // MiniMax TTS：整条回复生成完后调一次，把播放按钮挂在最后一个气泡下面；默认不自动播放，点了才放
+  async function attachTTSButton(bubbleWrap, text) {
+    if (!bubbleWrap || !text || !text.trim()) return;
+    const col = bubbleWrap.querySelector('.msg-col');
+    if (!col) return;
+    const btn = document.createElement('div');
+    btn.className = 'tts-play-btn loading';
+    btn.textContent = '🔊';
+    btn.title = '生成中…';
+    col.appendChild(btn);
+    try {
+      const res = await fetch('https://ryven.homes/relay/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ text })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const base64Audio = data.audio || data.audio_base64 || data.data || '';
+      if (!base64Audio) throw new Error('empty audio');
+
+      const audioBytes = atob(base64Audio);
+      const arr = new Uint8Array(audioBytes.length);
+      for (let i = 0; i < audioBytes.length; i++) arr[i] = audioBytes.charCodeAt(i);
+      const blob = new Blob([arr], { type: 'audio/mp3' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+
+      btn.classList.remove('loading');
+      btn.title = '播放語音';
+      btn.onclick = () => { audio.currentTime = 0; audio.play(); };
+    } catch(e) {
+      console.error('TTS 生成失敗', e);
+      btn.remove();
+    }
+  }
+
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
@@ -7404,6 +7455,8 @@ async function loadChatHistory() {
           },
           body: JSON.stringify({ session_id: sessionId, messages: toSave })
         }).catch(() => {});
+
+        attachTTSButton(currentBubble.wrap, fullText);
 
     } catch(e) {
         pendingReplyCount = Math.max(0, pendingReplyCount - 1);
@@ -8411,7 +8464,8 @@ function renderSettingsPage() {
     const ifaces = settingsGetInterfaces();
     ['elevenlabs', 'xiaomi', 'netease'].forEach(id => {
         const info = ifaces[id];
-        const connected = !!(info && info.key);
+        // MiniMax TTS（id沿用elevenlabs）走服務器端 /relay/tts，不需要客戶端存key，永遠顯示已連
+        const connected = id === 'elevenlabs' ? true : !!(info && info.key);
         const dot = document.getElementById(`settings-iface-dot-${id}`);
         const text = document.getElementById(`settings-iface-text-${id}`);
         const card = document.getElementById(`settings-iface-card-${id}`);
