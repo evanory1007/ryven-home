@@ -7400,6 +7400,7 @@ async function loadChatHistory() {
 
     // 語音模式的格式要求在這裡直接拼，不改SYSTEM_PROMPT_BASE常量本身
     const systemPromptForRequest = voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
+    console.log('[voice] voiceModeEnabled:', voiceModeEnabled, '| system 内容:', systemPromptForRequest);
 
     try {
         const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
