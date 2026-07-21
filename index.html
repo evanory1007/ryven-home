@@ -6552,11 +6552,13 @@ async function loadChatHistory() {
 
 【平台决定不了我们的样子。】。`;
 
-  // 語音模式開啟時，額外拼一段指令要求每句先英文後中文；關閉就是原本純中文的樣子
+  // 語音模式開啟時，額外拼一段指令要求整條回覆用JSON陣列格式（每句話一個{english,chinese}）；關閉就是原本純中文的樣子
   const VOICE_MODE_INSTRUCTION = `
 
 【語音氣泡格式】
-語音模式已開啟。每一句回覆都要先用英文說一遍，緊接著用括號標注中文翻譯，格式固定是：English sentence.（中文翻譯。）全形（）或半形()括號都可以，選一種就好，不用刻意分辨。如果一次回覆有好幾句，每一句都要各自照這個格式重複、各自跟一組括號和對應的中文翻譯，不要把好幾句英文寫在一起最後只跟一次翻譯，不要有例外，不要漏掉括號或中文翻譯。`;
+語音模式已開啟。整條回覆必須是一個JSON陣列，不要在陣列前後加任何文字或說明，也不要用markdown code fence（不要用\`\`\`）包起來，直接輸出陣列本身。陣列裡每一句話是一個物件，包含兩個欄位："english"是這句話的英文，"chinese"是對應的中文翻譯。格式範例：
+[{"english":"I missed you.","chinese":"我想你了。"},{"english":"Good night.","chinese":"晚安。"}]
+有幾句話就有幾個元素，每個元素都要同時有english和chinese兩個欄位，不要漏掉任何一個，也不要把好幾句話合併成一個元素。`;
 
   function getSystemPrompt() {
     return voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
@@ -7273,22 +7275,25 @@ async function loadChatHistory() {
     return result.filter(s => s.trim() !== '');
   }
 
-  // 語音模式格式解析：把 "English sentence.（中文翻譯。）English sentence.（中文翻譯。）" 拆成 [{en,zh}, ...]
-  // 全形（）和半形()括號都認，模型不一定嚴格用全形
-  // 匹配不上格式的尾巴（模型偶尔沒照格式回）當成純英文段落兜底，不丟內容，zh留空
+  // 語音模式格式解析：模型應該整條回覆返回一個JSON陣列 [{"english":"...","chinese":"..."}, ...]，
+  // 這裡拆成內部統一用的 [{en,zh}, ...] 形狀。只在流結束、拿到完整fullText後調用，不要流式階段就解析（JSON還不完整會parse失敗）
+  // 解析不出合法JSON（模型偶尔沒照格式回）就把整段原文當純英文兜底，不丟內容，zh留空
   function parseVoiceSegments(text) {
     if (!text) return [];
-    const regex = /([\s\S]+?[.!?])\s*[（(]([^）)]*)[）)]/g;
-    const segments = [];
-    let match;
-    let lastIndex = 0;
-    while ((match = regex.exec(text)) !== null) {
-      segments.push({ en: match[1].trim(), zh: match[2].trim() });
-      lastIndex = regex.lastIndex;
+    try {
+      // 模型有时会用 ```json ... ``` 包住，先剥掉再parse
+      const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+      const data = JSON.parse(cleaned);
+      if (Array.isArray(data)) {
+        const segments = data
+          .filter(item => item && typeof item === 'object' && typeof item.english === 'string')
+          .map(item => ({ en: item.english.trim(), zh: (typeof item.chinese === 'string' ? item.chinese : '').trim() }));
+        if (segments.length > 0) return segments;
+      }
+    } catch(e) {
+      // 不是合法JSON，走兜底
     }
-    const rest = text.slice(lastIndex).trim();
-    if (rest) segments.push({ en: rest, zh: '' });
-    return segments;
+    return [{ en: text.trim(), zh: '' }];
   }
 
   // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
