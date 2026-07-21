@@ -7551,6 +7551,8 @@ async function loadChatHistory() {
             }
         }
 
+        console.log('[voice] fullText:', fullText.substring(0, 200));
+
         if (voiceModeEnabled && fullText.trim()) {
             // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式解析出的英文/中文兩行氣泡
             // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
