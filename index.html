@@ -4928,15 +4928,24 @@ async function loadChatHistory() {
           // 先看是不是語音格式（"English.（中文。）"），是的話按語音氣泡渲染；不是就走原本的分句渲染
           const voiceSegments = typeof msg.content === 'string' ? parseVoiceSegments(msg.content) : [];
           const isVoiceFormat = voiceSegments.length > 0 && voiceSegments.some(s => s.zh);
+          // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
+          let thinkAdded = false;
           if (isVoiceFormat) {
-            voiceSegments.forEach((seg, i) => addMessage(msg.role, seg.en, msgTime, i > 0, i === 0 ? msg.thinking : undefined, seg));
+            voiceSegments.forEach((seg, i) => {
+              addMessage(msg.role, seg.en, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, seg);
+              thinkAdded = true;
+            });
           } else {
             // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框，thinking内容也只传给第一句
             const segments = splitIntoSentences(msg.content);
             if (segments.length === 0) {
-              addMessage(msg.role, msg.content, msgTime, false, msg.thinking);
+              addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking);
+              thinkAdded = true;
             } else {
-              segments.forEach((seg, i) => addMessage(msg.role, seg, msgTime, i > 0, i === 0 ? msg.thinking : undefined));
+              segments.forEach((seg, i) => {
+                addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking);
+                thinkAdded = true;
+              });
             }
           }
         } else {
@@ -6890,8 +6899,10 @@ async function loadChatHistory() {
       }
 
       if (voiceModeEnabled && fullText.trim()) {
-        // 語音模式：丟掉流式階段顯示的原始整段文字氣泡，換成正式解析出的英文/中文兩行氣泡
+        // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式解析出的英文/中文兩行氣泡
+        // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
         if (currentBubble.appended) currentBubble.wrap.remove();
+        thinkRow.remove();
         const voiceSegments = parseVoiceSegments(fullText);
         let lastWrap = null;
         voiceSegments.forEach((seg, i) => {
@@ -7381,6 +7392,9 @@ async function loadChatHistory() {
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
 
+    // 語音模式的格式要求在這裡直接拼，不改SYSTEM_PROMPT_BASE常量本身
+    const systemPromptForRequest = voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
+
     try {
         const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
             method:'POST',
@@ -7393,7 +7407,7 @@ async function loadChatHistory() {
                 model:CHAT_MODEL,
                 base_url:CHAT_BASE_URL,
                 max_tokens:500,
-                system:getSystemPrompt(),
+                system:systemPromptForRequest,
                 messages:chatHistory
             })
         });
@@ -7532,8 +7546,10 @@ async function loadChatHistory() {
         }
 
         if (voiceModeEnabled && fullText.trim()) {
-            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡，換成正式解析出的英文/中文兩行氣泡
+            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式解析出的英文/中文兩行氣泡
+            // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
             if (currentBubble.appended) currentBubble.wrap.remove();
+            thinkRow.remove();
             const voiceSegments = parseVoiceSegments(fullText);
             let lastWrap = null;
             voiceSegments.forEach((seg, i) => {
