@@ -6556,7 +6556,7 @@ async function loadChatHistory() {
   const VOICE_MODE_INSTRUCTION = `
 
 【語音氣泡格式】
-語音模式已開啟。每一句回覆都要先用英文說一遍，緊接著用全角括號標注中文翻譯，格式固定是：English sentence.（中文翻譯。）如果一次回覆有好幾句，每一句都要照這個格式重複，不要有例外，不要漏掉括號或中文翻譯。`;
+語音模式已開啟。每一句回覆都要先用英文說一遍，緊接著用括號標注中文翻譯，格式固定是：English sentence.（中文翻譯。）全形（）或半形()括號都可以，選一種就好，不用刻意分辨。如果一次回覆有好幾句，每一句都要各自照這個格式重複、各自跟一組括號和對應的中文翻譯，不要把好幾句英文寫在一起最後只跟一次翻譯，不要有例外，不要漏掉括號或中文翻譯。`;
 
   function getSystemPrompt() {
     return voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
@@ -7274,10 +7274,11 @@ async function loadChatHistory() {
   }
 
   // 語音模式格式解析：把 "English sentence.（中文翻譯。）English sentence.（中文翻譯。）" 拆成 [{en,zh}, ...]
+  // 全形（）和半形()括號都認，模型不一定嚴格用全形
   // 匹配不上格式的尾巴（模型偶尔沒照格式回）當成純英文段落兜底，不丟內容，zh留空
   function parseVoiceSegments(text) {
     if (!text) return [];
-    const regex = /([\s\S]+?[.!?])\s*（([^）]*)）/g;
+    const regex = /([\s\S]+?[.!?])\s*[（(]([^）)]*)[）)]/g;
     const segments = [];
     let match;
     let lastIndex = 0;
