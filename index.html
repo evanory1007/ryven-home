@@ -4865,6 +4865,7 @@ function doLogin() {
       localStorage.setItem('ryven-auth-token', authToken);
       document.getElementById('login-overlay').classList.add('hidden');
       loadChatHistory();
+      renderHomePage();
     } else {
       document.getElementById('login-error').style.display = 'block';
     }
