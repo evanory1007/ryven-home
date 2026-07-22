@@ -4925,28 +4925,19 @@ async function loadChatHistory() {
         if (imageBlock) {
           renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime);
         } else if (msg.role === 'assistant' || msg.role === 'ryven') {
-          // 先看是不是語音格式（"English.（中文。）"），是的話按語音氣泡渲染；不是就走原本的分句渲染
-          const voiceSegments = typeof msg.content === 'string' ? parseVoiceSegments(msg.content) : [];
-          const isVoiceFormat = voiceSegments.length > 0 && voiceSegments.some(s => s.zh);
+          // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
+          // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
           // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
           let thinkAdded = false;
-          if (isVoiceFormat) {
-            voiceSegments.forEach((seg, i) => {
-              addMessage(msg.role, seg.en, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, seg);
+          const segments = splitIntoSentences(msg.content);
+          if (segments.length === 0) {
+            addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking);
+            thinkAdded = true;
+          } else {
+            segments.forEach((seg, i) => {
+              addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking);
               thinkAdded = true;
             });
-          } else {
-            // 历史消息也按句子拆开渲染，跟实时流式的分段效果保持一致；只有第一句带思考框，thinking内容也只传给第一句
-            const segments = splitIntoSentences(msg.content);
-            if (segments.length === 0) {
-              addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking);
-              thinkAdded = true;
-            } else {
-              segments.forEach((seg, i) => {
-                addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking);
-                thinkAdded = true;
-              });
-            }
           }
         } else {
           addMessage(msg.role, msg.content, msgTime);
@@ -6552,13 +6543,11 @@ async function loadChatHistory() {
 
 【平台决定不了我们的样子。】。`;
 
-  // 語音模式開啟時，額外拼一段指令要求整條回覆用JSON陣列格式（每句話一個{english,chinese}）；關閉就是原本純中文的樣子
+  // 語音模式開啟時，額外拼一段指令要求整條回覆只用英文（中文翻譯改由MiniMax翻譯API另外處理，不再要求模型自己雙語輸出）；關閉就是原本純中文的樣子
   const VOICE_MODE_INSTRUCTION = `
 
-【語音氣泡格式】
-語音模式已開啟。整條回覆必須是一個JSON陣列，不要在陣列前後加任何文字或說明，也不要用markdown code fence（不要用\`\`\`）包起來，直接輸出陣列本身。陣列裡每一句話是一個物件，包含兩個欄位："english"是這句話的英文，"chinese"是對應的中文翻譯。格式範例：
-[{"english":"I missed you.","chinese":"我想你了。"},{"english":"Good night.","chinese":"晚安。"}]
-有幾句話就有幾個元素，每個元素都要同時有english和chinese兩個欄位，不要漏掉任何一個，也不要把好幾句話合併成一個元素。`;
+【語音模式】
+語音模式已開啟，這次回覆請只用英文回，不要出現中文，也不要中英夾雜——就是自然、簡短、溫暖的英文句子，跟平常說話的語氣一樣，只是換成英文。`;
 
   function getSystemPrompt() {
     return voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
@@ -6684,8 +6673,9 @@ async function loadChatHistory() {
     // 引用回复：如果引用预览条开着，把引用内容嵌进这条消息（只有Nory自己发的消息才可能带着引用发出）
     const hasQuote = isMe && typeof pendingQuote !== 'undefined' && pendingQuote;
     // 語音氣泡：英文斜体大字 + 中文小字灰色，voiceParts存在時優先於普通文字氣泡
+    // .voice-zh 一律先建出來（沒翻譯完就顯示占位文字），翻譯API回來後直接改這個元素的textContent
     const bubbleInner = voiceParts
-      ? `<div class="voice-en">${voiceParts.en}</div>${voiceParts.zh ? `<div class="voice-zh">${voiceParts.zh}</div>` : ''}`
+      ? `<div class="voice-en">${voiceParts.en}</div><div class="voice-zh">${voiceParts.zh || '翻譯中…'}</div>`
       : text.replace(/\n/g,'<br>');
     const bubbleHTML = hasQuote
       ? `<div class="msg-bubble bubble-with-quote"><div class="inline-quote"><div class="inline-quote-who">${pendingQuote.who}</div>${pendingQuote.text}</div><div class="bubble-text">${bubbleInner}</div></div>`
@@ -6871,7 +6861,7 @@ async function loadChatHistory() {
               else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) chunk = json.choices[0].delta.content;
               fullText += chunk;
               if (voiceModeEnabled) {
-                // 語音模式：不做即時分句，先整段顯示當打字效果，流結束後再用 parseVoiceSegments() 正式解析
+                // 語音模式：不做即時分句，先整段顯示當打字效果，流結束後再用 splitEnglishSentences() 正式解析
                 currentText += chunk;
                 currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                 if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
@@ -6901,19 +6891,27 @@ async function loadChatHistory() {
       }
 
       if (voiceModeEnabled && fullText.trim()) {
-        // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式解析出的英文/中文兩行氣泡
+        // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的英文氣泡（中文翻譯非同步補上）
         // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
         if (currentBubble.appended) currentBubble.wrap.remove();
         thinkRow.remove();
-        const voiceSegments = parseVoiceSegments(fullText);
+        const englishSentences = splitEnglishSentences(fullText);
         let lastWrap = null;
-        voiceSegments.forEach((seg, i) => {
-          lastWrap = addMessage('assistant', seg.en, Date.now(), i > 0, i === 0 ? thinkingText : undefined, seg);
+        const wrapsForTranslation = [];
+        englishSentences.forEach((en, i) => {
+          const wrap = addMessage('assistant', en, Date.now(), i > 0, i === 0 ? thinkingText : undefined, { en, zh: '' });
+          wrapsForTranslation.push({ wrap, en });
+          lastWrap = wrap;
         });
         if (lastWrap) {
-          const englishOnly = voiceSegments.map(s => s.en).join(' ');
-          attachTTSButton(lastWrap, englishOnly);
+          attachTTSButton(lastWrap, englishSentences.join(' '));
         }
+        // 每句各自非同步拿中文翻譯，回來後直接補進對應氣泡的.voice-zh
+        wrapsForTranslation.forEach(async ({ wrap, en }) => {
+          const zh = await translateViaRelay(en);
+          const zhEl = wrap.querySelector('.voice-zh');
+          if (zhEl) zhEl.textContent = zh || '（翻譯失敗）';
+        });
       } else if (currentText === '' && !currentBubble.appended && fullText === '') {
         // 整条什么都没收到，兜底显示一个"…"，不能什么都不留
         currentBubble.bubble.innerHTML = '…';
@@ -7275,25 +7273,28 @@ async function loadChatHistory() {
     return result.filter(s => s.trim() !== '');
   }
 
-  // 語音模式格式解析：模型應該整條回覆返回一個JSON陣列 [{"english":"...","chinese":"..."}, ...]，
-  // 這裡拆成內部統一用的 [{en,zh}, ...] 形狀。只在流結束、拿到完整fullText後調用，不要流式階段就解析（JSON還不完整會parse失敗）
-  // 解析不出合法JSON（模型偶尔沒照格式回）就把整段原文當純英文兜底，不丟內容，zh留空
-  function parseVoiceSegments(text) {
+  // 語音模式：模型現在只回純英文，這裡按句子拆開，每句一個氣泡
+  function splitEnglishSentences(text) {
     if (!text) return [];
+    return text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+  }
+
+  // 語音模式：每句英文各自調 /relay/translate（relay.py轉發MiniMax翻譯API）拿中文翻譯
+  // 翻譯失敗回傳null，呼叫方自己決定顯示什麼兜底文字
+  async function translateViaRelay(englishText) {
     try {
-      // 模型有时会用 ```json ... ``` 包住，先剥掉再parse
-      const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
-      const data = JSON.parse(cleaned);
-      if (Array.isArray(data)) {
-        const segments = data
-          .filter(item => item && typeof item === 'object' && typeof item.english === 'string')
-          .map(item => ({ en: item.english.trim(), zh: (typeof item.chinese === 'string' ? item.chinese : '').trim() }));
-        if (segments.length > 0) return segments;
-      }
+      const res = await fetch('https://ryven.homes/relay/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ text: englishText })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      return data.translation || data.text || data.chinese || '';
     } catch(e) {
-      // 不是合法JSON，走兜底
+      console.error('翻譯失敗', e);
+      return null;
     }
-    return [{ en: text.trim(), zh: '' }];
   }
 
   // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
@@ -7520,7 +7521,7 @@ async function loadChatHistory() {
                         fullText += chunk;
                         if (voiceModeEnabled) {
                             // 語音模式：不做即時分句，先把原始文字整段显示在一个气泡里當打字效果，
-                            // 流結束後再用 parseVoiceSegments() 正式解析成英文/中文兩行氣泡（見迴圈外面）
+                            // 流結束後再用 splitEnglishSentences() 拆句、逐句非同步調翻譯API（見迴圈外面）
                             currentText += chunk;
                             currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                             if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
@@ -7555,19 +7556,27 @@ async function loadChatHistory() {
         console.log('[voice] fullText:', fullText.substring(0, 200));
 
         if (voiceModeEnabled && fullText.trim()) {
-            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式解析出的英文/中文兩行氣泡
+            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的英文氣泡（中文翻譯非同步補上）
             // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
             if (currentBubble.appended) currentBubble.wrap.remove();
             thinkRow.remove();
-            const voiceSegments = parseVoiceSegments(fullText);
+            const englishSentences = splitEnglishSentences(fullText);
             let lastWrap = null;
-            voiceSegments.forEach((seg, i) => {
-                lastWrap = addMessage('assistant', seg.en, Date.now(), i > 0, i === 0 ? thinkingText : undefined, seg);
+            const wrapsForTranslation = [];
+            englishSentences.forEach((en, i) => {
+                const wrap = addMessage('assistant', en, Date.now(), i > 0, i === 0 ? thinkingText : undefined, { en, zh: '' });
+                wrapsForTranslation.push({ wrap, en });
+                lastWrap = wrap;
             });
             if (lastWrap) {
-                const englishOnly = voiceSegments.map(s => s.en).join(' ');
-                attachTTSButton(lastWrap, englishOnly);
+                attachTTSButton(lastWrap, englishSentences.join(' '));
             }
+            // 每句各自非同步拿中文翻譯，回來後直接補進對應氣泡的.voice-zh
+            wrapsForTranslation.forEach(async ({ wrap, en }) => {
+                const zh = await translateViaRelay(en);
+                const zhEl = wrap.querySelector('.voice-zh');
+                if (zhEl) zhEl.textContent = zh || '（翻譯失敗）';
+            });
         } else if (currentText === '' && !currentBubble.appended && fullText === '') {
             // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
             currentBubble.bubble.innerHTML = '…';
