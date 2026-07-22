@@ -5152,18 +5152,24 @@ async function loadChatHistory() {
   let diaryData = {};
   const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+  // 請求序號：防止多次並發調用時，先發出但後resolve的過期請求（不管成功或失敗）覆蓋掉更新的結果
+  let noryDiaryRequestSeq = 0;
   async function loadNoryDiaryFromServer() {
+    const seq = ++noryDiaryRequestSeq;
     try {
       const res = await fetch('https://ryven.homes/relay/diary/nory', {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
+      if (seq !== noryDiaryRequestSeq) return diaryData; // 已經有更新的請求發出了，這次結果作廢
       diaryData = data.diary || data.data || data || {};
     } catch(e) {
       console.error('Nory 日記加載失敗', e);
+      if (seq !== noryDiaryRequestSeq) return diaryData;
       diaryData = {};
     }
+    return diaryData;
   }
 
   async function saveNoryDiaryToServer(data) {
@@ -7689,17 +7695,21 @@ function saveDepthsData(data) {
   saveDepthsToServer(data);
 }
 
+// 請求序號：防止多次並發調用時，先發出但後resolve的過期請求（不管成功或失敗）覆蓋掉更新的結果
+let depthsRequestSeq = 0;
 async function loadDepthsFromServer() {
+  const seq = ++depthsRequestSeq;
   try {
     const res = await fetch('https://ryven.homes/relay/depths', {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!res.ok) throw new Error('bad status ' + res.status);
     const data = await res.json();
+    if (seq !== depthsRequestSeq) return depthsDataCache; // 已經有更新的請求發出了，這次結果作廢
     depthsDataCache = data.data || data || {};
   } catch(e) {
     console.error('深淺數據加載失敗', e);
-    if (!depthsDataCache) depthsDataCache = {};
+    if (seq === depthsRequestSeq && !depthsDataCache) depthsDataCache = {};
   }
   return depthsDataCache;
 }
