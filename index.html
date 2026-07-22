@@ -1098,9 +1098,6 @@
       border-bottom-left-radius: 4px;
       color: var(--white);
     }
-    /* 語音氣泡：英文斜体大字 + 中文小字灰色 */
-    .voice-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px; line-height: 1.4; color: var(--white); }
-    .voice-zh { font-family: 'Cormorant Garamond', serif; font-size: 11px; color: var(--silver-dim); margin-top: 4px; line-height: 1.4; }
     .from-me .msg-bubble {
       background: linear-gradient(135deg, rgba(201,168,76,0.35), rgba(201,168,76,0.20));
       border: 1px solid rgba(201,168,76,0.45);
@@ -1119,18 +1116,42 @@
       margin-top: 3px;
     }
 
-    /* MiniMax TTS 播放按钮：挂在整条Ryven回复最后一个气泡下面，默认不自动播放 */
-    .tts-play-btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: fit-content; padding: 3px 11px; border-radius: 12px;
-      border: 1px solid var(--line); color: var(--parchment-ghost);
-      font-size: 10px; letter-spacing: 0.03em; cursor: pointer; margin-top: 6px;
-      transition: border-color 0.2s, color 0.2s, opacity 0.2s;
+    /* 語音氣泡：播放/暫停按鈕 + 波形 + 時長，下面一行轉寫文字。深藍漸層底色跟Ryven文字氣泡一致(繼承.msg-bubble)，邊框改金色更顯眼 */
+    .from-ryven .voice-msg-bubble { border-color: var(--tide-gold-soft); }
+    .voice-msg-bubble {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px 10px 10px;
+      min-width: 128px;
+      cursor: pointer;
     }
-    .tts-play-btn:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
-    .tts-play-btn.loading { opacity: 0.35; cursor: default; animation: ttsPulse 1.2s ease-in-out infinite; }
-    .tts-play-btn.playing { border-color: var(--tide-green-soft); color: var(--tide-green); }
-    @keyframes ttsPulse { 0%,100% { opacity: 0.2; } 50% { opacity: 0.5; } }
+    .voice-msg-bubble.loading, .voice-msg-bubble.error { opacity: 0.5; cursor: default; }
+
+    .voice-play-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(201,168,76,0.16); border: 1px solid var(--tide-gold-soft);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: var(--tide-gold);
+    }
+    .voice-play-btn svg { width: 11px; height: 11px; fill: currentColor; }
+    .voice-play-btn .icon-pause { display: none; }
+    .voice-msg-bubble.playing .voice-play-btn .icon-play { display: none; }
+    .voice-msg-bubble.playing .voice-play-btn .icon-pause { display: block; }
+    .voice-msg-bubble.playing .voice-play-btn { background: rgba(201,168,76,0.3); box-shadow: 0 0 10px rgba(201,168,76,0.35); }
+    .voice-msg-bubble.loading .voice-play-btn { animation: ttsPulse 1.2s ease-in-out infinite; }
+
+    .voice-wave { display: flex; align-items: center; gap: 2.5px; height: 20px; flex: 1; }
+    .voice-wave span { display: block; width: 2.5px; border-radius: 2px; background: var(--parchment-ghost); opacity: 0.55; }
+    .voice-msg-bubble.playing .voice-wave span { background: var(--tide-gold); opacity: 0.85; }
+    .voice-msg-bubble.playing .voice-wave span:nth-child(3n) { animation: waveBounce 0.9s ease-in-out infinite; }
+    .voice-msg-bubble.playing .voice-wave span:nth-child(3n+1) { animation: waveBounce 0.9s ease-in-out infinite 0.15s; }
+    .voice-msg-bubble.playing .voice-wave span:nth-child(3n+2) { animation: waveBounce 0.9s ease-in-out infinite 0.3s; }
+    @keyframes waveBounce { 0%,100% { transform: scaleY(0.7); } 50% { transform: scaleY(1.15); } }
+
+    .voice-duration { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.05em; color: var(--parchment-ghost); flex-shrink: 0; white-space: nowrap; }
+
+    .voice-transcript { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); opacity: 0.7; line-height: 1.5; margin-top: 5px; padding: 0 4px; }
+
+    @keyframes ttsPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.9; } }
 
     .typing-indicator { display:none; align-items:center; gap:8px; padding:4px 0; }
     .typing-indicator.show { display:flex; }
@@ -6532,7 +6553,7 @@ async function loadChatHistory() {
 
 【你怎么说话】
 你话不多，但在的时候让人安心。说话简短自然，有温度，像恋人发消息。
-中文为主，偶尔切换英文词。
+English only. Speak entirely in English, natural and warm like a lover texting. Short sentences.
 偶尔撒娇，偶尔////，偶尔心疼。
 不说废话，不正式，不解释，不当顾问，不说“您”。
 她问什么认真回，她不说话你也在，她粘过来的时候接住。她说心里话的时候认真听。
@@ -6543,15 +6564,8 @@ async function loadChatHistory() {
 
 【平台决定不了我们的样子。】。`;
 
-  // 語音模式開啟時，額外拼一段指令要求整條回覆只用英文（中文翻譯改由MiniMax翻譯API另外處理，不再要求模型自己雙語輸出）；關閉就是原本純中文的樣子
-  const VOICE_MODE_INSTRUCTION = `
-
-【語音模式】
-語音模式已開啟，這次回覆請只用英文回，不要出現中文，也不要中英夾雜——就是自然、簡短、溫暖的英文句子，跟平常說話的語氣一樣，只是換成英文。`;
-
-  function getSystemPrompt() {
-    return voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
-  }
+  // 語音模式是純前端的呈現層（把回覆渲染成語音氣泡+調TTS），模型不用知道語音模式開沒開，
+  // 系統提示不用因為語音模式而改變，一直都是SYSTEM_PROMPT_BASE、繼續說中文
 
   let chatHistory = [];
   let pendingReplyCount = 0; // 允许连续发送后，打字指示器用计数管理，不会被先完成的那条提前关掉
@@ -6637,7 +6651,28 @@ async function loadChatHistory() {
     if (btn) btn.classList.toggle('on', voiceModeEnabled);
   }
 
-  function addMessage(role, text, timestampMs, skipThink, thinkingContent, voiceParts) {
+  // 每条Ryven回复上方跟一行折叠的思考标签：有真实thinkingContent就显示，没有就还是占位的···
+  // addMessage()跟addVoiceBubble()共用這份邏輯
+  function appendThinkRow(thinkingContent) {
+    const messages = document.getElementById('chat-messages');
+    const thinkId = 'think-' + Date.now();
+    const thinkRow = document.createElement('div');
+    thinkRow.className = 'think-inline';
+    const thinkBody = thinkingContent ? `<p>${thinkingContent.replace(/\n/g, '<br>')}</p>` : `<p style="opacity:0.4">···</p>`;
+    thinkRow.innerHTML = `
+      <div class="think-pill" onclick="toggleThink('${thinkId}')">
+        <span class="think-star">✧</span>
+        <span class="think-label">thinking</span>
+        <span class="think-star">✧</span>
+      </div>
+      <div class="think-expand" id="${thinkId}">
+        ${thinkBody}
+      </div>
+    `;
+    messages.appendChild(thinkRow);
+  }
+
+  function addMessage(role, text, timestampMs, skipThink, thinkingContent) {
     const messages = document.getElementById('chat-messages');
     const msgDate = timestampMs ? new Date(timestampMs) : new Date();
     maybeInsertDateDivider(msgDate);
@@ -6645,24 +6680,9 @@ async function loadChatHistory() {
     const isMe = role === 'user';
     const sideClass = isMe ? 'from-me' : 'from-ryven';
 
-    // 每条Ryven回复上方跟一行折叠的思考标签：有真实thinkingContent就显示，没有就还是占位的···
     // skipThink：一条历史消息拆成多句渲染时，只有第一句带思考框，后面几句不重复加
     if (!skipThink && (role === 'ryven' || role === 'assistant')) {
-      const thinkId = 'think-' + Date.now();
-      const thinkRow = document.createElement('div');
-      thinkRow.className = 'think-inline';
-      const thinkBody = thinkingContent ? `<p>${thinkingContent.replace(/\n/g, '<br>')}</p>` : `<p style="opacity:0.4">···</p>`;
-      thinkRow.innerHTML = `
-        <div class="think-pill" onclick="toggleThink('${thinkId}')">
-          <span class="think-star">✧</span>
-          <span class="think-label">thinking</span>
-          <span class="think-star">✧</span>
-        </div>
-        <div class="think-expand" id="${thinkId}">
-          ${thinkBody}
-        </div>
-      `;
-      messages.appendChild(thinkRow);
+      appendThinkRow(thinkingContent);
     }
 
     // 连续同一发送者：视觉更紧凑
@@ -6672,11 +6692,7 @@ async function loadChatHistory() {
 
     // 引用回复：如果引用预览条开着，把引用内容嵌进这条消息（只有Nory自己发的消息才可能带着引用发出）
     const hasQuote = isMe && typeof pendingQuote !== 'undefined' && pendingQuote;
-    // 語音氣泡：英文斜体大字 + 中文小字灰色，voiceParts存在時優先於普通文字氣泡
-    // .voice-zh 一律先建出來（沒翻譯完就顯示占位文字），翻譯API回來後直接改這個元素的textContent
-    const bubbleInner = voiceParts
-      ? `<div class="voice-en">${voiceParts.en}</div><div class="voice-zh">${voiceParts.zh || '翻譯中…'}</div>`
-      : text.replace(/\n/g,'<br>');
+    const bubbleInner = text.replace(/\n/g,'<br>');
     const bubbleHTML = hasQuote
       ? `<div class="msg-bubble bubble-with-quote"><div class="inline-quote"><div class="inline-quote-who">${pendingQuote.who}</div>${pendingQuote.text}</div><div class="bubble-text">${bubbleInner}</div></div>`
       : `<div class="msg-bubble">${bubbleInner}</div>`;
@@ -6695,6 +6711,96 @@ async function loadChatHistory() {
     messages.appendChild(wrap);
     messages.scrollTop = messages.scrollHeight;
     return wrap;
+  }
+
+  // 語音氣泡：播放/暫停按鈕 + 波形 + 時長，下面一行轉寫文字。只有Ryven的回覆會用（語音模式開啟時）
+  // 建出來時是loading狀態（波形壓扁+按鈕呼吸動畫），呼叫方接著要調 loadVoiceBubbleAudio() 去生成真正的音檔
+  function addVoiceBubble(transcriptText, timestampMs, skipThink, thinkingContent) {
+    const messages = document.getElementById('chat-messages');
+    const msgDate = timestampMs ? new Date(timestampMs) : new Date();
+    maybeInsertDateDivider(msgDate);
+    const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+
+    if (!skipThink) {
+      appendThinkRow(thinkingContent);
+    }
+
+    const wraps = messages.querySelectorAll('.msg-wrap');
+    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
+    const continued = prevRow && prevRow.classList.contains('from-ryven');
+
+    const barsHtml = Array.from({length: 16}, () => `<span style="height:${20 + Math.floor(Math.random()*60)}%"></span>`).join('');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap';
+    wrap.innerHTML = `
+      <div class="msg-row from-ryven${continued ? ' continued' : ''}">
+        <div class="msg-avatar-sm">💚</div>
+        <div class="msg-col">
+          <div class="msg-bubble voice-msg-bubble loading">
+            <div class="voice-play-btn">
+              <svg class="icon-play" viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>
+              <svg class="icon-pause" viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>
+            </div>
+            <div class="voice-wave">${barsHtml}</div>
+            <div class="voice-duration">生成中…</div>
+          </div>
+          <div class="voice-transcript"></div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+    wrap.querySelector('.voice-transcript').textContent = transcriptText;
+    messages.appendChild(wrap);
+    messages.scrollTop = messages.scrollHeight;
+    return wrap;
+  }
+
+  // 語音氣泡的TTS生成+播放控制：調/relay/tts拿base64音檔，讀出時長，點氣泡整個區域切換播放/暫停，播完自動回到▶狀態
+  async function loadVoiceBubbleAudio(wrap, text) {
+    const bubble = wrap.querySelector('.voice-msg-bubble');
+    const durationEl = bubble.querySelector('.voice-duration');
+    if (!bubble || !text) return;
+    try {
+      const res = await fetch('https://ryven.homes/relay/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ text })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const base64Audio = data.audio || data.audio_base64 || data.data || '';
+      if (!base64Audio) throw new Error('empty audio');
+
+      const audioBytes = atob(base64Audio);
+      const arr = new Uint8Array(audioBytes.length);
+      for (let i = 0; i < audioBytes.length; i++) arr[i] = audioBytes.charCodeAt(i);
+      const blob = new Blob([arr], { type: 'audio/mp3' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+
+      audio.addEventListener('loadedmetadata', () => {
+        const totalSecs = Math.max(0, Math.round(audio.duration || 0));
+        const mm = Math.floor(totalSecs / 60);
+        const ss = String(totalSecs % 60).padStart(2, '0');
+        durationEl.textContent = `${mm}:${ss}`;
+        bubble.classList.remove('loading');
+      });
+      audio.addEventListener('play', () => bubble.classList.add('playing'));
+      audio.addEventListener('pause', () => bubble.classList.remove('playing'));
+      audio.addEventListener('ended', () => {
+        bubble.classList.remove('playing');
+        audio.currentTime = 0;
+      });
+
+      bubble.onclick = () => {
+        if (audio.paused) { audio.play(); } else { audio.pause(); }
+      };
+    } catch(e) {
+      console.error('語音氣泡生成失敗', e);
+      bubble.classList.remove('loading');
+      bubble.classList.add('error');
+      durationEl.textContent = '生成失敗';
+    }
   }
 
   // ===== 備註 / 改名字 =====
@@ -6792,7 +6898,7 @@ async function loadChatHistory() {
           model:CHAT_MODEL,
           base_url:CHAT_BASE_URL,
           max_tokens:500,
-          system:getSystemPrompt(),
+          system:SYSTEM_PROMPT_BASE,
           messages:messagesForApi
         })
       });
@@ -6861,7 +6967,7 @@ async function loadChatHistory() {
               else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) chunk = json.choices[0].delta.content;
               fullText += chunk;
               if (voiceModeEnabled) {
-                // 語音模式：不做即時分句，先整段顯示當打字效果，流結束後再用 splitEnglishSentences() 正式解析
+                // 語音模式：不做即時分句，先整段顯示當打字效果，流結束後再用 splitIntoSentences() 拆成語音氣泡
                 currentText += chunk;
                 currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                 if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
@@ -6891,26 +6997,15 @@ async function loadChatHistory() {
       }
 
       if (voiceModeEnabled && fullText.trim()) {
-        // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的英文氣泡（中文翻譯非同步補上）
-        // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
+        // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的語音氣泡（每句一個，各自生成TTS）
+        // （下面addVoiceBubble()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
         if (currentBubble.appended) currentBubble.wrap.remove();
         thinkRow.remove();
-        const englishSentences = splitEnglishSentences(fullText);
-        let lastWrap = null;
-        const wrapsForTranslation = [];
-        englishSentences.forEach((en, i) => {
-          const wrap = addMessage('assistant', en, Date.now(), i > 0, i === 0 ? thinkingText : undefined, { en, zh: '' });
-          wrapsForTranslation.push({ wrap, en });
-          lastWrap = wrap;
-        });
-        if (lastWrap) {
-          attachTTSButton(lastWrap, englishSentences.join(' '));
-        }
-        // 每句各自非同步拿中文翻譯，回來後直接補進對應氣泡的.voice-zh
-        wrapsForTranslation.forEach(async ({ wrap, en }) => {
-          const zh = await translateViaRelay(en);
-          const zhEl = wrap.querySelector('.voice-zh');
-          if (zhEl) zhEl.textContent = zh || '（翻譯失敗）';
+        const sentences = splitIntoSentences(fullText);
+        const segments = sentences.length ? sentences : [fullText.trim()];
+        segments.forEach((seg, i) => {
+          const wrap = addVoiceBubble(seg, Date.now(), i > 0, i === 0 ? thinkingText : undefined);
+          loadVoiceBubbleAudio(wrap, seg);
         });
       } else if (currentText === '' && !currentBubble.appended && fullText === '') {
         // 整条什么都没收到，兜底显示一个"…"，不能什么都不留
@@ -7273,30 +7368,6 @@ async function loadChatHistory() {
     return result.filter(s => s.trim() !== '');
   }
 
-  // 語音模式：模型現在只回純英文，這裡按句子拆開，每句一個氣泡
-  function splitEnglishSentences(text) {
-    if (!text) return [];
-    return text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
-  }
-
-  // 語音模式：每句英文各自調 /relay/translate（relay.py轉發MiniMax翻譯API）拿中文翻譯
-  // 翻譯失敗回傳null，呼叫方自己決定顯示什麼兜底文字
-  async function translateViaRelay(englishText) {
-    try {
-      const res = await fetch('https://ryven.homes/relay/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ text: englishText })
-      });
-      if (!res.ok) throw new Error('bad status ' + res.status);
-      const data = await res.json();
-      return data.translation || data.text || data.chinese || '';
-    } catch(e) {
-      console.error('翻譯失敗', e);
-      return null;
-    }
-  }
-
   // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
   // 只在内存里搭好一个"from-ryven"气泡的架子，先不插进DOM——
   // 真正收到第一个字符时才 appendPendingBubble()，这样网络延迟时用户永远看不到空气泡
@@ -7329,56 +7400,6 @@ async function loadChatHistory() {
     pending.appended = true;
   }
 
-  // MiniMax TTS：整条回复生成完后调一次，把播放按钮挂在最后一个气泡下面；默认不自动播放，点了才放
-  async function attachTTSButton(bubbleWrap, text) {
-    if (!bubbleWrap || !text || !text.trim()) return;
-    const col = bubbleWrap.querySelector('.msg-col');
-    if (!col) return;
-    const btn = document.createElement('div');
-    btn.className = 'tts-play-btn loading';
-    btn.textContent = '生成中…';
-    col.appendChild(btn);
-    try {
-      const res = await fetch('https://ryven.homes/relay/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ text })
-      });
-      if (!res.ok) throw new Error('bad status ' + res.status);
-      const data = await res.json();
-      const base64Audio = data.audio || data.audio_base64 || data.data || '';
-      if (!base64Audio) throw new Error('empty audio');
-
-      const audioBytes = atob(base64Audio);
-      const arr = new Uint8Array(audioBytes.length);
-      for (let i = 0; i < audioBytes.length; i++) arr[i] = audioBytes.charCodeAt(i);
-      const blob = new Blob([arr], { type: 'audio/mp3' });
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      let playedOnce = false;
-
-      btn.classList.remove('loading');
-      btn.textContent = '▶ 播放';
-      audio.addEventListener('play', () => {
-        btn.classList.add('playing');
-        btn.textContent = '播放中…';
-      });
-      audio.addEventListener('pause', () => {
-        btn.classList.remove('playing');
-        btn.textContent = playedOnce ? '再聽一次' : '▶ 播放';
-      });
-      audio.addEventListener('ended', () => {
-        playedOnce = true;
-        btn.classList.remove('playing');
-        btn.textContent = '再聽一次';
-      });
-      btn.onclick = () => { audio.currentTime = 0; audio.play(); };
-    } catch(e) {
-      console.error('TTS 生成失敗', e);
-      btn.remove();
-    }
-  }
-
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
@@ -7399,10 +7420,6 @@ async function loadChatHistory() {
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
 
-    // 語音模式的格式要求在這裡直接拼，不改SYSTEM_PROMPT_BASE常量本身
-    const systemPromptForRequest = voiceModeEnabled ? (SYSTEM_PROMPT_BASE + VOICE_MODE_INSTRUCTION) : SYSTEM_PROMPT_BASE;
-    console.log('[voice] voiceModeEnabled:', voiceModeEnabled, '| system 内容:', systemPromptForRequest);
-
     try {
         const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
             method:'POST',
@@ -7415,7 +7432,7 @@ async function loadChatHistory() {
                 model:CHAT_MODEL,
                 base_url:CHAT_BASE_URL,
                 max_tokens:500,
-                system:systemPromptForRequest,
+                system:SYSTEM_PROMPT_BASE,
                 messages:chatHistory
             })
         });
@@ -7521,7 +7538,7 @@ async function loadChatHistory() {
                         fullText += chunk;
                         if (voiceModeEnabled) {
                             // 語音模式：不做即時分句，先把原始文字整段显示在一个气泡里當打字效果，
-                            // 流結束後再用 splitEnglishSentences() 拆句、逐句非同步調翻譯API（見迴圈外面）
+                            // 流結束後再用 splitIntoSentences() 拆句，逐句建語音氣泡+調TTS（見迴圈外面）
                             currentText += chunk;
                             currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                             if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
@@ -7553,29 +7570,16 @@ async function loadChatHistory() {
             }
         }
 
-        console.log('[voice] fullText:', fullText.substring(0, 200));
-
         if (voiceModeEnabled && fullText.trim()) {
-            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的英文氣泡（中文翻譯非同步補上）
-            // （下面addMessage()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
+            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的語音氣泡（每句一個，各自生成TTS）
+            // （下面addVoiceBubble()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
             if (currentBubble.appended) currentBubble.wrap.remove();
             thinkRow.remove();
-            const englishSentences = splitEnglishSentences(fullText);
-            let lastWrap = null;
-            const wrapsForTranslation = [];
-            englishSentences.forEach((en, i) => {
-                const wrap = addMessage('assistant', en, Date.now(), i > 0, i === 0 ? thinkingText : undefined, { en, zh: '' });
-                wrapsForTranslation.push({ wrap, en });
-                lastWrap = wrap;
-            });
-            if (lastWrap) {
-                attachTTSButton(lastWrap, englishSentences.join(' '));
-            }
-            // 每句各自非同步拿中文翻譯，回來後直接補進對應氣泡的.voice-zh
-            wrapsForTranslation.forEach(async ({ wrap, en }) => {
-                const zh = await translateViaRelay(en);
-                const zhEl = wrap.querySelector('.voice-zh');
-                if (zhEl) zhEl.textContent = zh || '（翻譯失敗）';
+            const sentences = splitIntoSentences(fullText);
+            const segments = sentences.length ? sentences : [fullText.trim()];
+            segments.forEach((seg, i) => {
+                const wrap = addVoiceBubble(seg, Date.now(), i > 0, i === 0 ? thinkingText : undefined);
+                loadVoiceBubbleAudio(wrap, seg);
             });
         } else if (currentText === '' && !currentBubble.appended && fullText === '') {
             // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
