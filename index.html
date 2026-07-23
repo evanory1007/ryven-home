@@ -1191,6 +1191,31 @@
       animation: fadeIn 0.2s ease;
     }
 
+    /* 工具調用節點：跟思考框同款折疊樣式，金色調區分，執行中/完成/失敗三態 */
+    .tool-inline { margin: 8px 0 4px 12px; }
+    .tool-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      cursor: pointer; font-size: 11px; letter-spacing: 0.15em;
+      color: var(--tide-gold-soft);
+    }
+    .tool-status-icon { font-size: 10px; width: 14px; display: inline-block; text-align: center; flex-shrink: 0; }
+    .tool-status-icon.loading { animation: ttsPulse 1.2s ease-in-out infinite; }
+    .tool-status-icon.ok { color: var(--tide-green); }
+    .tool-status-icon.error { color: var(--danger); }
+    .tool-label { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.15em; }
+    .tool-expand {
+      display: none;
+      padding: 8px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      color: var(--parchment-ghost);
+      border-left: 1.5px solid var(--tide-gold-soft);
+      margin-left: 4px;
+      margin-top: 4px;
+      animation: fadeIn 0.2s ease;
+    }
+    .tool-expand pre { white-space: pre-wrap; word-break: break-all; }
+
     #chat .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
     /* 输入栏 */
@@ -7419,178 +7444,368 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     await requestRyvenReply(text);
   }
 
+  // 工具調用：中文標籤，展示在折疊節點裡（跟思考框同款樣式）
+  const TOOL_LABELS = {
+    write_home_letter: '在信箋留了一句話',
+    record_my_depth: '記錄了今天的深淺',
+    write_diary: '寫了一篇日記',
+    hold_memory: '存了一條記憶',
+    add_thought: '有了一個念頭',
+    read_nory_diary: '讀了你的日記',
+    read_desk: '看了書桌',
+    read_wishlist: '看了心願賬戶',
+    read_differences: '看了我們的分歧'
+  };
+
+  // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
+  function addToolCallNode(name, input) {
+    const messages = document.getElementById('chat-messages');
+    const nodeId = 'tool-' + Date.now() + Math.random().toString(36).slice(2, 6);
+    const label = TOOL_LABELS[name] || name;
+    const inputPreview = JSON.stringify(input || {}, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const row = document.createElement('div');
+    row.className = 'tool-inline';
+    row.innerHTML = `
+      <div class="tool-pill" onclick="toggleThink('${nodeId}')">
+        <span class="tool-status-icon loading">…</span>
+        <span class="tool-label">${label}</span>
+      </div>
+      <div class="tool-expand" id="${nodeId}"><pre>${inputPreview}</pre></div>
+    `;
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+    const iconEl = row.querySelector('.tool-status-icon');
+    return {
+      setSuccess: () => { iconEl.textContent = '✓'; iconEl.className = 'tool-status-icon ok'; },
+      setError: () => { iconEl.textContent = '✗'; iconEl.className = 'tool-status-icon error'; }
+    };
+  }
+
+  // 執行單個tool_use：顯示節點+調對應relay端點+更新節點狀態，回傳要塞進tool_result的內容字串
+  async function executeToolUse(toolUse) {
+    const name = toolUse && toolUse.name;
+    const input = (toolUse && toolUse.input) || {};
+    const node = addToolCallNode(name, input);
+    try {
+      let resultText = 'ok';
+      if (name === 'write_home_letter') {
+        const res = await fetch('https://ryven.homes/relay/ryven/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ text: input.content })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = '已經留言給Nory了';
+      } else if (name === 'record_my_depth') {
+        await migrateDepthsDataIfNeeded();
+        await loadDepthsFromServer();
+        const data = getDepthsData();
+        const key = depthsTodayKey();
+        if (!data[key]) data[key] = { nory: null, ryven: null };
+        data[key].ryven = input.value;
+        saveDepthsData(data);
+        resultText = '已記錄今天的深淺';
+      } else if (name === 'write_diary') {
+        const res = await fetch('https://ryven.homes/relay/ryven/diary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ text: input.content, mood: input.mood })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = '已寫下今天的日記';
+      } else if (name === 'hold_memory') {
+        const res = await fetch('https://ryven.homes/relay/ombre/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({
+            name: (input.content || '').slice(0, 24) || '一條記憶',
+            content_preview: input.content || '',
+            domain: ['對話'],
+            tags: [],
+            importance: input.importance != null ? input.importance : 5,
+            type: 'permanent'
+          })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = '已存進海裡';
+      } else if (name === 'add_thought') {
+        const res = await fetch('https://ryven.homes/relay/desire/feed_thought', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ text: input.text, drive: input.drive })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = '已記下這個念頭';
+      } else if (name === 'read_nory_diary') {
+        const res = await fetch('https://ryven.homes/relay/diary/nory', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        resultText = JSON.stringify(data.diary || data.data || data || {});
+      } else if (name === 'read_desk') {
+        const res = await fetch('https://ryven.homes/relay/desk', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = JSON.stringify(await res.json());
+      } else if (name === 'read_wishlist') {
+        const res = await fetch('https://ryven.homes/relay/wishlist', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = JSON.stringify(await res.json());
+      } else if (name === 'read_differences') {
+        const res = await fetch('https://ryven.homes/relay/ombre/breath', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ max_results: 50 })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        const buckets = data.result || [];
+        const diffs = buckets.filter(b => Array.isArray(b.domain) && b.domain.includes('分歧'));
+        resultText = JSON.stringify(diffs);
+      } else {
+        resultText = 'unknown tool: ' + name;
+      }
+      node.setSuccess();
+      return resultText;
+    } catch(e) {
+      console.error('工具執行失敗：' + name, e);
+      node.setError();
+      return 'error: ' + e.message;
+    }
+  }
+
   // 流式接收 Ryven 回复 + 渲染 + 存历史。调用前 chatHistory 里必须已经 push 好这次的 user 消息，
   // userContentForSave 是存进 /relay/chat/save 的那条 user content（文字发送传字符串，贴纸发送传 content block 数组）
+  // 支持 tool_use：模型調工具時不顯示氣泡，只顯示折疊節點；工具結果回傳給API再拿一次真正的文字回覆（最多循環MAX_TOOL_ROUNDS輪）
   async function requestRyvenReply(userContentForSave) {
     pendingReplyCount++;
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
 
+    const messagesEl = document.getElementById('chat-messages');
+    let thinkingText = ''; // 整個交換（可能含多輪工具調用）共用一份思考文字，跨輪累積
+    let streamThinkId = null;
+    let thinkRow = null;
+
     try {
-        const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json',
-                'Authorization':'Bearer ryven-nory-6.28',
-                'x-api-key':CHAT_API_KEY
-            },
-            body: JSON.stringify({
-                model:CHAT_MODEL,
-                base_url:CHAT_BASE_URL,
-                max_tokens:500,
-                system:SYSTEM_PROMPT_BASE,
-                messages:chatHistory
-            })
-        });
-
-        if (!res.ok) throw new Error('API error ' + res.status);
-
-        // ===== 流式讀取 =====
-        // 用计数器而不是直接隐藏：如果还有别的消息也在等首字节，指示器不能被这条先归位的抢先关掉
-        pendingReplyCount = Math.max(0, pendingReplyCount - 1);
-        if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
-
-        const messagesEl = document.getElementById('chat-messages');
-
-        // 思考行（跟 addMessage() 里同款逻辑，thinking block 还没接真实数据，先留空壳）
-        const streamThinkId = 'think-' + Date.now();
-        const thinkRow = document.createElement('div');
-        thinkRow.className = 'think-inline';
-        thinkRow.innerHTML = `
-        <div class="think-pill" onclick="toggleThink('${streamThinkId}')">
-          <span class="think-star">✧</span>
-          <span class="think-label">thinking</span>
-          <span class="think-star">✧</span>
-        </div>
-        <div class="think-expand" id="${streamThinkId}">
-          <p style="opacity:0.4">···</p>
-        </div>
-      `;
-        messagesEl.appendChild(thinkRow);
-
-        // 逐句流式：每收到一个字符就追加，一碰到句末标点（。！？\n）就把当前气泡定型，换一个新气泡接着收
-        // 不再等整条流完再拆句——不然会有先显示全文、再清空重排的闪烁感
-        // 新气泡先在内存里准备好，真的收到内容才 appendPendingBubble()，网络延迟时不会露出空气泡
-        let currentBubble = prepareRyvenBubble();
-        let currentText = '';
+        let messagesForApi = chatHistory;
         let fullText = '';
-        let thinkingText = '';
-        let pendingCut = false; // 上一个字符是句末标点，正等下一个字符判断是不是「」）》】这类收尾符号
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buffer = '';
-        let sseEventType = 'message'; // 默认类型
+        let roundCount = 0;
+        const MAX_TOOL_ROUNDS = 6; // 安全上限：連續調工具超過這個次數還沒給最終回覆就放棄
 
         while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop();
+            roundCount++;
+            if (roundCount > MAX_TOOL_ROUNDS) {
+                addMessage('assistant', '🌙 …工具調用太多次了，先停一下');
+                break;
+            }
 
-            for (const line of lines) {
-                if (line.startsWith('event:')) {
-                    sseEventType = line.slice(6).trim();
-                    continue;
-                }
-                if (line === '') {
-                    sseEventType = 'message'; // 空行是SSE消息边界，事件类型重置回默认
-                    continue;
-                }
-                if (line.startsWith('data:')) {
-                    const payload = line.slice(5).trim();
-                    if (payload === '[DONE]') { sseEventType = 'message'; continue; }
+            const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json',
+                    'Authorization':'Bearer ryven-nory-6.28',
+                    'x-api-key':CHAT_API_KEY
+                },
+                body: JSON.stringify({
+                    model:CHAT_MODEL,
+                    base_url:CHAT_BASE_URL,
+                    max_tokens:500,
+                    system:SYSTEM_PROMPT_BASE,
+                    messages:messagesForApi
+                })
+            });
 
-                    if (sseEventType === 'memories') {
-                        // 思考框先不接检索到的记忆内容了，等 thinking block 正式接上再启用
-                        // console.log('memories event received', payload);
-                        // try {
-                        //     const memories = JSON.parse(payload);
-                        //     if (Array.isArray(memories) && memories.length > 0) {
-                        //         const thinkContent = memories
-                        //             .map(m => typeof m === 'string' ? m : (m && (m.content || m.snippet)) || '')
-                        //             .filter(Boolean)
-                        //             .join('　·　');
-                        //         const expands = messagesEl.querySelectorAll('.think-expand');
-                        //         const latestExpand = expands[expands.length - 1];
-                        //         if (latestExpand && thinkContent) latestExpand.innerHTML = `<p>${thinkContent}</p>`;
-                        //     }
-                        // } catch(e) {
-                        //     console.log('memories event parse failed', e);
-                        // }
-                        sseEventType = 'message';
+            if (!res.ok) throw new Error('API error ' + res.status);
+
+            if (roundCount === 1) {
+                // 用计数器而不是直接隐藏：如果还有别的消息也在等首字节，指示器不能被这条先归位的抢先关掉
+                pendingReplyCount = Math.max(0, pendingReplyCount - 1);
+                if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
+
+                // 思考行（跟 addMessage() 里同款逻辑，thinking block 还没接真实数据，先留空壳）
+                // 整個交換只建一次，之後每輪的thinking_delta都往同一個框裡累加
+                streamThinkId = 'think-' + Date.now();
+                thinkRow = document.createElement('div');
+                thinkRow.className = 'think-inline';
+                thinkRow.innerHTML = `
+                <div class="think-pill" onclick="toggleThink('${streamThinkId}')">
+                  <span class="think-star">✧</span>
+                  <span class="think-label">thinking</span>
+                  <span class="think-star">✧</span>
+                </div>
+                <div class="think-expand" id="${streamThinkId}">
+                  <p style="opacity:0.4">···</p>
+                </div>
+              `;
+                messagesEl.appendChild(thinkRow);
+            }
+
+            // ===== 這一輪的流式讀取 =====
+            // 逐句流式：每收到一个字符就追加，一碰到句末标点（。！？\n）就把当前气泡定型，换一个新气泡接着收
+            // 不再等整条流完再拆句——不然会有先显示全文、再清空重排的闪烁感
+            // 新气泡先在内存里准备好，真的收到内容才 appendPendingBubble()，网络延迟时不会露出空气泡
+            let currentBubble = prepareRyvenBubble();
+            let currentText = '';
+            let roundText = '';
+            let pendingCut = false; // 上一个字符是句末标点，正等下一个字符判断是不是「」）》】这类收尾符号
+            const blocks = {}; // content block index -> {type, id, name, partialJson}：追蹤tool_use的參數JSON流式累積
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let sseEventType = 'message'; // 默认类型
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('event:')) {
+                        sseEventType = line.slice(6).trim();
                         continue;
                     }
+                    if (line === '') {
+                        sseEventType = 'message'; // 空行是SSE消息边界，事件类型重置回默认
+                        continue;
+                    }
+                    if (line.startsWith('data:')) {
+                        const payload = line.slice(5).trim();
+                        if (payload === '[DONE]') { sseEventType = 'message'; continue; }
 
-                    try {
-                        const json = JSON.parse(payload);
-
-                        if (json.type === 'content_block_delta' && json.delta && json.delta.type === 'thinking_delta') {
-                            thinkingText += json.delta.thinking || '';
-                            const expandEl = document.getElementById(streamThinkId);
-                            if (expandEl) expandEl.innerHTML = `<p>${thinkingText.replace(/\n/g, '<br>')}</p>`;
+                        if (sseEventType === 'memories') {
+                            sseEventType = 'message';
                             continue;
                         }
 
-                        let chunk = '';
-                        if (json.type === 'content_block_delta' && json.delta && json.delta.text) {
-                            chunk = json.delta.text;
-                        } else if (json.delta && json.delta.text) {
-                            chunk = json.delta.text;
-                        } else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
-                            chunk = json.choices[0].delta.content;
-                        }
-                        fullText += chunk;
-                        if (voiceModeEnabled) {
-                            // 語音模式：不做即時分句，先把原始文字整段显示在一个气泡里當打字效果，
-                            // 流結束後再用 splitIntoSentences() 拆句，逐句建語音氣泡+調TTS（見迴圈外面）
-                            currentText += chunk;
-                            currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
-                            if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
-                        } else {
-                            for (const ch of chunk) {
-                                const isClosingMark = /[」』"'）》】]/.test(ch);
-                                // 上一个字符是句末标点：这个字符不是收尾符号了，才真正切割；是收尾符号就并入当前气泡继续等下一个字符
-                                if (pendingCut && !isClosingMark) {
-                                    currentText = '';
-                                    currentBubble = prepareRyvenBubble();
-                                    pendingCut = false;
+                        try {
+                            const json = JSON.parse(payload);
+
+                            // relay.py注入了tools定義後，回覆裡可能出現tool_use content block：
+                            // content_block_start帶id+name，input_json_delta把參數JSON分段傳，content_block_stop時已經拼完整
+                            if (json.type === 'content_block_start') {
+                                const idx = json.index;
+                                const cb = json.content_block || {};
+                                if (cb.type === 'tool_use') {
+                                    blocks[idx] = { type: 'tool_use', id: cb.id, name: cb.name, partialJson: '' };
+                                } else {
+                                    blocks[idx] = { type: cb.type || 'text' };
                                 }
-                                currentText += ch;
-                                // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append——绝不能appended-then-filled，
-                                // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
+                                continue;
+                            }
+
+                            if (json.type === 'content_block_delta' && json.delta && json.delta.type === 'input_json_delta') {
+                                const block = blocks[json.index];
+                                if (block) block.partialJson += json.delta.partial_json || '';
+                                continue;
+                            }
+
+                            if (json.type === 'content_block_delta' && json.delta && json.delta.type === 'thinking_delta') {
+                                thinkingText += json.delta.thinking || '';
+                                const expandEl = document.getElementById(streamThinkId);
+                                if (expandEl) expandEl.innerHTML = `<p>${thinkingText.replace(/\n/g, '<br>')}</p>`;
+                                continue;
+                            }
+
+                            let chunk = '';
+                            if (json.type === 'content_block_delta' && json.delta && json.delta.text) {
+                                chunk = json.delta.text;
+                            } else if (json.delta && json.delta.text) {
+                                chunk = json.delta.text;
+                            } else if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
+                                chunk = json.choices[0].delta.content;
+                            }
+                            roundText += chunk;
+                            if (voiceModeEnabled) {
+                                // 語音模式：不做即時分句，先把原始文字整段显示在一个气泡里當打字效果，
+                                // 流結束後再用 splitIntoSentences() 拆句，逐句建語音氣泡+調TTS（見迴圈外面）
+                                currentText += chunk;
                                 currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                                 if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
-                                if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
-                                    // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
-                                    pendingCut = true;
+                            } else {
+                                for (const ch of chunk) {
+                                    const isClosingMark = /[」』"'）》】]/.test(ch);
+                                    // 上一个字符是句末标点：这个字符不是收尾符号了，才真正切割；是收尾符号就并入当前气泡继续等下一个字符
+                                    if (pendingCut && !isClosingMark) {
+                                        currentText = '';
+                                        currentBubble = prepareRyvenBubble();
+                                        pendingCut = false;
+                                    }
+                                    currentText += ch;
+                                    // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append——绝不能appended-then-filled，
+                                    // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
+                                    currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
+                                    if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                                    if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
+                                        // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
+                                        pendingCut = true;
+                                    }
                                 }
                             }
+                            messagesEl.scrollTop = messagesEl.scrollHeight;
+                        } catch(e) {
+                            // 非 JSON 行跳過
                         }
-                        messagesEl.scrollTop = messagesEl.scrollHeight;
-                    } catch(e) {
-                        // 非 JSON 行跳過
                     }
                 }
             }
-        }
 
-        if (voiceModeEnabled && fullText.trim()) {
-            // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的語音氣泡（每句一個，各自生成TTS）
-            // （下面addVoiceBubble()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
-            if (currentBubble.appended) currentBubble.wrap.remove();
-            thinkRow.remove();
-            const sentences = splitIntoSentences(fullText);
-            const segments = sentences.length ? sentences : [fullText.trim()];
-            segments.forEach((seg, i) => {
-                const wrap = addVoiceBubble(seg, Date.now(), i > 0, i === 0 ? thinkingText : undefined);
-                loadVoiceBubbleAudio(wrap, seg);
-            });
-        } else if (currentText === '' && !currentBubble.appended && fullText === '') {
-            // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
-            currentBubble.bubble.innerHTML = '…';
-            appendPendingBubble(messagesEl, currentBubble);
+            // 這一輪讀完了：看有沒有完整的tool_use block
+            const toolUses = Object.keys(blocks)
+                .map(idx => blocks[idx])
+                .filter(b => b.type === 'tool_use')
+                .map(b => {
+                    let input = {};
+                    try { input = JSON.parse(b.partialJson || '{}'); } catch(e) {}
+                    return { id: b.id, name: b.name, input };
+                });
+
+            if (toolUses.length === 0) {
+                // 沒有工具調用：這輪就是真正的最終回覆，沿用原本的收尾渲染
+                fullText = roundText;
+
+                if (voiceModeEnabled && fullText.trim()) {
+                    // 語音模式：丟掉流式階段顯示的原始整段文字氣泡跟思考框，換成正式的語音氣泡（每句一個，各自生成TTS）
+                    // （下面addVoiceBubble()第一句會重新建一個帶真實thinkingText的思考框，這裡流式開始時建的舊思考框要先清掉，不然兩個框重疊）
+                    if (currentBubble.appended) currentBubble.wrap.remove();
+                    thinkRow.remove();
+                    const sentences = splitIntoSentences(fullText);
+                    const segments = sentences.length ? sentences : [fullText.trim()];
+                    segments.forEach((seg, i) => {
+                        const wrap = addVoiceBubble(seg, Date.now(), i > 0, i === 0 ? thinkingText : undefined);
+                        loadVoiceBubbleAudio(wrap, seg);
+                    });
+                } else if (currentText === '' && !currentBubble.appended && fullText === '') {
+                    // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
+                    currentBubble.bubble.innerHTML = '…';
+                    appendPendingBubble(messagesEl, currentBubble);
+                }
+                break;
+            } else {
+                // 有工具調用：這輪產生的文字氣泡不算數（不顯示），依序執行工具（各自顯示折疊節點），組下一輪請求繼續對話
+                if (currentBubble.appended) currentBubble.wrap.remove();
+
+                const assistantContentBlocks = toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }));
+                const toolResultBlocks = [];
+                for (const tu of toolUses) {
+                    const resultText = await executeToolUse(tu);
+                    toolResultBlocks.push({ type: 'tool_result', tool_use_id: tu.id, content: resultText });
+                }
+
+                messagesForApi = [
+                    ...messagesForApi,
+                    { role: 'assistant', content: assistantContentBlocks },
+                    { role: 'user', content: toolResultBlocks }
+                ];
+                // 回到 while(true)，發下一輪請求
+            }
         }
 
         chatHistory.push({role:'assistant', content: fullText});
