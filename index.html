@@ -3889,9 +3889,6 @@
 
       <div class="sidebar-section">
         <div class="sidebar-label"><span>本月潮汐</span><small>this month</small></div>
-        <div class="sidebar-prose">
-          我們說了 <strong class="g" id="stat-sidebar-turns">0</strong> 次話。
-        </div>
         <div style="display:none">
           <span id="stat-today-cost">¥0.00</span><span id="stat-today-detail">0 turns · 0 in · 0 out</span>
           <span id="stat-total-cost">¥0.00</span>
@@ -7898,9 +7895,6 @@ async function fetchStats() {
       `${today.turns} turns · ${formatNum(today.input_tokens || 0)} in · ${formatNum(today.output_tokens || 0)} out`;
 
     document.getElementById('stat-total-cost').textContent = '¥' + (total.cost * USD_TO_CNY).toFixed(4);
-
-    // 侧边栏"本月潮汐"：次数用累计total.turns
-    document.getElementById('stat-sidebar-turns').textContent = total.turns || 0;
 
     // 主頁散文第二行"我們說了 XX 次話"：用累计 total.turns（/relay/stats 目前沒有月粒度）
     const homeProseTurnsEl = document.getElementById('home-prose-turns');
