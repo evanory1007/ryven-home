@@ -5228,13 +5228,13 @@ async function loadChatHistory() {
 
   function renderCalendar() {
     document.getElementById('cal-month-label').textContent=`${monthNames[calMonth]} ${calYear}`;
-    const todayKey=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    const todayKey=diaryKeyFor(now.getFullYear(), now.getMonth(), now.getDate());
     const firstDay=new Date(calYear,calMonth,1).getDay();
     const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
     let html=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-weekday">${d}</div>`).join('');
     for(let i=0;i<firstDay;i++) html+=`<div class="cal-day empty"></div>`;
     for(let d=1;d<=daysInMonth;d++){
-      const key=`${calYear}-${calMonth}-${d}`;
+      const key=diaryKeyFor(calYear, calMonth, d);
       const entry = diaryNormalizeEntry(diaryData[key]);
       const mood = entry && entry.moods[0] ? entry.moods[0] : '';
       html+=`<div class="cal-day ${key===todayKey?'today':''} ${entry?'has-note':''}" onclick="calendarJumpToDay(${d})">${d}${mood ? `<span style="position:absolute;bottom:1px;right:2px;font-size:9px;line-height:1">${mood}</span>` : ''}</div>`;
@@ -5251,7 +5251,7 @@ async function loadChatHistory() {
 
   // 點日曆某天：goTo('diary') 之後交給 diaryJumpToDay() 決定滾動到已有信封還是打開寫日記彈窗
   function calendarJumpToDay(d) {
-    const dayKey = `${calYear}-${calMonth}-${d}`;
+    const dayKey = diaryKeyFor(calYear, calMonth, d);
     goTo('diary');
     diaryJumpToDay(dayKey);
   }
@@ -5261,10 +5261,18 @@ async function loadChatHistory() {
   let diaryComposeTargetKey = null;
   const DIARY_WEEKDAYS = ['日','一','二','三','四','五','六'];
 
-  function diaryKeyFor(year, month0, day) { return `${year}-${month0}-${day}`; }
+  // key統一用"YYYY-MM-DD"（月份+1、補零2位），避免跟Ryven日記/伺服器慣例對不上（之前0-index不補零的格式
+  // 會讓read_nory_diary這類工具讀到"2026-6-23"以為是6月，其實是7月）
+  function diaryKeyFor(year, month0, day) { return `${year}-${String(month0+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`; }
   function diaryKeyParts(key) {
-    const [y, m, d] = key.split('-').map(Number);
-    return { year: y, month: m, day: d };
+    const parts = key.split('-');
+    const year = Number(parts[0]);
+    const monthRaw = parts[1];
+    // 新格式月份補零2位、1-indexed，要-1轉回0-indexed；舊資料殘留的0-indexed不補零格式維持原樣不轉
+    // （用"這段是不是2位數字"粗略判斷，10/11月的舊資料剛好也是2位數字會被誤判，這是舊資料格式不統一下的已知限制）
+    const month = monthRaw.length === 2 ? Number(monthRaw) - 1 : Number(monthRaw);
+    const day = Number(parts[2]);
+    return { year, month, day };
   }
 
   // 兼容三種歷史形態：純字符串 / {text,mood} / {text,moods}
@@ -7542,7 +7550,15 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         const data = await res.json();
-        resultText = JSON.stringify(data.diary || data.data || data || {});
+        const rawDiary = data.diary || data.data || data || {};
+        // key不管是舊格式(0-index不補零)還是新格式，統一轉成"YYYY-MM-DD"可讀日期再給模型，不要讓它自己猜月份
+        const readableDiary = {};
+        Object.keys(rawDiary).forEach(key => {
+          const p = diaryKeyParts(key);
+          const readableKey = `${p.year}-${String(p.month + 1).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+          readableDiary[readableKey] = rawDiary[key];
+        });
+        resultText = JSON.stringify(readableDiary);
       } else if (name === 'read_desk') {
         const res = await fetch('https://ryven.homes/relay/desk', {
           headers: { 'Authorization': `Bearer ${authToken}` }
