@@ -4888,6 +4888,7 @@ function doLogin() {
       document.getElementById('login-overlay').classList.add('hidden');
       loadChatHistory();
       renderHomePage();
+      loadUserConfigFromServer();
     } else {
       document.getElementById('login-error').style.display = 'block';
     }
@@ -6363,7 +6364,7 @@ async function loadChatHistory() {
     // 没存过就用旧的单配置数据迁移出一份默认配置
     return [{ id: 'default', name: '玖時 · 默認', emoji: '🐺', apiKey: CHAT_API_KEY, baseUrl: CHAT_BASE_URL, model: CHAT_MODEL }];
   }
-  function saveModelConfigsToStorage() { localStorage.setItem('ryven-model-configs', JSON.stringify(modelConfigs)); }
+  function saveModelConfigsToStorage() { localStorage.setItem('ryven-model-configs', JSON.stringify(modelConfigs)); syncUserConfigToServer(); }
   function getCurrentModelConfig() { return modelConfigs.find(c => c.id === currentConfigId) || modelConfigs[0]; }
   function applyCurrentModelConfig() {
     const cfg = getCurrentModelConfig();
@@ -6468,6 +6469,7 @@ async function loadChatHistory() {
   function setDefaultModelConfig(id) {
     defaultConfigId = id;
     localStorage.setItem('ryven-default-config-id', defaultConfigId);
+    syncUserConfigToServer();
     renderModelPanel();
     showToast('✧ 已設為默認配置');
   }
@@ -6476,7 +6478,6 @@ async function loadChatHistory() {
     if (modelConfigs.length === 1) { showToast('✧ 至少要留一個配置'); return; }
     if (!confirm('刪除這個配置？')) return;
     modelConfigs = modelConfigs.filter(c => c.id !== id);
-    saveModelConfigsToStorage();
     if (defaultConfigId === id) {
       defaultConfigId = modelConfigs[0].id;
       localStorage.setItem('ryven-default-config-id', defaultConfigId);
@@ -6486,6 +6487,7 @@ async function loadChatHistory() {
       applyCurrentModelConfig();
     }
     if (selectedConfigId === id) selectedConfigId = currentConfigId;
+    saveModelConfigsToStorage();
     renderModelPanel();
   }
 
@@ -6862,9 +6864,55 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     if (!newName || newName === nickname) return;
     nickname = newName;
     localStorage.setItem('ryven-nickname', nickname);
+    syncUserConfigToServer();
     applyNicknameToUI();
     insertSysMsg(`Nory 把我的名字改成了「${nickname}」`);
     triggerNicknameReaction(nickname);
+  }
+
+  // ===== 模型配置 + 備註 跨設備同步（存服務器 /relay/user/config，localStorage 只當本地緩存/離線兜底） =====
+  async function syncUserConfigToServer() {
+    if (!authToken) return;
+    try {
+      await fetch('https://ryven.homes/relay/user/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname })
+      });
+    } catch(e) {
+      console.error('用戶配置同步失敗', e);
+    }
+  }
+
+  async function loadUserConfigFromServer() {
+    if (!authToken) return;
+    try {
+      const res = await fetch('https://ryven.homes/relay/user/config', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.ok) return;
+      if (Array.isArray(data.modelConfigs) && data.modelConfigs.length) {
+        modelConfigs = data.modelConfigs;
+        localStorage.setItem('ryven-model-configs', JSON.stringify(modelConfigs));
+      }
+      if (data.defaultConfigId && modelConfigs.find(c => c.id === data.defaultConfigId)) {
+        defaultConfigId = data.defaultConfigId;
+        localStorage.setItem('ryven-default-config-id', defaultConfigId);
+      }
+      currentConfigId = defaultConfigId;
+      selectedConfigId = currentConfigId;
+      applyCurrentModelConfig();
+      renderModelPanel();
+      if (data.nickname && data.nickname !== nickname) {
+        nickname = data.nickname;
+        localStorage.setItem('ryven-nickname', nickname);
+        applyNicknameToUI();
+      }
+    } catch(e) {
+      console.error('用戶配置加載失敗', e);
+    }
   }
 
   function saveNickname() {
@@ -9017,6 +9065,8 @@ setInterval(() => {
 
 // #home 是默认打开的屏幕，不经过 goHome()，页面初始化时也要加载一次真实数据
 renderHomePage();
+// 已登录（刷新页面/换设备）时，页面初始化也从服务器同步一次模型配置/備註
+if (isLoggedIn) loadUserConfigFromServer();
 </script>
 </body>
 </html>
