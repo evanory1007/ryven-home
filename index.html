@@ -4983,6 +4983,13 @@ async function loadChatHistory() {
         if (imageBlock) {
           renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
         } else if (msg.role === 'assistant' || msg.role === 'ryven') {
+          // 历史里存的工具调用记录（toolCalls字段）：重新加载时补渲染出对应的折叠节点，
+          // 直接标记完成✓状态（不是重新执行工具，只是还原当时的调用记录）
+          if (Array.isArray(msg.toolCalls)) {
+            msg.toolCalls.forEach(tc => {
+              if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess();
+            });
+          }
           // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
           // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
           // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
@@ -7713,6 +7720,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         let messagesForApi = chatHistory;
         let fullText = '';
         let roundCount = 0;
+        const allToolCalls = []; // 累積這次交換裡所有輪次的工具調用（name+input），最終跟這條assistant消息一起存進歷史
         const MAX_TOOL_ROUNDS = 6; // 安全上限：連續調工具超過這個次數還沒給最終回覆就放棄
 
         while (true) {
@@ -7911,6 +7919,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                 if (currentBubble.appended) currentBubble.wrap.remove();
 
                 const assistantContentBlocks = toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }));
+                toolUses.forEach(tu => allToolCalls.push({ name: tu.name, input: tu.input }));
                 const toolResultBlocks = [];
                 for (const tu of toolUses) {
                     const resultText = await executeToolUse(tu);
@@ -7931,7 +7940,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
               // 保存到服务器
         const toSave = [
           { role: 'user', content: userContentForSave },
-          { role: 'assistant', content: fullText, thinking: thinkingText }
+          { role: 'assistant', content: fullText, thinking: thinkingText, ...(allToolCalls.length ? { toolCalls: allToolCalls } : {}) }
         ];
         fetch(`https://ryven.homes/relay/chat/save`, {
           method: 'POST',
