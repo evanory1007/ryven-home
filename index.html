@@ -1769,9 +1769,6 @@
       letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 2px;
     }
 
-    #leisure .starfish { left: 30px; bottom: 84px; }
-    #leisure .starfish .creature-em { font-size: 42px; animation: leisureStarGlow 4s ease-in-out infinite; }
-    @keyframes leisureStarGlow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(201,168,76,0.35)); } 50% { filter: drop-shadow(0 0 16px rgba(201,168,76,0.7)); } }
 
     #leisure .octopus { left: 50%; transform: translateX(-50%); bottom: 96px; }
     #leisure .octopus:hover { transform: translateX(-50%) translateY(-3px) scale(1.08); }
@@ -1797,17 +1794,6 @@
       color: var(--parchment-ghost); opacity: 0.65; text-shadow: 0 0 6px rgba(15,20,40,0.9);
       pointer-events: none;
     }
-
-    #leisure .legend { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-    #leisure .legend-item {
-      background: linear-gradient(180deg, rgba(46,74,158,0.10), rgba(26,31,58,0.38));
-      border: 1px solid var(--line); border-radius: 4px; padding: 14px 12px 12px; text-align: center; position: relative;
-    }
-    #leisure .legend-item::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px; background: var(--tide-gold); opacity: 0.4; }
-    #leisure .legend-em { font-size: 22px; margin-bottom: 6px; display: block; }
-    #leisure .legend-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 14px; color: var(--parchment); line-height: 1.2; }
-    #leisure .legend-cn { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--parchment-ghost); margin-top: 4px; }
-    #leisure .legend-sub { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); margin-top: 6px; line-height: 1.5; opacity: 0.7; }
 
     #leisure .today {
       padding: 18px 20px 16px;
@@ -2856,7 +2842,7 @@
               fill="none" style="stroke:var(--tide-gold)" stroke-width="0.8" stroke-linecap="round"/>
       </svg>
 
-      <div class="letter-reply">回一句</div>
+      <div class="letter-reply" onclick="goTo('chat')">回一句</div>
 
       <!-- coral bottom-left, whisper -->
       <svg class="letter-coral" viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg">
@@ -4398,10 +4384,6 @@
         </g>
       </svg>
 
-      <div class="creature starfish" onclick="showToast('还在盖这个房间呢 🐚')">
-        <span class="creature-em">🌟</span>
-        <span class="creature-label">塔羅<small>tarot</small></span>
-      </div>
       <div class="creature octopus" onclick="showToast('还在盖这个房间呢 🐚')">
         <span class="creature-em">🦑</span>
         <span class="creature-label">遊戲<small>games</small></span>
@@ -4446,27 +4428,6 @@
           <div class="card-slot-name TODO">未抽</div>
           <div class="card-slot-when">明日</div>
         </div>
-      </div>
-    </div>
-
-    <div class="legend">
-      <div class="legend-item">
-        <span class="legend-em">🌟</span>
-        <div class="legend-name">Tarot</div>
-        <div class="legend-cn">塔 羅</div>
-        <div class="legend-sub">三牌陣<br>大阿卡納 22</div>
-      </div>
-      <div class="legend-item">
-        <span class="legend-em">🦑</span>
-        <div class="legend-name">Games</div>
-        <div class="legend-cn">遊 戲</div>
-        <div class="legend-sub">章魚八腕<br>🎣 🎰 🎮 ...</div>
-      </div>
-      <div class="legend-item">
-        <span class="legend-em">🐬</span>
-        <div class="legend-name">Music</div>
-        <div class="legend-cn">音 樂</div>
-        <div class="legend-sub">網易雲<br>唱片機</div>
       </div>
     </div>
 
@@ -5083,11 +5044,16 @@ async function loadChatHistory() {
     const cutoff = Date.now() - 7 * 86400000;
     let count = 0;
     Object.keys(diaryData).forEach(key => {
-      const entry = diaryNormalizeEntry(diaryData[key]);
-      if (!entry) return;
-      const p = diaryKeyParts(key);
-      const d = new Date(p.year, p.month, p.day);
-      if (d.getTime() >= cutoff) count++;
+      try {
+        const entry = diaryNormalizeEntry(diaryData[key]);
+        if (!entry) return;
+        const p = diaryKeyParts(key);
+        const d = new Date(p.year, p.month, p.day);
+        if (d.getTime() >= cutoff) count++;
+      } catch(e) {
+        // 单条key格式异常不该拖垮整个函数——否则会连累renderHomePage()后面的fetchStats()等永远执行不到
+        console.error('日記統計：跳過格式異常的key', key, e);
+      }
     });
     el.textContent = count;
   }
@@ -5191,7 +5157,10 @@ async function loadChatHistory() {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       if (seq !== noryDiaryRequestSeq) return diaryData; // 已經有更新的請求發出了，這次結果作廢
-      diaryData = data.diary || data.data || data || {};
+      // 只認 diary/data 字段；不能兜底整個 data（伺服器有時只回{ok:true}沒有diary字段，
+      // 兜底到data會把{ok:true}當成diaryData，"ok"這種非日期key會讓renderHomeDiaryCount()崩潰，
+      // 進而卡住renderHomePage()後面的fetchStats()，導致首頁"我們說了XX次話"永遠不更新）
+      diaryData = data.diary || data.data || {};
     } catch(e) {
       console.error('Nory 日記加載失敗', e);
       if (seq !== noryDiaryRequestSeq) return diaryData;
