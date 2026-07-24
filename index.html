@@ -2342,11 +2342,49 @@
     #library .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
     #library .head-count { font-size: 11px; color: var(--tide-gold-soft); letter-spacing: 0.1em; background: var(--tide-gold-ghost); border: 1px solid var(--line); border-radius: 20px; padding: 4px 10px; }
 
+    #library .lib-search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    #library .lib-search-row .search-wrap { flex: 1; margin-bottom: 0; }
     #library .search-wrap { position: relative; margin-bottom: 16px; }
     #library .search-input { width: 100%; background: rgba(15,20,40,0.6); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px 12px 40px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--parchment); outline: none; transition: border-color 0.2s; backdrop-filter: blur(8px); }
     #library .search-input::placeholder { color: var(--parchment-ghost); }
     #library .search-input:focus { border-color: var(--tide-gold-soft); }
     #library .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--parchment-ghost); pointer-events: none; }
+
+    #library .lib-filter-btn {
+      position: relative; flex-shrink: 0; display: flex; align-items: center; gap: 4px;
+      height: 44px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line);
+      background: rgba(15,20,40,0.6); color: var(--parchment-dim); font-family: 'DM Sans', sans-serif;
+      font-size: 12px; letter-spacing: 0.06em; cursor: pointer; backdrop-filter: blur(8px); transition: border-color 0.2s, color 0.2s;
+    }
+    #library .lib-filter-btn:hover { border-color: var(--tide-gold-soft); }
+    #library .lib-filter-btn.active { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #library .lib-filter-btn-count {
+      min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+      background: var(--tide-gold); color: #1a1f3a; font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .lib-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 39; display: none; }
+    .lib-drawer-overlay.show { display: block; }
+    body.light .lib-drawer-overlay { background: rgba(200,212,232,0.6); }
+
+    .lib-drawer {
+      position: fixed; top: 0; right: -300px; width: 300px; max-width: 85vw; height: 100%;
+      background: linear-gradient(180deg, rgba(10,14,31,0.98), rgba(15,20,40,0.98));
+      border-left: 1px solid var(--tide-gold-soft); box-shadow: -20px 0 40px rgba(0,0,0,0.4);
+      z-index: 40; transition: right 0.3s ease; display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .lib-drawer.open { right: 0; }
+    body.light .lib-drawer {
+      background: rgba(220,228,240,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-left: 1px solid var(--tide-gold-soft); box-shadow: -20px 0 40px rgba(0,0,0,0.08);
+    }
+    .lib-drawer-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 24px 20px 14px; }
+    .lib-drawer-title { flex: 1; font-family: 'Playfair Display', serif; font-size: 19px; font-style: italic; color: var(--parchment); }
+    .lib-drawer-clear { flex-shrink: 0; background: none; border: 1px solid var(--line); color: var(--parchment-dim); border-radius: 14px; padding: 4px 12px; font-size: 11px; cursor: pointer; }
+    .lib-drawer-clear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    .lib-drawer-close { flex-shrink: 0; background: none; border: none; color: var(--parchment-ghost); font-size: 22px; line-height: 1; cursor: pointer; }
+    .lib-drawer .tags-wrap { padding: 4px 20px 24px; margin-bottom: 0; }
 
     #library .tags-wrap { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 20px; }
     #library .tag-chip { padding: 5px 13px; border-radius: 20px; font-size: 11px; letter-spacing: 0.06em; cursor: pointer; border: 1px solid rgba(74,111,165,0.2); background: rgba(74,111,165,0.08); color: rgba(150,185,230,0.65); transition: all 0.2s; white-space: nowrap; }
@@ -3181,13 +3219,25 @@
       <div class="head-count" id="lib-head-count">XX 顆</div>
     </div>
 
-    <div class="search-wrap">
-      <div class="search-icon">🔍</div>
-      <input class="search-input" id="lib-search-input" placeholder="搜索珍珠…" oninput="libFilterAndRender()" />
+    <div class="lib-search-row">
+      <div class="search-wrap">
+        <div class="search-icon">🔍</div>
+        <input class="search-input" id="lib-search-input" placeholder="搜索珍珠…" oninput="libFilterAndRender()" />
+      </div>
+      <button class="lib-filter-btn" id="lib-filter-btn" onclick="toggleLibDrawer()">
+        篩選
+        <span class="lib-filter-btn-count" id="lib-filter-btn-count" style="display:none">0</span>
+      </button>
     </div>
 
-    <div class="tags-wrap" id="lib-tags-wrap">
-      <div class="tag-chip active">全部</div>
+    <div class="lib-drawer-overlay" id="lib-drawer-overlay" onclick="toggleLibDrawer()"></div>
+    <div class="lib-drawer" id="lib-drawer">
+      <div class="lib-drawer-header">
+        <div class="lib-drawer-title">篩選標籤</div>
+        <button class="lib-drawer-clear" id="lib-drawer-clear" onclick="libClearTags()" style="display:none">清除</button>
+        <button class="lib-drawer-close" onclick="toggleLibDrawer()">×</button>
+      </div>
+      <div class="tags-wrap" id="lib-tags-wrap"></div>
     </div>
 
     <div class="section-divider" id="lib-pinned-divider" style="display:none">📌 常駐 · pinned</div>
@@ -5556,7 +5606,7 @@ async function loadChatHistory() {
 
   // ===== 記憶庫 =====
   let libraryBuckets = [];
-  let libActiveTag = 'all';
+  let libActiveTags = new Set(); // 多選：抽屜裡選中的標籤集合，空集合＝不按標籤篩選
   const libDomainEmojiMap = { '自省':'🪸', '恋爱':'💚', '编程':'🐚', '心理':'🌊' };
 
   function libDomainEmoji(domain) { return libDomainEmojiMap[domain] || '✦'; }
@@ -5602,7 +5652,7 @@ async function loadChatHistory() {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       libraryBuckets = data.result || [];
-      libActiveTag = 'all';
+      libActiveTags = new Set();
       renderLibraryTags();
       renderLibrary(libraryBuckets);
     } catch(e) {
@@ -5659,30 +5709,58 @@ async function loadChatHistory() {
     }
   }
 
+  // 抽屜裡的標籤chip：多選，點一下切換選中/取消
   function renderLibraryTags() {
     const wrap = document.getElementById('lib-tags-wrap');
     const domains = new Set();
     libraryBuckets.forEach(b => libDomainList(b).forEach(d => domains.add(d)));
-    const chips = [`<div class="tag-chip${libActiveTag==='all'?' active':''}" data-tag="all">全部</div>`];
-    domains.forEach(d => chips.push(`<div class="tag-chip${libActiveTag===d?' active':''}" data-tag="${d.replace(/"/g,'&quot;')}">${d}</div>`));
-    wrap.innerHTML = chips.join('');
+    const chips = Array.from(domains).map(d =>
+      `<div class="tag-chip${libActiveTags.has(d)?' active':''}" data-tag="${d.replace(/"/g,'&quot;')}">${d}</div>`
+    );
+    wrap.innerHTML = chips.length ? chips.join('') : '<div class="lib-status">還沒有標籤</div>';
     wrap.querySelectorAll('.tag-chip').forEach(chip => {
-      chip.addEventListener('click', () => libSelectTag(chip.getAttribute('data-tag')));
+      chip.addEventListener('click', () => libToggleTag(chip.getAttribute('data-tag')));
     });
+    updateLibFilterBtnUI();
   }
 
-  function libSelectTag(tag) {
-    libActiveTag = tag;
+  function libToggleTag(tag) {
+    if (libActiveTags.has(tag)) libActiveTags.delete(tag); else libActiveTags.add(tag);
     renderLibraryTags();
     libFilterAndRender();
   }
 
+  function libClearTags() {
+    libActiveTags.clear();
+    renderLibraryTags();
+    libFilterAndRender();
+  }
+
+  function toggleLibDrawer() {
+    document.getElementById('lib-drawer').classList.toggle('open');
+    document.getElementById('lib-drawer-overlay').classList.toggle('show');
+  }
+
+  function updateLibFilterBtnUI() {
+    const btn = document.getElementById('lib-filter-btn');
+    const countEl = document.getElementById('lib-filter-btn-count');
+    const clearBtn = document.getElementById('lib-drawer-clear');
+    const n = libActiveTags.size;
+    if (btn) btn.classList.toggle('active', n > 0);
+    if (countEl) { countEl.style.display = n > 0 ? 'flex' : 'none'; countEl.textContent = n; }
+    if (clearBtn) clearBtn.style.display = n > 0 ? 'inline-block' : 'none';
+  }
+
+  // 搜索关键词匹配標題/內容/domain/tags（libDomainList已经合并了domain+tags），
+  // 跟抽屜裡選中的標籤是交叉過濾（都要滿足）
   function libFilterAndRender() {
     const q = (document.getElementById('lib-search-input').value || '').trim().toLowerCase();
     let filtered = libraryBuckets;
-    if (libActiveTag !== 'all') filtered = filtered.filter(b => libDomainList(b).includes(libActiveTag));
+    if (libActiveTags.size) filtered = filtered.filter(b => libDomainList(b).some(d => libActiveTags.has(d)));
     if (q) filtered = filtered.filter(b =>
-      (b.name||'').toLowerCase().includes(q) || (b.content_preview||'').toLowerCase().includes(q)
+      (b.name||'').toLowerCase().includes(q) ||
+      (b.content_preview||'').toLowerCase().includes(q) ||
+      libDomainList(b).some(d => d.toLowerCase().includes(q))
     );
     renderLibrary(filtered);
   }
