@@ -8095,8 +8095,10 @@ function renderDepthsTideCurve() {
   const stepX = 400 / (days.length - 1);
   const points = days.map((d, i) => {
     const nory = d.rec && d.rec.nory != null ? d.rec.nory : null;
+    const ryven = d.rec && d.rec.ryven != null ? d.rec.ryven : null;
     const y = nory != null ? 20 + (1 - nory) * 90 : 70;
-    return { x: i * stepX, y, nory, isToday: d.isToday };
+    const yRyven = ryven != null ? 20 + (1 - ryven) * 90 : 70;
+    return { x: i * stepX, y, nory, yRyven, ryven, isToday: d.isToday };
   });
 
   const goldPoints = points.filter(p => p.nory != null);
@@ -8124,15 +8126,42 @@ function renderDepthsTideCurve() {
     svg.appendChild(c);
   }
 
-  // Ryven那條現在全是null，先用暗淡虛點占位
-  points.forEach(p => {
+  // Ryven那條線：有真實數據的日子連成虛線（呼應圖例的dashed樣式）+ 實心點，沒數據的日子維持暗淡虛點占位
+  const greenPoints = points.filter(p => p.ryven != null);
+  if (greenPoints.length >= 2) {
+    const greenPathD = depthsSmoothPath(greenPoints.map(p => ({ x: p.x, y: p.yRyven })));
+    const greenPath = document.createElementNS(ns, 'path');
+    greenPath.setAttribute('class', 'tide-dynamic');
+    greenPath.setAttribute('d', greenPathD);
+    greenPath.setAttribute('fill', 'none');
+    greenPath.setAttribute('stroke', 'url(#depthsGreenLineM)');
+    greenPath.setAttribute('stroke-width', '1.5');
+    greenPath.setAttribute('stroke-linecap', 'round');
+    greenPath.setAttribute('stroke-dasharray', '3 3');
+    svg.appendChild(greenPath);
+  } else if (greenPoints.length === 1) {
     const c = document.createElementNS(ns, 'circle');
     c.setAttribute('class', 'tide-dynamic');
-    c.setAttribute('cx', p.x); c.setAttribute('cy', 70); c.setAttribute('r', 2);
-    c.setAttribute('fill', 'none');
-    c.setAttribute('style', 'stroke:var(--tide-green)');
-    c.setAttribute('stroke-opacity', '0.2');
+    c.setAttribute('cx', greenPoints[0].x); c.setAttribute('cy', greenPoints[0].yRyven); c.setAttribute('r', 2.5);
+    c.setAttribute('style', 'fill:var(--tide-green)');
     svg.appendChild(c);
+  }
+  points.forEach(p => {
+    if (p.ryven != null) {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('class', 'tide-dynamic');
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.yRyven); dot.setAttribute('r', p.isToday ? 3 : 2);
+      dot.setAttribute('style', 'fill:var(--tide-green)');
+      svg.appendChild(dot);
+    } else {
+      const c = document.createElementNS(ns, 'circle');
+      c.setAttribute('class', 'tide-dynamic');
+      c.setAttribute('cx', p.x); c.setAttribute('cy', 70); c.setAttribute('r', 2);
+      c.setAttribute('fill', 'none');
+      c.setAttribute('style', 'stroke:var(--tide-green)');
+      c.setAttribute('stroke-opacity', '0.2');
+      svg.appendChild(c);
+    }
   });
 
   const todayPoint = points[points.length - 1];
