@@ -4919,15 +4919,13 @@ function extractImageSrc(block) {
 }
 
 // 图片消息渲染成气泡，role 是 'user' 或 'assistant'/'ryven' 都行；跟 addMessage() 一样处理日期分隔线/连续气泡/真实时间戳
-function renderImageBubble(role, src, timestampMs) {
+function renderImageBubble(role, src, timestampMs, skipScroll) {
   const msgDate = timestampMs ? new Date(timestampMs) : new Date();
   maybeInsertDateDivider(msgDate);
   const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
   const isMe = role === 'user';
   const sideClass = isMe ? 'from-me' : 'from-ryven';
-  const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
-  const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
-  const continued = prevRow && prevRow.classList.contains(sideClass);
+  const continued = lastMsgRow && lastMsgRow.classList.contains(sideClass);
   const wrap = document.createElement('div');
   wrap.className = 'msg-wrap';
   wrap.innerHTML = `
@@ -4940,7 +4938,8 @@ function renderImageBubble(role, src, timestampMs) {
     </div>`;
   wrap.querySelector('.img-bubble img').src = src;
   chatMessagesEl.appendChild(wrap);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+  lastMsgRow = wrap.firstElementChild;
+  if (!skipScroll) chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
 async function loadChatHistory() {
@@ -4951,9 +4950,13 @@ async function loadChatHistory() {
     if (!res.ok) return;
     const data = await res.json();
     const messages = data.messages || [];
+    // 历史消息数没变，说明没有新消息，跳过整个重渲染（避免每次进聊天室都全量重建DOM）
+    if (messages.length === lastLoadedMsgCount) return;
+    lastLoadedMsgCount = messages.length;
     if (messages.length > 0) {
       document.getElementById('chat-messages').innerHTML = '';
       lastMsgDateKey = null;
+      lastMsgRow = null;
       chatHistory = [];
       const estimateBase = Date.now();
       for (let idx = 0; idx < messages.length; idx++) {
@@ -4967,7 +4970,7 @@ async function loadChatHistory() {
         // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
         const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
         if (imageBlock) {
-          renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime);
+          renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
         } else if (msg.role === 'assistant' || msg.role === 'ryven') {
           // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
           // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
@@ -4975,20 +4978,22 @@ async function loadChatHistory() {
           let thinkAdded = false;
           const segments = splitIntoSentences(msg.content);
           if (segments.length === 0) {
-            addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking);
+            addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking, true);
             thinkAdded = true;
           } else {
             segments.forEach((seg, i) => {
-              addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking);
+              addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, true);
               thinkAdded = true;
             });
           }
         } else {
-          addMessage(msg.role, msg.content, msgTime);
+          addMessage(msg.role, msg.content, msgTime, undefined, undefined, true);
         }
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
       }
+      // 全部渲染完只滚一次到底部，而不是每条消息都强制reflow一次
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
     }
   } catch(e) {
     console.error('加载历史失败', e);
@@ -6607,6 +6612,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
   let chatHistory = [];
   let pendingReplyCount = 0; // 允许连续发送后，打字指示器用计数管理，不会被先完成的那条提前关掉
+  let lastMsgRow = null; // 追蹤最後一條消息行的DOM引用，取代每次都querySelectorAll('.msg-wrap')全量掃描
+  let lastLoadedMsgCount = -1; // loadChatHistory()緩存標記：歷史消息數沒變就跳過整個重渲染
 
   if (CHAT_API_KEY) {
     setTimeout(() => {
@@ -6644,6 +6651,9 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   function clearChat() {
     chatHistory = []; msgCount = 0; totalTokens = 0;
     lastMsgDateKey = null;
+    lastMsgRow = null;
+    // 清空只是本地清屏，服务器历史没删；重置缓存标记，不然下次进聊天室因为消息数「没变」被误判成不用重渲染
+    lastLoadedMsgCount = -1;
     document.getElementById('chat-messages').innerHTML = `<div class="api-notice" id="api-notice" ${CHAT_API_KEY?'style="display:none"':''}>💙 在右上角選單填入 API Key 後 Ryven 就能回話了</div>`;
     showToast('🌊 對話已清空');
     toggleSidebar();
@@ -6710,7 +6720,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     messages.appendChild(thinkRow);
   }
 
-  function addMessage(role, text, timestampMs, skipThink, thinkingContent) {
+  function addMessage(role, text, timestampMs, skipThink, thinkingContent, skipScroll) {
     const messages = document.getElementById('chat-messages');
     const msgDate = timestampMs ? new Date(timestampMs) : new Date();
     maybeInsertDateDivider(msgDate);
@@ -6723,10 +6733,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
       appendThinkRow(thinkingContent);
     }
 
-    // 连续同一发送者：视觉更紧凑
-    const wraps = messages.querySelectorAll('.msg-wrap');
-    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
-    const continued = prevRow && prevRow.classList.contains(sideClass);
+    // 连续同一发送者：视觉更紧凑（用lastMsgRow追踪最后一条消息行，不用每次都querySelectorAll全量扫描）
+    const continued = lastMsgRow && lastMsgRow.classList.contains(sideClass);
 
     // 引用回复：如果引用预览条开着，把引用内容嵌进这条消息（只有Nory自己发的消息才可能带着引用发出）
     const hasQuote = isMe && typeof pendingQuote !== 'undefined' && pendingQuote;
@@ -6747,7 +6755,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         </div>
       </div>`;
     messages.appendChild(wrap);
-    messages.scrollTop = messages.scrollHeight;
+    lastMsgRow = wrap.firstElementChild;
+    if (!skipScroll) messages.scrollTop = messages.scrollHeight;
     return wrap;
   }
 
@@ -6763,9 +6772,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
       appendThinkRow(thinkingContent);
     }
 
-    const wraps = messages.querySelectorAll('.msg-wrap');
-    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
-    const continued = prevRow && prevRow.classList.contains('from-ryven');
+    const continued = lastMsgRow && lastMsgRow.classList.contains('from-ryven');
 
     const barsHtml = Array.from({length: 16}, () => `<span style="height:${20 + Math.floor(Math.random()*60)}%"></span>`).join('');
 
@@ -6789,6 +6796,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
       </div>`;
     wrap.querySelector('.voice-transcript').textContent = transcriptText;
     messages.appendChild(wrap);
+    lastMsgRow = wrap.firstElementChild;
     messages.scrollTop = messages.scrollHeight;
     return wrap;
   }
@@ -7387,9 +7395,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     maybeInsertDateDivider(voiceNow);
     const time = voiceNow.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
     const waveId = 'vw-' + Date.now();
-    const wraps = chatMessagesEl.querySelectorAll('.msg-wrap');
-    const prevRow = wraps.length ? wraps[wraps.length - 1].querySelector('.msg-row') : null;
-    const continued = prevRow && prevRow.classList.contains('from-me');
+    const continued = lastMsgRow && lastMsgRow.classList.contains('from-me');
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
@@ -7403,6 +7409,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         </div>
       </div>`;
     chatMessagesEl.appendChild(wrap);
+    lastMsgRow = wrap.firstElementChild;
     chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     buildWave(waveId, Math.max(1, dur));
   }
