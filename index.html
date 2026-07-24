@@ -5561,11 +5561,14 @@ async function loadChatHistory() {
 
   function libDomainEmoji(domain) { return libDomainEmojiMap[domain] || '✦'; }
 
+  // Library列表页的"标签"来源：domain（大分类）+ tags（更细的标签）合并去重，
+  // 这样才跟珍珠详情页一样，两个字段都能显示出来、也都能拿来筛选
   function libDomainList(bucket) {
     const d = bucket.domain;
-    if (Array.isArray(d)) return d.filter(Boolean);
-    if (typeof d === 'string' && d) return [d];
-    return [];
+    const domainList = Array.isArray(d) ? d.filter(Boolean) : (typeof d === 'string' && d ? [d] : []);
+    const t = bucket.tags;
+    const tagList = Array.isArray(t) ? t.filter(Boolean) : (typeof t === 'string' && t ? [t] : []);
+    return [...new Set([...domainList, ...tagList])];
   }
 
   function libFormatDate(iso) {
