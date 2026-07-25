@@ -6763,7 +6763,9 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   // addMessage()跟addVoiceBubble()共用這份邏輯
   function appendThinkRow(thinkingContent) {
     const messages = document.getElementById('chat-messages');
-    const thinkId = 'think-' + Date.now();
+    // 单用Date.now()同一毫秒内连续调用会撞id（比如loadChatHistory()同步循环批量渲染时），
+    // getElementById()对重复id永远只认第一个，导致点这个框展开的是另一个——加个随机后缀保证唯一
+    const thinkId = 'think-' + Date.now() + Math.random().toString(36).slice(2, 8);
     const thinkRow = document.createElement('div');
     thinkRow.className = 'think-inline';
     const thinkBody = thinkingContent ? `<p>${thinkingContent.replace(/\n/g, '<br>')}</p>` : `<p style="opacity:0.4">···</p>`;
@@ -7061,8 +7063,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
       const messagesEl = document.getElementById('chat-messages');
 
-      // 思考行（跟 addMessage() 里同款逻辑）
-      const streamThinkId = 'think-' + Date.now();
+      // 思考行（跟 addMessage() 里同款逻辑）；加随机后缀避免跟同一毫秒内其他think框撞id
+      const streamThinkId = 'think-' + Date.now() + Math.random().toString(36).slice(2, 8);
       const thinkRow = document.createElement('div');
       thinkRow.className = 'think-inline';
       thinkRow.innerHTML = `
@@ -7791,8 +7793,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                 if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
 
                 // 思考行（跟 addMessage() 里同款逻辑，thinking block 还没接真实数据，先留空壳）
-                // 整個交換只建一次，之後每輪的thinking_delta都往同一個框裡累加
-                streamThinkId = 'think-' + Date.now();
+                // 整個交換只建一次，之後每輪的thinking_delta都往同一個框裡累加；加随机后缀避免撞id
+                streamThinkId = 'think-' + Date.now() + Math.random().toString(36).slice(2, 8);
                 thinkRow = document.createElement('div');
                 thinkRow.className = 'think-inline';
                 thinkRow.innerHTML = `
