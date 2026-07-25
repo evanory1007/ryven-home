@@ -8042,7 +8042,9 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     let thinkRow = null;
 
     try {
-        let messagesForApi = chatHistory;
+        // 做快照隔离，不能直接引用chatHistory——不然工具调用触发的多轮请求之间，
+        // 如果同时有另一条消息被发送并率先完成、往chatHistory里push了内容，会被错误地混进这次交换的上下文里
+        let messagesForApi = [...chatHistory];
         let fullText = '';
         let roundCount = 0;
         const allToolCalls = []; // 累積這次交換裡所有輪次的工具調用（name+input），最終跟這條assistant消息一起存進歷史
