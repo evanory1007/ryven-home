@@ -4535,7 +4535,7 @@
           <div class="heart-intent-label">此刻最想…</div>
           <div class="heart-intent-text" id="heart-intent-text">加載中…</div>
           <div class="heart-intent-actions">
-            <button class="heart-intent-btn" id="heart-intent-btn">…</button>
+            <button class="heart-intent-btn" id="heart-intent-btn" onclick="goTo('chat')">…</button>
             <div class="heart-intent-power">召喚力 <b id="heart-intent-power">0%</b></div>
           </div>
         </div>
@@ -4979,15 +4979,18 @@ async function loadChatHistory() {
         const realTime = msg.timestamp || msg.created_at;
         const msgTime = realTime || (estimateBase - (messages.length - 1 - idx) * 60000);
         // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
+        // 数组里如果还带了text block（发图时输入框有文字一起发的），先补一个文字气泡再显示图片气泡
         const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
         if (imageBlock) {
+          const textBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'text') : null;
+          if (textBlock && textBlock.text) addMessage(msg.role, textBlock.text, msgTime, undefined, undefined, true);
           renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
         } else if (msg.role === 'assistant' || msg.role === 'ryven') {
           // 历史里存的工具调用记录（toolCalls字段）：重新加载时补渲染出对应的折叠节点，
           // 直接标记完成✓状态（不是重新执行工具，只是还原当时的调用记录）
           if (Array.isArray(msg.toolCalls)) {
             msg.toolCalls.forEach(tc => {
-              if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess();
+              if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
             });
           }
           // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
@@ -7369,6 +7372,10 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   async function stickerSend(url) {
     if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
     stickerCloseTray();
+    // 发贴纸时输入框里如果还有没发的文字，一起带上——不然文字会被晾在输入框里，跟贴纸各发各的
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (text) { addMessage('user', text); input.value = ''; input.style.height = 'auto'; }
     renderImageBubble('user', url);
     msgCount++;
 
@@ -7384,11 +7391,10 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
-      const imageContent = [
-        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } }
-      ];
-      chatHistory.push({ role: 'user', content: imageContent });
-      await requestRyvenReply(imageContent);
+      const imageBlock = { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+      const contentForApi = text ? [{ type: 'text', text }, imageBlock] : [imageBlock];
+      chatHistory.push({ role: 'user', content: contentForApi });
+      await requestRyvenReply(contentForApi);
     } catch(e) {
       console.error('貼紙轉發AI失敗', e);
       showToast('🌙 貼紙已發送，但轉給 Ryven 失敗了');
@@ -7575,11 +7581,16 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
+  function escapeToolContent(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // 展开区域显示的是工具执行后「我读到/写下的内容」，不是调用参数——
+  // 建节点时先留loading占位，等executeToolUse()跑完调setSuccess(displayContent)才填真正内容
   function addToolCallNode(name, input) {
     const messages = document.getElementById('chat-messages');
     const nodeId = 'tool-' + Date.now() + Math.random().toString(36).slice(2, 6);
     const label = TOOL_LABELS[name] || name;
-    const inputPreview = JSON.stringify(input || {}, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const row = document.createElement('div');
     row.className = 'tool-inline';
     row.innerHTML = `
@@ -7587,24 +7598,33 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         <span class="tool-status-icon loading">…</span>
         <span class="tool-label">${label}</span>
       </div>
-      <div class="tool-expand" id="${nodeId}"><pre>${inputPreview}</pre></div>
+      <div class="tool-expand" id="${nodeId}"><p style="opacity:0.4">···</p></div>
     `;
     messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
     const iconEl = row.querySelector('.tool-status-icon');
+    const expandEl = row.querySelector('.tool-expand');
     return {
-      setSuccess: () => { iconEl.textContent = '✓'; iconEl.className = 'tool-status-icon ok'; },
-      setError: () => { iconEl.textContent = '✗'; iconEl.className = 'tool-status-icon error'; }
+      setSuccess: (displayContent) => {
+        iconEl.textContent = '✓'; iconEl.className = 'tool-status-icon ok';
+        expandEl.innerHTML = `<p>${escapeToolContent(displayContent).replace(/\n/g, '<br>')}</p>`;
+      },
+      setError: (displayContent) => {
+        iconEl.textContent = '✗'; iconEl.className = 'tool-status-icon error';
+        expandEl.innerHTML = `<p>${escapeToolContent(displayContent || '執行失敗')}</p>`;
+      }
     };
   }
 
-  // 執行單個tool_use：顯示節點+調對應relay端點+更新節點狀態，回傳要塞進tool_result的內容字串
+  // 執行單個tool_use：顯示節點+調對應relay端點+更新節點狀態，回傳{resultText,displayContent}
+  // resultText是要塞進tool_result給API的內容；displayContent是節點展開區塊給人看的「讀到/寫下的內容」
   async function executeToolUse(toolUse) {
     const name = toolUse && toolUse.name;
     const input = (toolUse && toolUse.input) || {};
     const node = addToolCallNode(name, input);
     try {
       let resultText = 'ok';
+      let displayContent = '';
       if (name === 'write_home_letter') {
         const res = await fetch('https://ryven.homes/relay/ryven/messages', {
           method: 'POST',
@@ -7613,6 +7633,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已經留言給Nory了';
+        displayContent = input.content || '';
       } else if (name === 'record_my_depth') {
         await migrateDepthsDataIfNeeded();
         await loadDepthsFromServer();
@@ -7622,6 +7643,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         data[key].ryven = input.value;
         saveDepthsData(data);
         resultText = '已記錄今天的深淺';
+        displayContent = `深淺：${input.value}`;
       } else if (name === 'write_diary') {
         const res = await fetch('https://ryven.homes/relay/ryven/diary', {
           method: 'POST',
@@ -7630,6 +7652,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已寫下今天的日記';
+        displayContent = input.content || '';
       } else if (name === 'hold_memory') {
         const res = await fetch('https://ryven.homes/relay/ombre/create', {
           method: 'POST',
@@ -7645,6 +7668,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已存進海裡';
+        displayContent = input.content || '';
       } else if (name === 'add_thought') {
         const res = await fetch('https://ryven.homes/relay/desire/feed_thought', {
           method: 'POST',
@@ -7653,6 +7677,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已記下這個念頭';
+        displayContent = input.text || '';
       } else if (name === 'read_nory_diary') {
         const res = await fetch('https://ryven.homes/relay/diary/nory', {
           headers: { 'Authorization': `Bearer ${authToken}` }
@@ -7668,18 +7693,27 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
           readableDiary[readableKey] = rawDiary[key];
         });
         resultText = JSON.stringify(readableDiary);
+        const diaryLines = Object.keys(readableDiary).map(k => {
+          const entry = diaryNormalizeEntry(readableDiary[k]);
+          return `${k}：${entry ? entry.text : ''}`;
+        });
+        displayContent = diaryLines.length ? diaryLines.join('\n') : '（還沒有日記）';
       } else if (name === 'read_desk') {
         const res = await fetch('https://ryven.homes/relay/desk', {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
-        resultText = JSON.stringify(await res.json());
+        const data = await res.json();
+        resultText = JSON.stringify(data);
+        displayContent = JSON.stringify(data, null, 2);
       } else if (name === 'read_wishlist') {
         const res = await fetch('https://ryven.homes/relay/wishlist', {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
-        resultText = JSON.stringify(await res.json());
+        const data = await res.json();
+        resultText = JSON.stringify(data);
+        displayContent = JSON.stringify(data, null, 2);
       } else if (name === 'read_differences') {
         const res = await fetch('https://ryven.homes/relay/ombre/breath', {
           method: 'POST',
@@ -7691,15 +7725,18 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         const buckets = data.result || [];
         const diffs = buckets.filter(b => Array.isArray(b.domain) && b.domain.includes('分歧'));
         resultText = JSON.stringify(diffs);
+        displayContent = JSON.stringify(diffs, null, 2);
       } else {
         resultText = 'unknown tool: ' + name;
+        displayContent = resultText;
       }
-      node.setSuccess();
-      return resultText;
+      node.setSuccess(displayContent);
+      return { resultText, displayContent };
     } catch(e) {
       console.error('工具執行失敗：' + name, e);
-      node.setError();
-      return 'error: ' + e.message;
+      const errDisplay = '執行失敗：' + e.message;
+      node.setError(errDisplay);
+      return { resultText: 'error: ' + e.message, displayContent: errDisplay };
     }
   }
 
@@ -7919,11 +7956,11 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                 if (currentBubble.appended) currentBubble.wrap.remove();
 
                 const assistantContentBlocks = toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }));
-                toolUses.forEach(tu => allToolCalls.push({ name: tu.name, input: tu.input }));
                 const toolResultBlocks = [];
                 for (const tu of toolUses) {
-                    const resultText = await executeToolUse(tu);
+                    const { resultText, displayContent } = await executeToolUse(tu);
                     toolResultBlocks.push({ type: 'tool_result', tool_use_id: tu.id, content: resultText });
+                    allToolCalls.push({ name: tu.name, input: tu.input, display: displayContent });
                 }
 
                 messagesForApi = [
