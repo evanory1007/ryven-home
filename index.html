@@ -116,7 +116,8 @@
 
     /* 浅海模式下顶栏和输入栏背景 */
     body.light .chat-topbar,
-    body.light .chat-inputbar {
+    body.light .chat-inputbar,
+    body.light .select-actionbar {
       background: rgba(240,243,248,0.97) !important;
     }
 
@@ -1233,6 +1234,41 @@
     }
     .chat-inputbar-row { display: flex; align-items: flex-end; gap: 8px; }
 
+    /* 消息勾选导出模式的底部操作栏，长按气泡进入时替代chat-inputbar显示 */
+    .select-actionbar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px 20px;
+      background: rgba(10,14,31,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--tide-gold-soft);
+      flex-shrink: 0;
+    }
+    .select-actionbar.show { display: flex; }
+    .select-cancel-btn, .select-export-btn {
+      padding: 9px 18px; border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-size: 14px; cursor: pointer;
+    }
+    .select-cancel-btn { background: transparent; border: 1px solid var(--line); color: var(--parchment-dim); }
+    .select-export-btn { background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15)); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold); }
+    .select-count { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--parchment-ghost); letter-spacing: 0.05em; }
+
+    /* 勾选模式下每条消息前面露出一个圆形勾选指示器 */
+    #chat-messages.selecting .msg-wrap { cursor: pointer; }
+    #chat-messages.selecting .msg-row { padding-left: 32px; position: relative; transition: background 0.15s; border-radius: 12px; }
+    #chat-messages.selecting .msg-row::before {
+      content: ''; position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
+      width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--tide-gold-soft);
+      background: rgba(15,20,40,0.4); box-sizing: border-box;
+    }
+    #chat-messages.selecting .msg-wrap.msg-selected .msg-row { background: rgba(201,168,76,0.08); }
+    #chat-messages.selecting .msg-wrap.msg-selected .msg-row::before {
+      content: '✓'; background: var(--tide-gold); border-color: var(--tide-gold); color: #1a1f3a;
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; line-height: 1;
+    }
+
     /* + 弹出的四宫格 tray */
     .tray {
       display: none;
@@ -1411,12 +1447,19 @@
     .sheet-overlay.show .sheet-panel { transform: translateY(0); }
     .sheet-handle { width: 34px; height: 3px; border-radius: 2px; background: var(--line); margin: 0 auto 16px; }
     .sheet-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px; color: var(--parchment-dim); margin-bottom: 14px; }
-    .img-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 14px; }
-    .img-thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; cursor: pointer; position: relative; border: 1px solid var(--line); transition: border-color 0.2s; }
-    .img-thumb:hover { border-color: var(--tide-gold-soft); }
-    .img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .img-thumb.selected::after { content: '✓'; position: absolute; inset: 0; background: color-mix(in srgb, var(--tide-gold) 30%, transparent); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--tide-gold); }
     .sheet-cancel { width: 100%; padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--tide-gold); opacity: 0.7; font-family: 'Cormorant Garamond', serif; font-size: 14px; cursor: pointer; }
+
+    /* ─── 上傳選單（圖片/文件）─── */
+    .upload-option-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .upload-option {
+      display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+      border-radius: 14px; border: 1px solid var(--line); background: rgba(15,20,40,0.4);
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-option:hover { border-color: var(--tide-gold-soft); background: rgba(15,20,40,0.6); }
+    .upload-option-em { font-size: 24px; flex-shrink: 0; }
+    .upload-option-label { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--parchment); }
+    .upload-option-label small { display: block; font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.15em; color: var(--parchment-ghost); margin-top: 2px; }
 
     /* ─── 貼紙托盘 ─── */
     .sticker-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; max-height: 320px; overflow-y: auto; }
@@ -3517,11 +3560,11 @@
             <div class="album-zh">相 册</div>
           </div>
           <div class="album-meta">
-            <div class="album-count">XX</div>
+            <div class="album-count" id="desk-album-count">XX</div>
             <div class="album-label">photos</div>
           </div>
         </div>
-        <div class="album-grid">
+        <div class="album-grid" id="desk-album-grid">
           <div class="album-cell">——</div>
           <div class="album-cell">——</div>
           <div class="album-cell">——</div>
@@ -3529,7 +3572,7 @@
           <div class="album-cell">——</div>
           <div class="album-cell">——</div>
           <div class="album-cell">——</div>
-          <div class="album-cell add">＋</div>
+          <div class="album-cell add" onclick="showUploadSheet()">＋</div>
         </div>
         <div class="album-footer">
           <span>view all photos</span>
@@ -4020,7 +4063,7 @@
           <span class="tray-em">🎙</span>
           <span class="tray-label">語音</span>
         </div>
-        <div class="tray-item" onclick="document.getElementById('chat-tray').classList.remove('show'); showSheet()">
+        <div class="tray-item" onclick="document.getElementById('chat-tray').classList.remove('show'); showUploadSheet()">
           <span class="tray-em">🖼</span>
           <span class="tray-label">圖片</span>
         </div>
@@ -4039,11 +4082,18 @@
 
       <div class="chat-inputbar-row">
         <button class="chat-input-add" title="貼紙" onclick="stickerOpenTray()">🐟</button>
-        <button class="chat-input-add" title="發送圖片" onclick="showSheet()">📎</button>
+        <button class="chat-input-add" title="上傳" onclick="showUploadSheet()">📎</button>
         <textarea class="chat-input" id="chat-input" placeholder="和 Ryven 說話…" rows="1"
           onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
         <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()">➤</button>
       </div>
+    </div>
+
+    <!-- ═══ 消息勾选模式操作栏（长按气泡进入）═══ -->
+    <div class="select-actionbar" id="select-actionbar">
+      <button class="select-cancel-btn" onclick="exitSelectionMode()">取消</button>
+      <div class="select-count" id="select-count">已選 0 條</div>
+      <button class="select-export-btn" onclick="exportSelectedMessages()">導出</button>
     </div>
 
     <!-- ═══ 长按菜单 ═══ -->
@@ -4053,22 +4103,26 @@
       <div class="ctx-item" onclick="doCopy()">⎘ 複製</div>
     </div>
 
-    <!-- ═══ 图片选择 sheet ═══ -->
-    <div class="sheet-overlay" id="img-sheet" onclick="if(event.target===this)hideSheet()">
+    <!-- ═══ 上傳選單（圖片/文件）═══ -->
+    <div class="sheet-overlay" id="upload-sheet" onclick="if(event.target===this)hideUploadSheet()">
       <div class="sheet-panel">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">選擇圖片</div>
-        <div class="img-grid">
-          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=200&q=80" alt=""></div>
-          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&q=80" alt=""></div>
-          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=200&q=80" alt=""></div>
-          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1499244571948-7ccddb3583f1?w=200&q=80" alt=""></div>
-          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=200&q=80" alt=""></div>
-          <div class="img-thumb" onclick="selectImg(this)"><img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&q=80" alt=""></div>
+        <div class="sheet-title">上傳</div>
+        <div class="upload-option-list">
+          <div class="upload-option" onclick="triggerImageUpload()">
+            <span class="upload-option-em">🖼</span>
+            <span class="upload-option-label">上傳圖片</span>
+          </div>
+          <div class="upload-option" onclick="triggerFileUpload()">
+            <span class="upload-option-em">📄</span>
+            <span class="upload-option-label">上傳文件<small>txt / md / pdf</small></span>
+          </div>
         </div>
-        <button class="sheet-cancel" onclick="hideSheet()">取消</button>
+        <button class="sheet-cancel" onclick="hideUploadSheet()">取消</button>
       </div>
     </div>
+    <input type="file" id="upload-image-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
+    <input type="file" id="upload-file-input" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" style="display:none" onchange="handleFileUpload(event)" />
 
     <!-- ═══ 貼紙托盘 ═══ -->
     <div class="sheet-overlay" id="sticker-sheet" onclick="if(event.target===this)stickerCloseTray()">
@@ -4835,6 +4889,13 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- 上傳PDF文件時提取文字用，只有extractPdfText()這一處用到 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <script>
   // 气泡
   const bubblesEl = document.getElementById('bubbles');
@@ -4939,6 +5000,8 @@ function renderImageBubble(role, src, timestampMs, skipScroll) {
   const continued = lastMsgRow && lastMsgRow.classList.contains(sideClass);
   const wrap = document.createElement('div');
   wrap.className = 'msg-wrap';
+  wrap.dataset.role = isMe ? 'user' : 'assistant';
+  wrap.dataset.ts = msgDate.getTime();
   wrap.innerHTML = `
     <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
       <div class="msg-avatar-sm">${isMe ? '🐻' : '💚'}</div>
@@ -6131,6 +6194,9 @@ async function loadChatHistory() {
 
   // ===== 書桌（Notes / Shelf，服务器 json 存储）=====
   let deskData = { notes: [], books: [] };
+  // Album跟notes/books分开存：saveDeskData()会把deskData整个POST回/relay/desk，
+  // 如果album也塞进deskData里，编辑笔记时POST出去的旧album快照可能会覆盖掉/relay/upload/album那边刚写入的新数据
+  let deskAlbumCache = [];
   const DESK_BOOK_STATUS = {
     reading: { label: '在读', cls: 'tag-r' },
     done: { label: '读完', cls: 'tag-d' },
@@ -6152,14 +6218,32 @@ async function loadChatHistory() {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       deskData = { notes: data.notes || [], books: data.books || [] };
+      deskAlbumCache = data.album || [];
       renderDeskNotes();
       renderDeskShelf();
+      renderDeskAlbum();
     } catch(e) {
       console.error('書桌數據加載失敗', e);
       document.getElementById('desk-notes-body').innerHTML = '<div class="desk-status">加载失敗</div>';
       document.getElementById('desk-shelf-list').innerHTML = '<div class="desk-status" style="padding-left:18px">加载失敗</div>';
       showToast('🌙 書桌數據加載失敗');
     }
+  }
+
+  // Album卡片：只讀deskAlbumCache（GET /relay/desk拿到的album列表），不走saveDeskData()那條寫入路徑
+  function renderDeskAlbum() {
+    const grid = document.getElementById('desk-album-grid');
+    const countEl = document.getElementById('desk-album-count');
+    if (!grid) return;
+    const photos = deskAlbumCache || [];
+    if (countEl) countEl.textContent = photos.length;
+    const recent = photos.slice(-7).reverse();
+    const cells = recent.map(p =>
+      `<div class="album-cell"><img src="${(p.url||'').replace(/"/g,'&quot;')}" alt="" style="width:100%;height:100%;object-fit:cover;"></div>`
+    ).join('');
+    const emptyCount = Math.max(0, 7 - recent.length);
+    const emptyCells = Array.from({length: emptyCount}, () => '<div class="album-cell">——</div>').join('');
+    grid.innerHTML = cells + emptyCells + '<div class="album-cell add" onclick="showUploadSheet()">＋</div>';
   }
 
   async function saveDeskData() {
@@ -6808,6 +6892,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap';
+    wrap.dataset.role = isMe ? 'user' : 'assistant';
+    wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
         <div class="msg-avatar-sm">${isMe ? '🐻' : '💚'}</div>
@@ -6840,6 +6926,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap';
+    wrap.dataset.role = 'assistant';
+    wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row from-ryven${continued ? ' continued' : ''}">
         <div class="msg-avatar-sm">💚</div>
@@ -7188,6 +7276,11 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   const ctxMenuEl = document.getElementById('ctx-menu');
   const chatMessagesEl = document.getElementById('chat-messages');
 
+  // 消息勾选导出模式：长按气泡进入，点气泡切换勾选；普通单击气泡改成弹引用/撤回/複製小菜单
+  let selectionMode = false;
+  let selectedWraps = new Set();
+  let longPressFired = false; // 长按刚触发过（进了勾选模式），松手时紧跟着的click事件要吞掉，不然会又弹一次小菜单
+
   function ctxBubbleFromEvent(e) {
     const bubble = e.target.closest ? e.target.closest('.msg-bubble') : null;
     return (bubble && !bubble.classList.contains('recalled')) ? bubble : null;
@@ -7200,16 +7293,31 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   });
   chatMessagesEl.addEventListener('mousedown', e => {
     const bubble = ctxBubbleFromEvent(e);
-    if (!bubble || e.button !== 0) return;
-    ctxHoldTimer = setTimeout(() => openCtx(e, bubble), 600);
+    if (!bubble || e.button !== 0 || selectionMode) return;
+    longPressFired = false;
+    ctxHoldTimer = setTimeout(() => { longPressFired = true; enterSelectionMode(bubble); }, 600);
   });
   chatMessagesEl.addEventListener('mouseup', () => clearTimeout(ctxHoldTimer));
   chatMessagesEl.addEventListener('touchstart', e => {
     const bubble = ctxBubbleFromEvent(e);
-    if (!bubble) return;
-    ctxHoldTimer = setTimeout(() => openCtx(e.touches[0], bubble), 500);
+    if (!bubble || selectionMode) return;
+    longPressFired = false;
+    ctxHoldTimer = setTimeout(() => { longPressFired = true; enterSelectionMode(bubble); }, 500);
   }, {passive:true});
   chatMessagesEl.addEventListener('touchend', () => clearTimeout(ctxHoldTimer));
+
+  chatMessagesEl.addEventListener('click', e => {
+    if (selectionMode) {
+      const wrap = e.target.closest ? e.target.closest('.msg-wrap') : null;
+      if (wrap) { e.stopPropagation(); toggleWrapSelected(wrap); }
+      return;
+    }
+    if (longPressFired) { longPressFired = false; return; } // 长按松手后的click，不重复弹菜单
+    const bubble = ctxBubbleFromEvent(e);
+    if (!bubble) return;
+    e.stopPropagation();
+    openCtx(e, bubble);
+  });
 
   function openCtx(e, bubble) {
     ctxTarget = bubble;
@@ -7220,6 +7328,78 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   }
   function closeCtx() { ctxMenuEl.classList.remove('show'); ctxTarget = null; }
   document.addEventListener('click', e => { if (!ctxMenuEl.contains(e.target)) closeCtx(); });
+
+  function enterSelectionMode(bubble) {
+    selectionMode = true;
+    selectedWraps.clear();
+    chatMessagesEl.classList.add('selecting');
+    document.querySelector('#chat .chat-inputbar').style.display = 'none';
+    document.getElementById('select-actionbar').classList.add('show');
+    closeCtx();
+    const wrap = bubble && bubble.closest('.msg-wrap');
+    if (wrap) toggleWrapSelected(wrap); else updateSelectCount();
+  }
+
+  function exitSelectionMode() {
+    selectionMode = false;
+    selectedWraps.forEach(w => w.classList.remove('msg-selected'));
+    selectedWraps.clear();
+    chatMessagesEl.classList.remove('selecting');
+    document.querySelector('#chat .chat-inputbar').style.display = '';
+    document.getElementById('select-actionbar').classList.remove('show');
+  }
+
+  function toggleWrapSelected(wrap) {
+    if (selectedWraps.has(wrap)) { selectedWraps.delete(wrap); wrap.classList.remove('msg-selected'); }
+    else { selectedWraps.add(wrap); wrap.classList.add('msg-selected'); }
+    updateSelectCount();
+  }
+
+  function updateSelectCount() {
+    const el = document.getElementById('select-count');
+    if (el) el.textContent = `已選 ${selectedWraps.size} 條`;
+  }
+
+  function formatExportTime(ts) {
+    const d = new Date(Number(ts));
+    if (isNaN(d)) return '';
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // 导出成txt：角色：内容\n时间，消息之间空一行；按DOM里的时间先后顺序导出（不是勾选点击顺序）
+  function exportSelectedMessages() {
+    if (!selectedWraps.size) { showToast('✧ 還沒選消息'); return; }
+    const wraps = Array.from(chatMessagesEl.querySelectorAll('.msg-wrap')).filter(w => selectedWraps.has(w));
+    const lines = wraps.map(w => {
+      const role = w.dataset.role === 'user' ? '我' : nickname;
+      const time = formatExportTime(w.dataset.ts);
+      let content = '';
+      const voiceTranscript = w.querySelector('.voice-transcript');
+      const imgBubble = w.querySelector('.img-bubble');
+      const bubbleText = w.querySelector('.bubble-text');
+      const msgBubble = w.querySelector('.msg-bubble');
+      if (voiceTranscript) content = voiceTranscript.textContent.trim();
+      else if (imgBubble) content = '[圖片]';
+      else if (bubbleText) content = bubbleText.textContent.trim();
+      else if (msgBubble) content = msgBubble.textContent.trim();
+      return `${role}：${content}\n${time}`;
+    });
+    const text = lines.join('\n\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.href = url;
+    a.download = `聊天記錄_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast(`✧ 已導出 ${wraps.length} 條`);
+    exitSelectionMode();
+  }
 
   function doQuote() {
     if (!ctxTarget) return;
@@ -7258,18 +7438,94 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   }
 
   // ===== 图片 sheet =====
-  function showSheet() { document.getElementById('img-sheet').classList.add('show'); }
-  function hideSheet() {
-    document.getElementById('img-sheet').classList.remove('show');
-    document.querySelectorAll('.img-thumb.selected').forEach(t=>t.classList.remove('selected'));
+  // ===== 上傳（圖片/文件）=====
+  function showUploadSheet() { document.getElementById('upload-sheet').classList.add('show'); }
+  function hideUploadSheet() { document.getElementById('upload-sheet').classList.remove('show'); }
+  function triggerImageUpload() { hideUploadSheet(); document.getElementById('upload-image-input').click(); }
+  function triggerFileUpload() { hideUploadSheet(); document.getElementById('upload-file-input').click(); }
+
+  async function handleImageUpload(e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
+    if (!file.type.startsWith('image/')) { showToast('🌊 請選擇圖片文件'); return; }
+    showToast('🐟 上傳中…');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('https://ryven.homes/relay/upload/album', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+        body: formData
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      const url = data.url;
+      if (!url) throw new Error('沒有拿到圖片URL');
+      deskAlbumCache.push({ url, uploaded_at: new Date().toISOString() });
+
+      // 输入框有没发的文字一起带上（跟stickerSend()同款做法）
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (text) { addMessage('user', text); input.value = ''; input.style.height = 'auto'; }
+      renderImageBubble('user', url);
+      msgCount++;
+
+      // 图片转base64发给AI
+      const imgRes = await fetch(url);
+      const blob = await imgRes.blob();
+      const mediaType = blob.type || file.type || 'image/png';
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const imageBlock = { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+      const contentForApi = text ? [{ type: 'text', text }, imageBlock] : [imageBlock];
+      chatHistory.push({ role: 'user', content: contentForApi });
+      await requestRyvenReply(contentForApi);
+    } catch(err) {
+      console.error('圖片上傳失敗', err);
+      showToast('🌙 上傳失敗，稍後再試');
+    }
   }
-  function selectImg(thumb) {
-    thumb.classList.toggle('selected');
-    const src = thumb.querySelector('img').src;
-    setTimeout(() => {
-      hideSheet();
-      renderImageBubble('user', src);
-    }, 180);
+
+  async function extractPdfText(file) {
+    if (!window.pdfjsLib) throw new Error('pdf.js 未加載');
+    const buf = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return text;
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!['txt','md','pdf'].includes(ext)) { showToast('🌊 只支持 txt / md / pdf'); return; }
+    showToast('📄 讀取中…');
+    try {
+      const text = (ext === 'pdf' ? await extractPdfText(file) : await file.text()).trim();
+      if (!text) { showToast('🌙 文件內容是空的'); return; }
+      const input = document.getElementById('chat-input');
+      input.value = ''; input.style.height = 'auto';
+      addMessage('user', text);
+      chatHistory.push({ role: 'user', content: text });
+      msgCount++;
+      await requestRyvenReply(text);
+    } catch(err) {
+      console.error('文件讀取失敗', err);
+      showToast('🌙 文件讀取失敗，稍後再試');
+    }
   }
 
   // ===== 貼紙 =====
