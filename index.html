@@ -7847,29 +7847,55 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
   // 展开区域显示的是工具执行后「我读到/写下的内容」，不是调用参数——
   // 建节点时先留loading占位，等executeToolUse()跑完调setSuccess(displayContent)才填真正内容
-  function addToolCallNode(name, input) {
+  //
+  // exchangeId：这次requestRyvenReply()交换的唯一标识，打在节点的data-exchange-id上，方便追溯/调试
+  // 节点建出来后到setSuccess/setError之前，如果loadChatHistory()把#chat-messages整个清空重建了，
+  // 这个节点就会变成脱离文档的孤儿——继续更新它不会有任何效果（用户什么都看不到）。
+  // 所以setSuccess/setError执行前都先检查节点还在不在文档里，不在的话就在当前DOM里重新建一个接着显示
+  function addToolCallNode(name, input, exchangeId) {
     const messages = document.getElementById('chat-messages');
-    const nodeId = 'tool-' + Date.now() + Math.random().toString(36).slice(2, 6);
     const label = TOOL_LABELS[name] || name;
-    const row = document.createElement('div');
-    row.className = 'tool-inline';
-    row.innerHTML = `
-      <div class="tool-pill" onclick="toggleThink('${nodeId}')">
-        <span class="tool-status-icon loading">…</span>
-        <span class="tool-label">${label}</span>
-      </div>
-      <div class="tool-expand" id="${nodeId}"><p style="opacity:0.4">···</p></div>
-    `;
+
+    function buildRow() {
+      const nodeId = 'tool-' + Date.now() + Math.random().toString(36).slice(2, 8);
+      const el = document.createElement('div');
+      el.className = 'tool-inline';
+      if (exchangeId) el.dataset.exchangeId = exchangeId;
+      el.innerHTML = `
+        <div class="tool-pill" onclick="toggleThink('${nodeId}')">
+          <span class="tool-status-icon loading">…</span>
+          <span class="tool-label">${label}</span>
+        </div>
+        <div class="tool-expand" id="${nodeId}"><p style="opacity:0.4">···</p></div>
+      `;
+      return el;
+    }
+
+    let row = buildRow();
     messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
-    const iconEl = row.querySelector('.tool-status-icon');
-    const expandEl = row.querySelector('.tool-expand');
+
+    function ensureAttached() {
+      if (!document.body.contains(row)) {
+        row = buildRow();
+        messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+      }
+      return row;
+    }
+
     return {
       setSuccess: (displayContent) => {
+        const r = ensureAttached();
+        const iconEl = r.querySelector('.tool-status-icon');
+        const expandEl = r.querySelector('.tool-expand');
         iconEl.textContent = '✓'; iconEl.className = 'tool-status-icon ok';
         expandEl.innerHTML = `<p>${escapeToolContent(displayContent).replace(/\n/g, '<br>')}</p>`;
       },
       setError: (displayContent) => {
+        const r = ensureAttached();
+        const iconEl = r.querySelector('.tool-status-icon');
+        const expandEl = r.querySelector('.tool-expand');
         iconEl.textContent = '✗'; iconEl.className = 'tool-status-icon error';
         expandEl.innerHTML = `<p>${escapeToolContent(displayContent || '執行失敗')}</p>`;
       }
@@ -7878,10 +7904,10 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
   // 執行單個tool_use：顯示節點+調對應relay端點+更新節點狀態，回傳{resultText,displayContent}
   // resultText是要塞進tool_result給API的內容；displayContent是節點展開區塊給人看的「讀到/寫下的內容」
-  async function executeToolUse(toolUse) {
+  async function executeToolUse(toolUse, exchangeId) {
     const name = toolUse && toolUse.name;
     const input = (toolUse && toolUse.input) || {};
-    const node = addToolCallNode(name, input);
+    const node = addToolCallNode(name, input, exchangeId);
     try {
       let resultText = 'ok';
       let displayContent = '';
@@ -8040,6 +8066,30 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     let thinkingText = ''; // 整個交換（可能含多輪工具調用）共用一份思考文字，跨輪累積
     let streamThinkId = null;
     let thinkRow = null;
+    // 這次交換的唯一標識：工具調用要跨多輪請求（每輪都要再發一次fetch+執行工具），
+    // 過程中如果使用者切走再切回聊天室，loadChatHistory()會把#chat-messages整個清空重建，
+    // 讓thinkRow變成脫離文檔的孤兒——之後thinking_delta再更新它，畫面上什麼都不會發生。
+    // 所以每次要動思考框之前都先確認它還在文檔裡，不在的話用累積到目前的thinkingText就地重建一個新的接著顯示
+    const exchangeId = 'ex-' + Date.now() + Math.random().toString(36).slice(2, 8);
+
+    function ensureThinkRow() {
+        if (thinkRow && document.body.contains(thinkRow)) return streamThinkId;
+        streamThinkId = 'think-' + Date.now() + Math.random().toString(36).slice(2, 8);
+        thinkRow = document.createElement('div');
+        thinkRow.className = 'think-inline';
+        thinkRow.dataset.exchangeId = exchangeId;
+        const body = thinkingText ? `<p>${thinkingText.replace(/\n/g, '<br>')}</p>` : `<p style="opacity:0.4">···</p>`;
+        thinkRow.innerHTML = `
+          <div class="think-pill" onclick="toggleThink('${streamThinkId}')">
+            <span class="think-star">✧</span>
+            <span class="think-label">thinking</span>
+            <span class="think-star">✧</span>
+          </div>
+          <div class="think-expand" id="${streamThinkId}">${body}</div>
+        `;
+        messagesEl.appendChild(thinkRow);
+        return streamThinkId;
+    }
 
     try {
         // 做快照隔离，不能直接引用chatHistory——不然工具调用触发的多轮请求之间，
@@ -8080,22 +8130,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                 pendingReplyCount = Math.max(0, pendingReplyCount - 1);
                 if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
 
-                // 思考行（跟 addMessage() 里同款逻辑，thinking block 还没接真实数据，先留空壳）
-                // 整個交換只建一次，之後每輪的thinking_delta都往同一個框裡累加；加随机后缀避免撞id
-                streamThinkId = 'think-' + Date.now() + Math.random().toString(36).slice(2, 8);
-                thinkRow = document.createElement('div');
-                thinkRow.className = 'think-inline';
-                thinkRow.innerHTML = `
-                <div class="think-pill" onclick="toggleThink('${streamThinkId}')">
-                  <span class="think-star">✧</span>
-                  <span class="think-label">thinking</span>
-                  <span class="think-star">✧</span>
-                </div>
-                <div class="think-expand" id="${streamThinkId}">
-                  <p style="opacity:0.4">···</p>
-                </div>
-              `;
-                messagesEl.appendChild(thinkRow);
+                // 思考行：整個交換共用一個，之後每輪的thinking_delta都往同一個框裡累加
+                ensureThinkRow();
             }
 
             // ===== 這一輪的流式讀取 =====
@@ -8162,7 +8198,9 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
                             if (json.type === 'content_block_delta' && json.delta && json.delta.type === 'thinking_delta') {
                                 thinkingText += json.delta.thinking || '';
-                                const expandEl = document.getElementById(streamThinkId);
+                                // 思考框如果被loadChatHistory()清掉了，ensureThinkRow()会就地重建一个新的接着用
+                                const id = ensureThinkRow();
+                                const expandEl = document.getElementById(id);
                                 if (expandEl) expandEl.innerHTML = `<p>${thinkingText.replace(/\n/g, '<br>')}</p>`;
                                 continue;
                             }
@@ -8248,7 +8286,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                 const assistantContentBlocks = toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }));
                 const toolResultBlocks = [];
                 for (const tu of toolUses) {
-                    const { resultText, displayContent } = await executeToolUse(tu);
+                    const { resultText, displayContent } = await executeToolUse(tu, exchangeId);
                     toolResultBlocks.push({ type: 'tool_result', tool_use_id: tu.id, content: resultText });
                     allToolCalls.push({ name: tu.name, input: tu.input, display: displayContent });
                 }
