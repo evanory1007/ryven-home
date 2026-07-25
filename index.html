@@ -4227,9 +4227,9 @@
     </div>
 
     <div class="month-nav">
-      <div class="month-nav-arrow">‹</div>
+      <div class="month-nav-arrow" onclick="depthsShiftMonth(-1)">‹</div>
       <div class="month-nav-label" id="depths-month-label"></div>
-      <div class="month-nav-arrow">›</div>
+      <div class="month-nav-arrow" onclick="depthsShiftMonth(1)">›</div>
     </div>
 
     <div class="month-tide">
@@ -8431,6 +8431,15 @@ function depthsSmoothPath(points) {
 }
 
 let depthsEditingDate = null;
+// depths页顶部左右箭头切换查看的月份，跟diaryViewYear/diaryViewMonth同款模式
+let depthsViewYear = now.getFullYear(), depthsViewMonth = now.getMonth();
+
+function depthsShiftMonth(dir) {
+  depthsViewMonth += dir;
+  if (depthsViewMonth < 0) { depthsViewMonth = 11; depthsViewYear--; }
+  if (depthsViewMonth > 11) { depthsViewMonth = 0; depthsViewYear++; }
+  renderDepthsPage();
+}
 
 function depthsEditDay(dateKey) {
   depthsEditingDate = dateKey;
@@ -8616,18 +8625,18 @@ function renderDepthsStrip() {
   if (!g) return;
   g.innerHTML = '';
 
-  const now = new Date();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const today = now.getDate();
+  const today = new Date();
+  const daysInMonth = new Date(depthsViewYear, depthsViewMonth + 1, 0).getDate();
   const data = getDepthsData();
   const step = 380 / 30;
   const ns = 'http://www.w3.org/2000/svg';
 
   for (let d = 1; d <= daysInMonth; d++) {
     const x = 6.5 + (d - 1) * step;
-    const isToday = d === today;
-    const isFuture = d > today;
-    const dateKey = depthsDateKey(now.getFullYear(), now.getMonth(), d);
+    // 跟真實今天比對完整年月日，不能只比day數字——不然切到別的月份時day剛好等於今天的日期會被誤判成isToday
+    const isToday = depthsViewYear === today.getFullYear() && depthsViewMonth === today.getMonth() && d === today.getDate();
+    const isFuture = new Date(depthsViewYear, depthsViewMonth, d) > new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dateKey = depthsDateKey(depthsViewYear, depthsViewMonth, d);
     const rec = data[dateKey];
 
     const guide = document.createElementNS(ns, 'line');
@@ -8687,9 +8696,8 @@ function renderDepthsStrip() {
 }
 
 function renderDepthsStats() {
-  const now = new Date();
   const data = getDepthsData();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-`;
+  const monthPrefix = `${depthsViewYear}-${String(depthsViewMonth + 1).padStart(2, '0')}-`;
   const entries = Object.keys(data)
     .filter(k => k.startsWith(monthPrefix) && data[k].nory != null)
     .map(k => ({ key: k, nory: data[k].nory }));
@@ -8726,11 +8734,10 @@ function renderDepthsStats() {
 }
 
 function renderDepthsPage() {
-  const now = new Date();
   const monthLabel = document.getElementById('depths-month-label');
   const monthNamesEN = ['january','february','march','april','may','june','july','august','september','october','november','december'];
   if (monthLabel) {
-    monthLabel.innerHTML = `${now.getFullYear()} · ${String(now.getMonth()+1).padStart(2,'0')}<small>${monthNamesEN[now.getMonth()]}</small>`;
+    monthLabel.innerHTML = `${depthsViewYear} · ${String(depthsViewMonth+1).padStart(2,'0')}<small>${monthNamesEN[depthsViewMonth]}</small>`;
   }
 
   depthsEditingDate = depthsTodayKey();
