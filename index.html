@@ -7579,7 +7579,9 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     read_nory_diary: '讀了你的日記',
     read_desk: '看了書桌',
     read_wishlist: '看了心願賬戶',
-    read_differences: '看了我們的分歧'
+    read_differences: '看了我們的分歧',
+    right_difference: '記下了一個分歧',
+    record_depth_by_date: '補記了一天的深淺'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -7646,6 +7648,17 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         saveDepthsData(data);
         resultText = '已記錄今天的深淺';
         displayContent = `深淺：${input.value}`;
+      } else if (name === 'record_depth_by_date') {
+        // 補記指定日期（不一定是今天）的深淺，跟record_my_depth邏輯一樣，只是key用傳入的date而不是今天
+        await migrateDepthsDataIfNeeded();
+        await loadDepthsFromServer();
+        const data = getDepthsData();
+        const key = input.date;
+        if (!data[key]) data[key] = { nory: null, ryven: null };
+        data[key].ryven = input.ryven_value;
+        saveDepthsData(data);
+        resultText = '已補記那天的深淺';
+        displayContent = `${input.date}：深淺 ${input.ryven_value}`;
       } else if (name === 'write_diary') {
         const res = await fetch('https://ryven.homes/relay/ryven/diary', {
           method: 'POST',
@@ -7671,6 +7684,23 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已存進海裡';
         displayContent = input.content || '';
+      } else if (name === 'right_difference') {
+        const diffContent = `Ryven的立場：${input.ryven_view || ''}` + (input.nory_view ? `\nNory的立場：${input.nory_view}` : '');
+        const res = await fetch('https://ryven.homes/relay/ombre/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({
+            name: input.title || '一個分歧',
+            content_preview: diffContent,
+            domain: ['分歧'],
+            tags: ['分歧'],
+            importance: 5,
+            type: 'permanent'
+          })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = '已記錄這個分歧';
+        displayContent = `${input.title || ''}\n${diffContent}`;
       } else if (name === 'add_thought') {
         const res = await fetch('https://ryven.homes/relay/desire/feed_thought', {
           method: 'POST',
