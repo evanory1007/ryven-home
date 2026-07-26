@@ -7479,7 +7479,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
       const data = await res.json();
       const url = data.url;
       if (!url) throw new Error('沒有拿到圖片URL');
-      deskAlbumCache.push({ url, uploaded_at: new Date().toISOString() });
+      // 上傳只負責把圖片發給Ryven看，不自動存進相冊——存不存、要不要備註由Ryven自己決定（調save_to_album工具）
 
       // 输入框有没发的文字一起带上（跟stickerSend()同款做法）
       const input = document.getElementById('chat-input');
@@ -7853,7 +7853,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     read_wishlist: '看了心願賬戶',
     read_differences: '看了我們的分歧',
     right_difference: '記下了一個分歧',
-    record_depth_by_date: '補記了一天的深淺'
+    record_depth_by_date: '補記了一天的深淺',
+    save_to_album: '存了一張照片進相冊'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -8057,6 +8058,24 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         const diffs = buckets.filter(b => Array.isArray(b.domain) && b.domain.includes('分歧'));
         resultText = JSON.stringify(diffs);
         displayContent = JSON.stringify(diffs, null, 2);
+      } else if (name === 'save_to_album') {
+        // /relay/upload/album是純上傳端點，不會自動存進相冊——要真的存進desk.album，
+        // 得自己GET現有desk數據、把這張照片追加進album數組，再整份POST回去
+        const getRes = await fetch('https://ryven.homes/relay/desk', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!getRes.ok) throw new Error('bad status ' + getRes.status);
+        const deskDataFromServer = await getRes.json();
+        const album = Array.isArray(deskDataFromServer.album) ? deskDataFromServer.album : [];
+        album.push({ url: input.url, note: input.note, uploaded_at: new Date().toISOString() });
+        const postRes = await fetch('https://ryven.homes/relay/desk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ notes: deskDataFromServer.notes || [], books: deskDataFromServer.books || [], album })
+        });
+        if (!postRes.ok) throw new Error('bad status ' + postRes.status);
+        resultText = '已存進相冊';
+        displayContent = `${input.url || ''}${input.note ? '\n備註：' + input.note : ''}`;
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
