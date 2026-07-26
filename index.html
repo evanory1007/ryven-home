@@ -7958,10 +7958,11 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         resultText = '已補記那天的深淺';
         displayContent = `${input.date}：深淺 ${input.ryven_value}`;
       } else if (name === 'write_diary') {
+        // relay.py存日记需要date才知道存进哪一天，不依赖模型传参，前端自己算今天的日期（YYYY-MM-DD，跟depthsTodayKey()同款格式）
         const res = await fetch('https://ryven.homes/relay/ryven/diary', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ text: input.content, mood: input.mood })
+          body: JSON.stringify({ text: input.content, mood: input.mood, date: depthsTodayKey() })
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已寫下今天的日記';
