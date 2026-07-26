@@ -5044,7 +5044,10 @@ async function loadChatHistory() {
         // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
         // 数组里如果还带了text block（发图时输入框有文字一起发的），先补一个文字气泡再显示图片气泡
         const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
-        if (imageBlock) {
+        if (msg.role === 'system') {
+          // 改名提示这类系统消息：小字提示样式，不是聊天气泡，走insertSysMsg()而不是addMessage()
+          insertSysMsg(msg.content, msgTime);
+        } else if (imageBlock) {
           const textBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'text') : null;
           if (textBlock && textBlock.text) addMessage(msg.role, textBlock.text, msgTime, undefined, undefined, true);
           renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
@@ -7024,7 +7027,18 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     localStorage.setItem('ryven-nickname', nickname);
     syncUserConfigToServer();
     applyNicknameToUI();
-    insertSysMsg(`Nory 把我的名字改成了「${nickname}」`);
+    const sysText = `Nory 把我的名字改成了「${nickname}」`;
+    const sysTime = Date.now();
+    insertSysMsg(sysText, sysTime);
+    // 之前只在当前DOM里显示一下，没存进chatHistory也没存服务器，刷新/重进聊天室就没了——
+    // 现在push进chatHistory（跟其它消息一样成为这次session的一部分）并存服务器，才能当成历史记录留下来
+    const sysMsg = { role: 'system', content: sysText, timestamp: sysTime };
+    chatHistory.push(sysMsg);
+    fetch(`https://ryven.homes/relay/chat/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+      body: JSON.stringify({ session_id: sessionId, messages: [sysMsg] })
+    }).catch(() => {});
     triggerNicknameReaction(nickname);
   }
 
@@ -7087,8 +7101,10 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   });
   document.getElementById('nickname-input').addEventListener('blur', saveNickname);
 
-  function insertSysMsg(text) {
+  function insertSysMsg(text, timestampMs) {
     const messages = document.getElementById('chat-messages');
+    const msgDate = timestampMs ? new Date(timestampMs) : new Date();
+    maybeInsertDateDivider(msgDate);
     const div = document.createElement('div');
     div.className = 'sys-msg';
     div.textContent = text;
