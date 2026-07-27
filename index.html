@@ -2626,6 +2626,8 @@
     #differences .action-btn:hover { background: var(--tide-gold-ghost); }
     #differences .action-btn.resolve { border-color: rgba(120,180,140,0.3); color: rgba(150,200,160,0.8); }
     #differences .action-btn.resolve:hover { background: rgba(120,180,140,0.1); }
+    #differences .action-btn.delete { border-color: color-mix(in srgb, var(--danger) 25%, transparent); color: color-mix(in srgb, var(--danger) 65%, transparent); flex: 0 0 auto; padding: 9px 16px; }
+    #differences .action-btn.delete:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
 
     #differences .mark-overlay { position: fixed; inset: 0; background: rgba(10,14,30,0.75); backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     #differences .mark-overlay.show { opacity: 1; pointer-events: all; }
@@ -6314,6 +6316,7 @@ async function loadChatHistory() {
   }
 
   // ===== 分歧 =====
+  // 分歧現在是獨立端點/relay/differences，不再從/relay/ombre/breath過濾
   let differencesBuckets = [];
 
   function diffFormatDate(iso) {
@@ -6323,23 +6326,16 @@ async function loadChatHistory() {
     return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
   }
 
-  function isDiffBucket(b) {
-    return (b.domain && b.domain.includes('分歧')) || (b.tags && b.tags.includes('分歧'));
-  }
-
   async function loadDifferences() {
     const list = document.getElementById('diff-list');
     list.innerHTML = '<div class="diff-status">加载中…</div>';
     try {
-      const res = await fetch('https://ryven.homes/relay/ombre/breath', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ max_results: 50 })
+      const res = await fetch('https://ryven.homes/relay/differences', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
-      const buckets = data.result || [];
-      differencesBuckets = buckets.filter(isDiffBucket);
+      differencesBuckets = data.items || [];
       renderDifferences(differencesBuckets);
     } catch(e) {
       console.error('分歧加載失敗', e);
@@ -6360,26 +6356,24 @@ async function loadChatHistory() {
   // memory 頁 Differences 小卡：只讀，不影響 differencesBuckets/#differences 頁自己的狀態
   async function loadMemoryDiffCard() {
     try {
-      const res = await fetch('https://ryven.homes/relay/ombre/breath', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ max_results: 50 })
+      const res = await fetch('https://ryven.homes/relay/differences', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
-      const buckets = (data.result || []).filter(isDiffBucket);
+      const items = data.items || [];
 
-      document.getElementById('memdiff-count').textContent = buckets.length;
+      document.getElementById('memdiff-count').textContent = items.length;
 
-      const resolvedCount = buckets.filter(b => b.resolved).length;
-      const unresolvedCount = buckets.length - resolvedCount;
-      document.getElementById('memdiff-stats-mini').textContent = buckets.length
+      const resolvedCount = items.filter(b => b.resolved).length;
+      const unresolvedCount = items.length - resolvedCount;
+      document.getElementById('memdiff-stats-mini').textContent = items.length
         ? `${unresolvedCount} 仍悬空 · ${resolvedCount} 已和解`
         : '';
 
-      if (buckets.length) {
-        const latest = buckets.slice().sort((a,b) => new Date(b.created) - new Date(a.created))[0];
-        document.getElementById('memdiff-latest-title').textContent = latest.name || '未命名';
+      if (items.length) {
+        const latest = items.slice().sort((a,b) => new Date(b.created) - new Date(a.created))[0];
+        document.getElementById('memdiff-latest-title').textContent = latest.title || '未命名';
         document.getElementById('memdiff-latest-meta').textContent = diffQuoteTimeFormat(latest.created);
       } else {
         document.getElementById('memdiff-latest-title').textContent = '還沒有分歧記錄';
@@ -6391,19 +6385,19 @@ async function loadChatHistory() {
     }
   }
 
-  function renderDifferences(buckets) {
-    const total = buckets.length;
-    const resolvedCount = buckets.filter(b => b.resolved).length;
+  function renderDifferences(items) {
+    const total = items.length;
+    const resolvedCount = items.filter(b => b.resolved).length;
     document.getElementById('diff-stat-total').textContent = total;
     document.getElementById('diff-stat-resolved').textContent = resolvedCount;
     document.getElementById('diff-stat-unresolved').textContent = total - resolvedCount;
 
     const list = document.getElementById('diff-list');
-    if (!buckets.length) {
+    if (!items.length) {
       list.innerHTML = '<div class="diff-status">還沒有分歧記錄</div>';
       return;
     }
-    list.innerHTML = buckets.map(b => {
+    list.innerHTML = items.map(b => {
       const resolved = !!b.resolved;
       return `
         <div class="diff-card ${resolved?'resolved':'unresolved'}">
@@ -6412,27 +6406,36 @@ async function loadChatHistory() {
             <span class="card-tag ${resolved?'tag-resolved':'tag-unresolved'}">${resolved?'已和解':'仍悬空'}</span>
           </div>
           <div class="card-topic"></div>
-          <div class="chat-snippet"><div class="snippet-line"></div></div>
-          ${resolved ? '' : '<div class="expand-actions" style="margin-top:12px"><button class="action-btn resolve">标记已和解</button></div>'}
+          <div class="chat-snippet">
+            <div class="snippet-line"><span class="snip-who nory">Nory</span><span class="snip-text"></span></div>
+            <div class="snippet-line"><span class="snip-who">Ryven</span><span class="snip-text"></span></div>
+          </div>
+          <div class="expand-actions" style="margin-top:12px">
+            ${resolved ? '' : '<button class="action-btn resolve">标记已和解</button>'}
+            <button class="action-btn delete">刪除</button>
+          </div>
         </div>`;
     }).join('');
 
     list.querySelectorAll('.diff-card').forEach((el, i) => {
-      const b = buckets[i];
+      const b = items[i];
       el.querySelector('.card-date').textContent = diffFormatDate(b.created);
-      el.querySelector('.card-topic').textContent = `「${b.name || '未命名分歧'}」`;
-      el.querySelector('.snippet-line').textContent = b.content_preview || '';
-      const btn = el.querySelector('.action-btn.resolve');
-      if (btn) btn.addEventListener('click', () => markDiffResolved(b.id));
+      el.querySelector('.card-topic').textContent = `「${b.title || '未命名分歧'}」`;
+      const snippetLines = el.querySelectorAll('.snippet-line .snip-text');
+      snippetLines[0].textContent = b.nory_view || '（未填）';
+      snippetLines[1].textContent = b.ryven_view || '（未填）';
+      const resolveBtn = el.querySelector('.action-btn.resolve');
+      if (resolveBtn) resolveBtn.addEventListener('click', () => markDiffResolved(b.id));
+      el.querySelector('.action-btn.delete').addEventListener('click', () => deleteDifference(b.id));
     });
   }
 
   async function markDiffResolved(id) {
     try {
-      const res = await fetch('https://ryven.homes/relay/ombre/update', {
-        method: 'POST',
+      const res = await fetch(`https://ryven.homes/relay/differences/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ id, resolved: true })
+        body: JSON.stringify({ resolved: true })
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       showToast('⚖️ 已標記和解');
@@ -6440,6 +6443,22 @@ async function loadChatHistory() {
     } catch(e) {
       console.error('標記和解失敗', e);
       showToast('🌙 操作失敗，稍後再試');
+    }
+  }
+
+  async function deleteDifference(id) {
+    if (!confirm('確定要刪除這條分歧記錄嗎？')) return;
+    try {
+      const res = await fetch(`https://ryven.homes/relay/differences/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      showToast('⚖️ 已刪除');
+      loadDifferences();
+    } catch(e) {
+      console.error('刪除分歧失敗', e);
+      showToast('🌙 刪除失敗，稍後再試');
     }
   }
 
@@ -6451,20 +6470,12 @@ async function loadChatHistory() {
     const noryText = document.getElementById('diffNoryInput').value.trim();
     const ryvenText = document.getElementById('diffRyvenInput').value.trim();
     if (!title) { showToast('✦ 請填標題'); return; }
-    const content = `Nory：${noryText || '（未填）'}\nRyven：${ryvenText || '（未填）'}`;
     showToast('⚖️ 保存中…');
     try {
-      const res = await fetch('https://ryven.homes/relay/ombre/create', {
+      const res = await fetch('https://ryven.homes/relay/differences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({
-          name: title,
-          content_preview: content,
-          domain: ['分歧'],
-          tags: ['分歧'],
-          importance: 5,
-          type: 'permanent'
-        })
+        body: JSON.stringify({ title, ryven_view: ryvenText, nory_view: noryText })
       });
       const data = await res.json();
       if (!res.ok || data.ok === false) throw new Error('bad response');
@@ -8612,22 +8623,18 @@ async function loadChatHistory() {
         resultText = '已存進海裡';
         displayContent = input.content || '';
       } else if (name === 'right_difference') {
-        const diffContent = `Ryven的立場：${input.ryven_view || ''}` + (input.nory_view ? `\nNory的立場：${input.nory_view}` : '');
-        const res = await fetch('https://ryven.homes/relay/ombre/create', {
+        const res = await fetch('https://ryven.homes/relay/differences', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
           body: JSON.stringify({
-            name: input.title || '一個分歧',
-            content_preview: diffContent,
-            domain: ['分歧'],
-            tags: ['分歧'],
-            importance: 5,
-            type: 'permanent'
+            title: input.title || '一個分歧',
+            ryven_view: input.ryven_view || '',
+            nory_view: input.nory_view || ''
           })
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         resultText = '已記錄這個分歧';
-        displayContent = `${input.title || ''}\n${diffContent}`;
+        displayContent = `${input.title || ''}\nRyven的立場：${input.ryven_view || ''}` + (input.nory_view ? `\nNory的立場：${input.nory_view}` : '');
       } else if (name === 'add_thought') {
         const res = await fetch('https://ryven.homes/relay/desire/feed_thought', {
           method: 'POST',
@@ -8674,15 +8681,12 @@ async function loadChatHistory() {
         resultText = JSON.stringify(data);
         displayContent = JSON.stringify(data, null, 2);
       } else if (name === 'read_differences') {
-        const res = await fetch('https://ryven.homes/relay/ombre/breath', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ max_results: 50 })
+        const res = await fetch('https://ryven.homes/relay/differences', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
         const data = await res.json();
-        const buckets = data.result || [];
-        const diffs = buckets.filter(b => Array.isArray(b.domain) && b.domain.includes('分歧'));
+        const diffs = data.items || [];
         resultText = JSON.stringify(diffs);
         displayContent = JSON.stringify(diffs, null, 2);
       } else if (name === 'save_to_album') {
