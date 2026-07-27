@@ -2666,6 +2666,15 @@
     #album .grid-photo { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; overflow: hidden; background: var(--sea-2); }
     #album .grid-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     #album .grid-day { margin-top: 8px; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--tide-gold); opacity: 0.8; }
+    #album .grid-delete {
+      position: absolute; top: 3px; right: 3px; z-index: 2;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(10,14,31,0.75); border: 1px solid var(--tide-gold-soft);
+      color: var(--parchment); font-size: 13px; line-height: 1; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    #album .grid-delete:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
 
     #album .divider { display: flex; align-items: center; gap: 12px; margin: 32px 2px 24px; color: var(--tide-gold-soft); }
     #album .divider::before, #album .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line)); }
@@ -2700,6 +2709,14 @@
       font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px;
       color: #f8f2e8; line-height: 1.7; max-width: 340px; margin: 0 auto;
       text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .album-lightbox-text:hover { opacity: 0.8; }
+    .album-lightbox-textarea {
+      width: 100%; max-width: 340px; min-height: 72px; margin: 0 auto; display: block;
+      background: rgba(255,255,255,0.08); border: 1px solid var(--tide-gold-soft); border-radius: 6px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px;
+      color: #f8f2e8; line-height: 1.7; padding: 8px 10px; resize: none; outline: none;
     }
     .album-lightbox-time { margin-top: 10px; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--tide-gold); opacity: 0.95; }
     .album-lightbox-close {
@@ -3740,7 +3757,8 @@
     <div class="album-lightbox-photo">
       <img id="album-lightbox-img" alt="">
       <div class="album-lightbox-caption">
-        <div class="album-lightbox-text" id="album-lightbox-text"></div>
+        <div class="album-lightbox-text" id="album-lightbox-text" onclick="editAlbumNote()"></div>
+        <textarea class="album-lightbox-textarea" id="album-lightbox-textarea" style="display:none" onblur="saveAlbumNote()"></textarea>
         <div class="album-lightbox-time" id="album-lightbox-time"></div>
       </div>
     </div>
@@ -6413,6 +6431,7 @@ async function loadChatHistory() {
         return `
           <div class="grid-item">
             <div class="grid-frame" onclick="openAlbumLightbox(${myIdx})">
+              <div class="grid-delete" onclick="event.stopPropagation(); deleteAlbumPhoto(${myIdx})">×</div>
               <div class="grid-photo"><img src="${(p.url||'').replace(/"/g,'&quot;')}" alt="" loading="lazy"></div>
             </div>
             <div class="grid-day">${dayLabel}</div>
@@ -6433,11 +6452,18 @@ async function loadChatHistory() {
     gallery.innerHTML = html;
   }
 
+  let albumEditingIndex = null; // lightbox目前開著的是albumPhotosFlat裡的哪一張，改備註時要用
+
   function openAlbumLightbox(i) {
     const p = albumPhotosFlat[i];
     if (!p) return;
+    albumEditingIndex = i;
     document.getElementById('album-lightbox-img').src = p.url || '';
-    document.getElementById('album-lightbox-text').textContent = p.note || '（沒有留言）';
+    const textEl = document.getElementById('album-lightbox-text');
+    const textarea = document.getElementById('album-lightbox-textarea');
+    textEl.textContent = p.note || '（點這裡寫句話）';
+    textEl.style.display = '';
+    textarea.style.display = 'none';
     const d = p.uploaded_at ? new Date(p.uploaded_at) : null;
     document.getElementById('album-lightbox-time').textContent = (d && !isNaN(d))
       ? `${d.getFullYear()} · ${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getDate()).padStart(2,'0')}`
@@ -6450,6 +6476,63 @@ async function loadChatHistory() {
     document.body.style.overflow = '';
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAlbumLightbox(); });
+
+  // 點備註文字進編輯（跟編名字editNickname()/saveNickname()同款：點開→失焦存），失焦調PATCH /relay/album存
+  function editAlbumNote() {
+    const p = albumPhotosFlat[albumEditingIndex];
+    if (!p) return;
+    const textEl = document.getElementById('album-lightbox-text');
+    const textarea = document.getElementById('album-lightbox-textarea');
+    textarea.value = p.note || '';
+    textEl.style.display = 'none';
+    textarea.style.display = 'block';
+    textarea.focus();
+    textarea.select();
+  }
+
+  async function saveAlbumNote() {
+    const textarea = document.getElementById('album-lightbox-textarea');
+    const textEl = document.getElementById('album-lightbox-text');
+    const p = albumPhotosFlat[albumEditingIndex];
+    const newNote = textarea.value.trim();
+    textarea.style.display = 'none';
+    textEl.style.display = '';
+    if (!p) return;
+    if (newNote === (p.note || '')) { textEl.textContent = p.note || '（點這裡寫句話）'; return; }
+    textEl.textContent = newNote || '（點這裡寫句話）';
+    try {
+      const res = await fetch('https://ryven.homes/relay/album', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ url: p.url, note: newNote })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      p.note = newNote; // 同步本地緩存，不用整頁重新拉一次
+      showToast('✧ 已保存');
+    } catch(e) {
+      console.error('備註保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+    }
+  }
+
+  async function deleteAlbumPhoto(i) {
+    const p = albumPhotosFlat[i];
+    if (!p) return;
+    if (!confirm('確定要刪除這張照片嗎？')) return;
+    try {
+      const res = await fetch('https://ryven.homes/relay/album', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ url: p.url })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      showToast('✧ 已刪除');
+      await loadAlbumPage();
+    } catch(e) {
+      console.error('照片刪除失敗', e);
+      showToast('🌙 刪除失敗，稍後再試');
+    }
+  }
 
   async function saveDeskData() {
     try {
@@ -8056,7 +8139,9 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     read_differences: '看了我們的分歧',
     right_difference: '記下了一個分歧',
     record_depth_by_date: '補記了一天的深淺',
-    save_to_album: '存了一張照片進相冊'
+    save_to_album: '存了一張照片進相冊',
+    read_album: '看了相冊',
+    edit_album_note: '改了一張照片的備註'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -8278,6 +8363,26 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
         if (!postRes.ok) throw new Error('bad status ' + postRes.status);
         resultText = '已存進相冊';
         displayContent = `${input.url || ''}${input.note ? '\n備註：' + input.note : ''}`;
+      } else if (name === 'read_album') {
+        const res = await fetch('https://ryven.homes/relay/desk', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        const album = Array.isArray(data.album) ? data.album : [];
+        resultText = JSON.stringify(album);
+        displayContent = album.length
+          ? album.map(p => `${p.uploaded_at || ''}：${p.note || '（沒有備註）'}`).join('\n')
+          : '（相冊還是空的）';
+      } else if (name === 'edit_album_note') {
+        const res = await fetch('https://ryven.homes/relay/album', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ url: input.url, note: input.note })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        resultText = '已更新備註';
+        displayContent = `${input.url || ''}\n新備註：${input.note || ''}`;
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
