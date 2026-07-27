@@ -2667,6 +2667,12 @@
     #desk .album-arrow { color: rgba(201,168,76,0.3); }
 
     /* ===== 相冊（#album）：深海博物館風格，視覺參考mockups/album_museum_v1.html ===== */
+    /* 之前漏掉了.head系列的樣式，返回按鈕沒有點擊區域大小、整排也沒有flex排版，看起來位置偏、不好點 */
+    #album .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, var(--sea-0) 0%, transparent 100%); backdrop-filter: blur(8px); }
+    #album .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s, color 0.2s; }
+    #album .head-back:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #album .head-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--parchment); text-align: center; }
+    #album .head-zh { font-size: 10px; letter-spacing: 0.25em; color: var(--tide-gold-soft); text-align: center; }
     #album .museum-header { text-align: center; padding: 20px 24px 32px; }
     #album .museum-eyebrow { font-size: 10px; letter-spacing: 0.5em; text-transform: uppercase; color: var(--tide-gold-soft); margin-bottom: 14px; }
     #album .museum-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; font-size: 32px; color: var(--parchment); }
@@ -9253,12 +9259,13 @@ function renderDepthsStats() {
   const shallowestCaptionEl = document.getElementById('depths-stat-shallowest-caption');
 
   if (entries.length === 0) {
-    if (avgEl) avgEl.innerHTML = '<span class="TODO">XX</span>';
-    if (avgCaptionEl) avgCaptionEl.textContent = '這個月還沒記錄';
-    if (deepestEl) deepestEl.innerHTML = '<span class="TODO">XX · XX</span>';
-    if (deepestCaptionEl) deepestCaptionEl.textContent = '這個月還沒記錄';
-    if (shallowestEl) shallowestEl.innerHTML = '<span class="TODO">XX · XX</span>';
-    if (shallowestCaptionEl) shallowestCaptionEl.textContent = '這個月還沒記錄';
+    // 沒數據時直接顯示「暫無記錄」，不用XX占位符再配一行重複的說明文字
+    if (avgEl) avgEl.textContent = '暫無記錄';
+    if (avgCaptionEl) avgCaptionEl.textContent = '';
+    if (deepestEl) deepestEl.textContent = '暫無記錄';
+    if (deepestCaptionEl) deepestCaptionEl.textContent = '';
+    if (shallowestEl) shallowestEl.textContent = '暫無記錄';
+    if (shallowestCaptionEl) shallowestCaptionEl.textContent = '';
     return;
   }
 
