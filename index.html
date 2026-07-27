@@ -1433,6 +1433,15 @@
     .qp-close { font-size: 15px; cursor: pointer; color: var(--parchment-ghost); opacity: 0.4; flex-shrink: 0; transition: opacity 0.2s; }
     .qp-close:hover { opacity: 0.8; }
 
+    /* ─── 消息队列提示（输入区上方） ─── */
+    .queue-indicator {
+      display: none; align-items: center; gap: 4px; width: fit-content;
+      padding: 5px 12px; margin-bottom: 8px;
+      font-size: 11px; letter-spacing: 0.05em; color: var(--tide-gold);
+      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); border-radius: 12px;
+    }
+    .queue-indicator.show { display: flex; }
+
     /* ─── 撤回 ─── */
     .msg-bubble.recalled {
       background: transparent !important;
@@ -4249,6 +4258,8 @@
         <div class="qp-text" id="qp-text"></div>
         <div class="qp-close" onclick="clearQuote()">✕</div>
       </div>
+
+      <div class="queue-indicator" id="queue-indicator">排隊中 <span class="queue-indicator-count">0</span> 條</div>
 
       <div class="chat-inputbar-row">
         <button class="chat-input-add" title="貼紙" onclick="stickerOpenTray()">🐟</button>
@@ -7657,17 +7668,19 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
               } else {
                 for (const ch of chunk) {
                   const isClosingMark = /[」』"'）》】]/.test(ch);
-                  // 上一个字符是句末标点：这个字符不是收尾符号了，才真正切割；是收尾符号就并入当前气泡继续等下一个字符
+                  // 候选切点确认要切：先看这段够不够长（不够就并入下一段），再决定要不要新开一个气泡
                   if (pendingCut && !isClosingMark) {
-                    currentText = '';
-                    currentBubble = prepareRyvenBubble();
+                    if (!isTooShortSegment(currentText)) {
+                      currentText = '';
+                      currentBubble = prepareRyvenBubble();
+                    }
                     pendingCut = false;
                   }
                   currentText += ch;
                   // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append，理由同 sendMessage()
                   currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                   if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
-                  if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
+                  if (currentText.trim() !== '' && isNaturalBreakPoint(currentText)) {
                     // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
                     pendingCut = true;
                   }
@@ -8321,27 +8334,49 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   }
 
   // ===== 分段消息显示：SSE流完之后，把完整回复拆成一句一句陆续发出来 =====
+  // 自然停顿分段规则，流式逐字输出跟这里(历史消息重建/语音分句)共用同一套判断，
+  // 保证同一条消息不管是刚发出来实时看到的，还是切走再切回来重新加载出来的，分段结果都一样：
+  // 主要断点——不看长度，遇到就是候选切点：换行、"——"长破折号、"……"省略号后接空格
+  // 次要断点——句末标点(。！？)：只有从上一个真正切点到现在累积够长(超过30字，不含标点)，才算候选切点，
+  //   短句先留着跟后面的内容合并成一段，不单独成气泡
+  function stripPunctForLen(text) {
+    return text.replace(/[。！？\n，、；：""''（）·…\-—\s]/g, '');
+  }
+  function isNaturalBreakPoint(accText) {
+    if (/\n$/.test(accText)) return true;
+    if (/——$/.test(accText)) return true;
+    if (/(?:…{1,2}|\.{3,})\s$/.test(accText)) return true;
+    if (/[。！？]$/.test(accText)) return stripPunctForLen(accText).length > 30;
+    return false;
+  }
+  // 候选切点定下来后，如果切出来的这一段太短（少于5个有效字），就不真的切，留着并入下一段
+  function isTooShortSegment(text) {
+    return stripPunctForLen(text).length < 5;
+  }
+
   function splitIntoSentences(text) {
-    const rawParts = text.split(/(?<=[。！？\n])/).map(s => s.trim()).filter(Boolean);
     const result = [];
     let carry = '';
-    for (const part of rawParts) {
-      const combined = carry + part;
-      // 去掉标点后剩下的有效字数，太短（含纯标点，视为0字）就先留着跟下一句合并
-      const strippedLen = combined.replace(/[。！？\n，、；：""''（）·…\-—\s]/g, '').length;
-      if (strippedLen < 3) {
-        carry = combined;
-      } else {
-        result.push(combined);
-        carry = '';
+    let pendingCut = false;
+    for (const ch of text) {
+      const isClosingMark = /[」』"'）》】]/.test(ch);
+      if (pendingCut && !isClosingMark) {
+        if (!isTooShortSegment(carry)) {
+          result.push(carry.trim());
+          carry = '';
+        }
+        pendingCut = false;
       }
+      carry += ch;
+      if (carry.trim() !== '' && isNaturalBreakPoint(carry)) pendingCut = true;
     }
-    if (carry) {
-      if (result.length > 0) result[result.length - 1] += carry;
+    if (carry.trim()) {
+      // 收尾剩下的这段：够长就自己成一段；太短（结尾正好没碰上断点、字数又不够）才并回上一段
+      if (result.length > 0 && isTooShortSegment(carry)) result[result.length - 1] += carry;
       else result.push(carry);
     }
     // 保险过滤：确保空字符串（或纯空白）不会生成一个看起来空的气泡
-    return result.filter(s => s.trim() !== '');
+    return result.map(s => s.trim()).filter(Boolean);
   }
 
   // 建一个新的"from-ryven"空气泡，流式分段时每句一个气泡都靠它
@@ -8376,17 +8411,46 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     pending.appended = true;
   }
 
+  // 消息队列：上一条Ryven还没完全回完（含所有工具调用轮次）之前，新发的消息先排队，
+  // 不再让多个requestRyvenReply()并发跑——并发会导致chatHistory被跨交换乱序push、
+  // thinking框/工具节点在DOM重建后被错误地追加到别的消息后面
+  let sendQueue = [];
+  let isProcessingQueue = false;
+
+  function updateQueueIndicator() {
+    const el = document.getElementById('queue-indicator');
+    if (!el) return;
+    if (sendQueue.length > 0) {
+      el.querySelector('.queue-indicator-count').textContent = sendQueue.length;
+      el.classList.add('show');
+    } else {
+      el.classList.remove('show');
+    }
+  }
+
+  async function processSendQueue() {
+    if (isProcessingQueue) return;
+    isProcessingQueue = true;
+    while (sendQueue.length > 0) {
+      const text = sendQueue.shift();
+      updateQueueIndicator();
+      chatHistory.push({role:'user', content:text});
+      msgCount++;
+      await requestRyvenReply(text);
+    }
+    isProcessingQueue = false;
+  }
+
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if (!text) return;
     if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
     input.value = ''; input.style.height = 'auto';
-    // 不锁发送按钮了——Ryven还没回完也能接着发下一条
     addMessage('user', text);
-    chatHistory.push({role:'user', content:text});
-    msgCount++;
-    await requestRyvenReply(text);
+    sendQueue.push(text);
+    updateQueueIndicator();
+    processSendQueue(); // 不等它——排队处理在背景跑，输入框可以馬上接著打下一條
   }
 
   // 工具調用：中文標籤，展示在折疊節點裡（跟思考框同款樣式）
@@ -8829,10 +8893,12 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                             } else {
                                 for (const ch of chunk) {
                                     const isClosingMark = /[」』"'）》】]/.test(ch);
-                                    // 上一个字符是句末标点：这个字符不是收尾符号了，才真正切割；是收尾符号就并入当前气泡继续等下一个字符
+                                    // 候选切点确认要切：先看这段够不够长（不够就并入下一段），再决定要不要新开一个气泡
                                     if (pendingCut && !isClosingMark) {
-                                        currentText = '';
-                                        currentBubble = prepareRyvenBubble();
+                                        if (!isTooShortSegment(currentText)) {
+                                            currentText = '';
+                                            currentBubble = prepareRyvenBubble();
+                                        }
                                         pendingCut = false;
                                     }
                                     currentText += ch;
@@ -8840,7 +8906,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                                     // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
                                     currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
                                     if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
-                                    if (/[。！？\n]/.test(ch) && currentText.trim() !== '') {
+                                    if (currentText.trim() !== '' && isNaturalBreakPoint(currentText)) {
                                         // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
                                         pendingCut = true;
                                     }
