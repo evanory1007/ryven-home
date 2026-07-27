@@ -2454,6 +2454,9 @@
     .lib-drawer-clear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
     .lib-drawer-close { flex-shrink: 0; background: none; border: none; color: var(--parchment-ghost); font-size: 22px; line-height: 1; cursor: pointer; }
     .lib-drawer .tags-wrap { padding: 4px 20px 24px; margin-bottom: 0; }
+    .lib-drawer-footer { margin-top: auto; padding: 14px 20px 24px; border-top: 1px solid var(--line); }
+    .lib-drawer-cleanup-btn { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid rgba(201,168,76,0.25); background: none; color: var(--tide-gold); font-size: 12px; letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; }
+    .lib-drawer-cleanup-btn:hover { border-color: var(--tide-gold); background: rgba(201,168,76,0.06); }
 
     #library .tags-wrap { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 20px; }
     #library .tag-chip { padding: 5px 13px; border-radius: 20px; font-size: 11px; letter-spacing: 0.06em; cursor: pointer; border: 1px solid rgba(74,111,165,0.2); background: rgba(74,111,165,0.08); color: rgba(150,185,230,0.65); transition: all 0.2s; white-space: nowrap; }
@@ -3406,6 +3409,9 @@
         <button class="lib-drawer-close" onclick="toggleLibDrawer()">×</button>
       </div>
       <div class="tags-wrap" id="lib-tags-wrap"></div>
+      <div class="lib-drawer-footer">
+        <button class="lib-drawer-cleanup-btn" onclick="libCleanDuplicates()">🧹 清理重複</button>
+      </div>
     </div>
 
     <div class="section-divider" id="lib-pinned-divider" style="display:none">📌 常駐 · pinned</div>
@@ -6106,6 +6112,66 @@ async function loadChatHistory() {
     const libraryActive = document.getElementById('library').classList.contains('active');
     btn.classList.toggle('show', libraryActive && window.scrollY > 300);
   }, { passive: true });
+
+  // name或content_preview完全相同的珍珠視為重複；用並查集把互相關聯的重複項合併成一組，每組只保留created最新的一條
+  function libFindDuplicates(buckets) {
+    const n = buckets.length;
+    const parent = Array.from({length:n}, (_,i)=>i);
+    function find(x) { while (parent[x]!==x) { parent[x]=parent[parent[x]]; x=parent[x]; } return x; }
+    function union(a,b) { const ra=find(a), rb=find(b); if (ra!==rb) parent[ra]=rb; }
+
+    const byName = new Map();
+    const byPreview = new Map();
+    buckets.forEach((b,i) => {
+      const name = (b.name||'').trim();
+      if (name) { if (byName.has(name)) union(byName.get(name), i); else byName.set(name, i); }
+      const preview = (b.content_preview||'').trim();
+      if (preview) { if (byPreview.has(preview)) union(byPreview.get(preview), i); else byPreview.set(preview, i); }
+    });
+
+    const groups = new Map();
+    buckets.forEach((b,i) => {
+      const root = find(i);
+      if (!groups.has(root)) groups.set(root, []);
+      groups.get(root).push(b);
+    });
+
+    const toDelete = [];
+    groups.forEach(group => {
+      if (group.length < 2) return;
+      let newest = group[0];
+      for (const b of group) { if (new Date(b.created||0) > new Date(newest.created||0)) newest = b; }
+      group.forEach(b => { if (b !== newest) toDelete.push(b); });
+    });
+    return toDelete;
+  }
+
+  async function libCleanDuplicates() {
+    const dupes = libFindDuplicates(libraryBuckets);
+    if (dupes.length === 0) { showToast('✦ 沒有發現重複珍珠'); return; }
+    if (!confirm(`找到 ${dupes.length} 條重複珍珠，將保留每組最新的一條並刪除其餘的，確定要清理嗎？`)) return;
+
+    showToast('清理中…');
+    let failCount = 0;
+    for (const b of dupes) {
+      try {
+        const res = await fetch('https://ryven.homes/relay/ombre/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ id: b.id })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+      } catch(e) {
+        console.error('刪除重複珍珠失敗', b.id, e);
+        failCount++;
+      }
+    }
+
+    document.getElementById('lib-drawer').classList.remove('open');
+    document.getElementById('lib-drawer-overlay').classList.remove('show');
+    showToast(failCount > 0 ? `🌙 已清理，但有 ${failCount} 條刪除失敗` : `✦ 已清理 ${dupes.length} 條重複珍珠`);
+    await loadLibrary();
+  }
 
   // ===== 珍珠詳情 =====
   let editing = false;
