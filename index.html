@@ -3892,6 +3892,18 @@
           </div>
         </div>
 
+        <!-- 推送通知 -->
+        <div class="pref-row">
+          <div class="pref-left">
+            <div class="pref-title">推送通知</div>
+            <div class="pref-sub">鎖屏也能收到 Ryven 的消息提醒</div>
+          </div>
+          <div class="lang-select">
+            <button class="lang-btn" id="settings-push-on" onclick="settingsSetPush(true)">開</button>
+            <button class="lang-btn" id="settings-push-off" onclick="settingsSetPush(false)">關</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -5150,6 +5162,7 @@ function doLogin() {
       loadChatHistory();
       renderHomePage();
       loadUserConfigFromServer();
+      requestPushPermissionOnLogin();
     } else {
       document.getElementById('login-error').style.display = 'block';
     }
@@ -5169,6 +5182,85 @@ document.addEventListener('keydown', function(e) {
 // 已登录则自动隐藏登录页
 if (isLoggedIn) {
   document.getElementById('login-overlay').classList.add('hidden');
+  requestPushPermissionOnLogin();
+}
+
+// ===== Web Push =====
+const VAPID_PUBLIC_KEY = 'BHw0eArStRzwBPaFZGkwaHUnJzcQGXYFoLWvyLOp7sDHncU1cAJqp4DjNENAQ8vvj3JTwR-5GMIEZpKny_piPXc';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('/sw.js');
+  } catch(e) {
+    console.error('Service Worker 註冊失敗', e);
+  }
+}
+registerServiceWorker();
+
+async function subscribeToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    await fetch('https://ryven.homes/relay/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+      body: JSON.stringify(sub)
+    });
+    localStorage.setItem('ryven-push-enabled', 'true');
+  } catch(e) {
+    console.error('推送訂閱失敗', e);
+  }
+}
+
+async function unsubscribeFromPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+  } catch(e) {
+    console.error('取消推送訂閱失敗', e);
+  } finally {
+    localStorage.setItem('ryven-push-enabled', 'false');
+  }
+}
+
+// 實際跟瀏覽器要通知權限、拿到權限就訂閱推送——設置頁點「開」時直接呼叫這個
+async function requestPushPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') { await subscribeToPush(); return; }
+  if (Notification.permission === 'denied') { showToast('🌙 瀏覽器已封鎖通知權限，請去瀏覽器設置裡手動開啟'); return; }
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') await subscribeToPush();
+}
+
+// 登入成功後自動請求一次；用戶之前在設置裡手動關過的話就不要再自動彈一次，蓋掉他關掉的選擇
+async function requestPushPermissionOnLogin() {
+  if (localStorage.getItem('ryven-push-enabled') === 'false') return;
+  await requestPushPermission();
+}
+
+async function settingsSetPush(enabled) {
+  if (enabled) await requestPushPermission();
+  else await unsubscribeFromPush();
+  renderSettingsPage();
 }
 
 // content 是 anthropic image content block 数组时，从里面抠出一个能直接塞进 <img src> 的地址
@@ -10086,6 +10178,12 @@ function renderSettingsPage() {
         const btn = document.getElementById(`settings-lang-${l}`);
         if (btn) btn.classList.toggle('active', lang === l);
     });
+
+    const pushEnabled = localStorage.getItem('ryven-push-enabled') === 'true';
+    const pushOnBtn = document.getElementById('settings-push-on');
+    const pushOffBtn = document.getElementById('settings-push-off');
+    if (pushOnBtn) pushOnBtn.classList.toggle('active', pushEnabled);
+    if (pushOffBtn) pushOffBtn.classList.toggle('active', !pushEnabled);
 }
 
 // ---- 档案：名字编辑 ----
