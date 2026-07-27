@@ -1152,6 +1152,29 @@
 
     .voice-transcript { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); opacity: 0.7; line-height: 1.5; margin-top: 5px; padding: 0 4px; }
 
+    /* 文件小方塊氣泡：上傳txt/md/pdf/docx/xlsx/xls後顯示，跟ChatGPT那種文件卡片類似 */
+    .file-msg-bubble {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; min-width: 170px; max-width: 240px;
+      cursor: pointer;
+    }
+    .file-bubble-icon { font-size: 26px; flex-shrink: 0; line-height: 1; }
+    .file-bubble-info { min-width: 0; }
+    .file-bubble-name {
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .file-bubble-meta { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--parchment-ghost); opacity: 0.8; margin-top: 2px; }
+    .file-bubble-expand {
+      display: none; margin-top: 6px; padding: 10px 12px;
+      background: rgba(15,20,40,0.35); border: 1px solid var(--line); border-radius: 10px;
+      max-height: 220px; overflow-y: auto;
+    }
+    .file-bubble-expand pre {
+      font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--parchment-dim);
+      white-space: pre-wrap; word-break: break-word; line-height: 1.6;
+    }
+
     @keyframes ttsPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.9; } }
 
     .typing-indicator { display:none; align-items:center; gap:8px; padding:4px 0; }
@@ -1238,9 +1261,8 @@
     .select-actionbar {
       display: none;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 16px 20px;
+      gap: 8px;
+      padding: 14px 14px 20px;
       background: rgba(10,14,31,0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -1248,12 +1270,16 @@
       flex-shrink: 0;
     }
     .select-actionbar.show { display: flex; }
-    .select-cancel-btn, .select-export-btn {
-      padding: 9px 18px; border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-size: 14px; cursor: pointer;
+    .select-cancel-btn, .select-tohere-btn, .select-export-btn {
+      padding: 8px 12px; border-radius: 16px; font-family: 'Cormorant Garamond', serif; font-size: 13px;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
     }
-    .select-cancel-btn { background: transparent; border: 1px solid var(--line); color: var(--parchment-dim); }
+    .select-cancel-btn, .select-tohere-btn { background: transparent; border: 1px solid var(--line); color: var(--parchment-dim); }
     .select-export-btn { background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.15)); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold); }
-    .select-count { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--parchment-ghost); letter-spacing: 0.05em; }
+    .select-count {
+      flex: 1; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--parchment-ghost); letter-spacing: 0.05em;
+    }
 
     /* 勾选模式下每条消息前面露出一个圆形勾选指示器 */
     #chat-messages.selecting .msg-wrap { cursor: pointer; }
@@ -4214,9 +4240,10 @@
       </div>
     </div>
 
-    <!-- ═══ 消息勾选模式操作栏（长按气泡进入）═══ -->
+    <!-- ═══ 消息勾选模式操作栏（长按气泡菜单点「導出」进入）═══ -->
     <div class="select-actionbar" id="select-actionbar">
       <button class="select-cancel-btn" onclick="exitSelectionMode()">取消</button>
+      <button class="select-tohere-btn" onclick="selectToHere()">選到這裡</button>
       <div class="select-count" id="select-count">已選 0 條</div>
       <button class="select-export-btn" onclick="exportSelectedMessages()">導出</button>
     </div>
@@ -4226,6 +4253,7 @@
       <div class="ctx-item" onclick="doQuote()">↩ 引用</div>
       <div class="ctx-item" onclick="doRecall()">↺ 撤回</div>
       <div class="ctx-item" onclick="doCopy()">⎘ 複製</div>
+      <div class="ctx-item" onclick="doExport()">⬇ 導出</div>
     </div>
 
     <!-- ═══ 上傳選單（圖片/文件）═══ -->
@@ -4247,7 +4275,7 @@
       </div>
     </div>
     <input type="file" id="upload-image-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
-    <input type="file" id="upload-file-input" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" style="display:none" onchange="handleFileUpload(event)" />
+    <input type="file" id="upload-file-input" accept=".txt,.md,.pdf,.docx,.xlsx,.xls,text/plain,text/markdown,application/pdf" style="display:none" onchange="handleFileUpload(event)" />
 
     <!-- ═══ 貼紙托盘 ═══ -->
     <div class="sheet-overlay" id="sticker-sheet" onclick="if(event.target===this)stickerCloseTray()">
@@ -5021,6 +5049,10 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
 </script>
+<!-- 上傳.docx文件時提取文字用，只有extractDocxText()這一處用到；mammoth只支持.docx，不支持舊版.doc二進制格式 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<!-- 上傳.xlsx/.xls文件時提取內容用，只有extractSheetText()這一處用到 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   // 气泡
   const bubblesEl = document.getElementById('bubbles');
@@ -5169,9 +5201,16 @@ async function loadChatHistory() {
         // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
         // 数组里如果还带了text block（发图时输入框有文字一起发的），先补一个文字气泡再显示图片气泡
         const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
+        const documentBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'document') : null;
         if (msg.role === 'system') {
           // 改名提示这类系统消息：小字提示样式，不是聊天气泡，走insertSysMsg()而不是addMessage()
           insertSysMsg(msg.content, msgTime);
+        } else if (documentBlock) {
+          // 上传文件消息：渲染成文件小方块气泡，不能走下面假设content是字符串的文字气泡逻辑
+          const filename = documentBlock.title || '文件';
+          const fileExt = (filename.split('.').pop() || '').toLowerCase();
+          const fileText = (documentBlock.source && documentBlock.source.data) || '';
+          addFileBubble(filename, fileExt, fileText, msgTime);
         } else if (imageBlock) {
           const textBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'text') : null;
           if (textBlock && textBlock.text) addMessage(msg.role, textBlock.text, msgTime, undefined, undefined, true);
@@ -7577,10 +7616,10 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   const ctxMenuEl = document.getElementById('ctx-menu');
   const chatMessagesEl = document.getElementById('chat-messages');
 
-  // 消息勾选导出模式：长按气泡进入，点气泡切换勾选；普通单击气泡改成弹引用/撤回/複製小菜单
+  // 消息勾选导出模式：长按气泡弹出的小菜单里有「導出」选项，点了才进勾选模式；
+  // 长按本身恢复成原来只弹小菜单（引用/撤回/複製/導出），不再直接进勾选模式
   let selectionMode = false;
   let selectedWraps = new Set();
-  let longPressFired = false; // 长按刚触发过（进了勾选模式），松手时紧跟着的click事件要吞掉，不然会又弹一次小菜单
 
   function ctxBubbleFromEvent(e) {
     const bubble = e.target.closest ? e.target.closest('.msg-bubble') : null;
@@ -7595,29 +7634,21 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   chatMessagesEl.addEventListener('mousedown', e => {
     const bubble = ctxBubbleFromEvent(e);
     if (!bubble || e.button !== 0 || selectionMode) return;
-    longPressFired = false;
-    ctxHoldTimer = setTimeout(() => { longPressFired = true; enterSelectionMode(bubble); }, 600);
+    ctxHoldTimer = setTimeout(() => openCtx(e, bubble), 600);
   });
   chatMessagesEl.addEventListener('mouseup', () => clearTimeout(ctxHoldTimer));
   chatMessagesEl.addEventListener('touchstart', e => {
     const bubble = ctxBubbleFromEvent(e);
     if (!bubble || selectionMode) return;
-    longPressFired = false;
-    ctxHoldTimer = setTimeout(() => { longPressFired = true; enterSelectionMode(bubble); }, 500);
+    ctxHoldTimer = setTimeout(() => openCtx(e.touches[0], bubble), 500);
   }, {passive:true});
   chatMessagesEl.addEventListener('touchend', () => clearTimeout(ctxHoldTimer));
 
+  // 勾选模式下点气泡切换勾选；不在勾选模式时这个监听器不做任何事（普通单击恢复原本什么都不做）
   chatMessagesEl.addEventListener('click', e => {
-    if (selectionMode) {
-      const wrap = e.target.closest ? e.target.closest('.msg-wrap') : null;
-      if (wrap) { e.stopPropagation(); toggleWrapSelected(wrap); }
-      return;
-    }
-    if (longPressFired) { longPressFired = false; return; } // 长按松手后的click，不重复弹菜单
-    const bubble = ctxBubbleFromEvent(e);
-    if (!bubble) return;
-    e.stopPropagation();
-    openCtx(e, bubble);
+    if (!selectionMode) return;
+    const wrap = e.target.closest ? e.target.closest('.msg-wrap') : null;
+    if (wrap) { e.stopPropagation(); toggleWrapSelected(wrap); }
   });
 
   function openCtx(e, bubble) {
@@ -7661,6 +7692,20 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     if (el) el.textContent = `已選 ${selectedWraps.size} 條`;
   }
 
+  // 「選到這裡」：從第一條消息批量勾選到目前已勾選消息裡最新（DOM順序最後）的那一條，
+  // 已經勾選的不受影響，勾選之後使用者仍可以手動取消單條
+  function selectToHere() {
+    const wraps = Array.from(chatMessagesEl.querySelectorAll('.msg-wrap'));
+    if (!wraps.length) return;
+    let lastIdx = -1;
+    wraps.forEach((w, i) => { if (selectedWraps.has(w)) lastIdx = i; });
+    if (lastIdx === -1) { showToast('✧ 先選一條消息'); return; }
+    for (let i = 0; i <= lastIdx; i++) {
+      if (!selectedWraps.has(wraps[i])) { selectedWraps.add(wraps[i]); wraps[i].classList.add('msg-selected'); }
+    }
+    updateSelectCount();
+  }
+
   function formatExportTime(ts) {
     const d = new Date(Number(ts));
     if (isNaN(d)) return '';
@@ -7678,10 +7723,12 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
       let content = '';
       const voiceTranscript = w.querySelector('.voice-transcript');
       const imgBubble = w.querySelector('.img-bubble');
+      const fileBubble = w.querySelector('.file-msg-bubble');
       const bubbleText = w.querySelector('.bubble-text');
       const msgBubble = w.querySelector('.msg-bubble');
       if (voiceTranscript) content = voiceTranscript.textContent.trim();
       else if (imgBubble) content = '[圖片]';
+      else if (fileBubble) content = `[文件：${w.querySelector('.file-bubble-name')?.textContent.trim() || ''}]`;
       else if (bubbleText) content = bubbleText.textContent.trim();
       else if (msgBubble) content = msgBubble.textContent.trim();
       return `${role}：${content}\n${time}`;
@@ -7736,6 +7783,14 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     navigator.clipboard?.writeText(text).catch(()=>{});
     closeCtx();
     showToast('✦ 已複製');
+  }
+
+  // 長按菜單裡的「導出」：進勾選模式，默認勾選這條被長按的消息
+  function doExport() {
+    if (!ctxTarget) return;
+    const bubble = ctxTarget;
+    closeCtx();
+    enterSelectionMode(bubble);
   }
 
   // ===== 图片 sheet =====
@@ -7806,23 +7861,101 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     return text;
   }
 
+  // mammoth只認.docx（OOXML格式），舊版.doc是完全不同的二進制格式，讀不了——
+  // handleFileUpload()裡已經把.doc單獨擋掉、不會走到這個函數
+  async function extractDocxText(file) {
+    if (!window.mammoth) throw new Error('mammoth.js 未加載');
+    const buf = await file.arrayBuffer();
+    const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+    return result.value;
+  }
+
+  // SheetJS支持.xlsx和舊版.xls，每個sheet轉成CSV文字、用sheet名字分段
+  async function extractSheetText(file) {
+    if (!window.XLSX) throw new Error('SheetJS 未加載');
+    const buf = await file.arrayBuffer();
+    const wb = window.XLSX.read(buf, { type: 'array' });
+    return wb.SheetNames.map(name => {
+      const csv = window.XLSX.utils.sheet_to_csv(wb.Sheets[name]);
+      return `【${name}】\n${csv}`;
+    }).join('\n\n');
+  }
+
+  const FILE_TYPE_META = {
+    txt:  { icon: '📄', label: '文字文件' },
+    md:   { icon: '📄', label: 'Markdown 文件' },
+    pdf:  { icon: '📕', label: 'PDF 文件' },
+    docx: { icon: '📘', label: 'Word 文件' },
+    xlsx: { icon: '📊', label: 'Excel 文件' },
+    xls:  { icon: '📊', label: 'Excel 文件' }
+  };
+
+  // 文件小方塊氣泡：只顯示文件名+圖標，點擊展開看提取出來的內容（複用toggleThink()做展開/收起）
+  function addFileBubble(filename, ext, content, timestampMs) {
+    const messages = document.getElementById('chat-messages');
+    const msgDate = timestampMs ? new Date(timestampMs) : new Date();
+    maybeInsertDateDivider(msgDate);
+    const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    const continued = lastMsgRow && lastMsgRow.classList.contains('from-me');
+    const meta = FILE_TYPE_META[ext] || { icon: '📄', label: '文件' };
+    const expandId = 'file-' + Date.now() + Math.random().toString(36).slice(2, 8);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap';
+    wrap.dataset.role = 'user';
+    wrap.dataset.ts = msgDate.getTime();
+    wrap.innerHTML = `
+      <div class="msg-row from-me${continued ? ' continued' : ''}">
+        <div class="msg-avatar-sm">🐻</div>
+        <div class="msg-col">
+          <div class="msg-bubble file-msg-bubble" onclick="toggleThink('${expandId}')">
+            <div class="file-bubble-icon">${meta.icon}</div>
+            <div class="file-bubble-info">
+              <div class="file-bubble-name"></div>
+              <div class="file-bubble-meta">${meta.label} · 點擊查看內容</div>
+            </div>
+          </div>
+          <div class="file-bubble-expand" id="${expandId}"><pre></pre></div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+    wrap.querySelector('.file-bubble-name').textContent = filename;
+    wrap.querySelector('.file-bubble-expand pre').textContent = content;
+    messages.appendChild(wrap);
+    lastMsgRow = wrap.firstElementChild;
+    messages.scrollTop = messages.scrollHeight;
+    return wrap;
+  }
+
   async function handleFileUpload(e) {
     const file = e.target.files[0];
     e.target.value = '';
     if (!file) return;
     if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
     const ext = (file.name.split('.').pop() || '').toLowerCase();
-    if (!['txt','md','pdf'].includes(ext)) { showToast('🌊 只支持 txt / md / pdf'); return; }
+    if (ext === 'doc') { showToast('🌊 不支持舊版 .doc，請另存為 .docx 後再試'); return; }
+    const supported = ['txt', 'md', 'pdf', 'docx', 'xlsx', 'xls'];
+    if (!supported.includes(ext)) { showToast('🌊 只支持 txt / md / pdf / docx / xlsx / xls'); return; }
     showToast('📄 讀取中…');
     try {
-      const text = (ext === 'pdf' ? await extractPdfText(file) : await file.text()).trim();
+      let text;
+      if (ext === 'pdf') text = await extractPdfText(file);
+      else if (ext === 'docx') text = await extractDocxText(file);
+      else if (ext === 'xlsx' || ext === 'xls') text = await extractSheetText(file);
+      else text = await file.text();
+      text = (text || '').trim();
       if (!text) { showToast('🌙 文件內容是空的'); return; }
-      const input = document.getElementById('chat-input');
-      input.value = ''; input.style.height = 'auto';
-      addMessage('user', text);
-      chatHistory.push({ role: 'user', content: text });
+
+      // 文件內容當document content block發給AI，不是純文字消息
+      const documentBlock = {
+        type: 'document',
+        source: { type: 'text', media_type: 'text/plain', data: text },
+        title: file.name
+      };
+      addFileBubble(file.name, ext, text);
       msgCount++;
-      await requestRyvenReply(text);
+      chatHistory.push({ role: 'user', content: [documentBlock] });
+      await requestRyvenReply([documentBlock]);
     } catch(err) {
       console.error('文件讀取失敗', err);
       showToast('🌙 文件讀取失敗，稍後再試');
