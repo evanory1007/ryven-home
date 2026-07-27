@@ -2640,6 +2640,77 @@
     #desk .album-footer { padding: 10px 18px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: 0.1em; color: var(--parchment-ghost); border-top: 1px solid rgba(201,168,76,0.06); }
     #desk .album-arrow { color: rgba(201,168,76,0.3); }
 
+    /* ===== 相冊（#album）：深海博物館風格，視覺參考mockups/album_museum_v1.html ===== */
+    #album .museum-header { text-align: center; padding: 20px 24px 32px; }
+    #album .museum-eyebrow { font-size: 10px; letter-spacing: 0.5em; text-transform: uppercase; color: var(--tide-gold-soft); margin-bottom: 14px; }
+    #album .museum-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; font-size: 32px; color: var(--parchment); }
+    #album .museum-zh { font-size: 11px; letter-spacing: 0.5em; color: var(--tide-gold); margin-top: 6px; opacity: 0.85; }
+    #album .museum-rule { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--tide-gold-soft), transparent); margin: 18px auto 0; }
+
+    #album .gallery { padding: 0 20px 60px; }
+    #album .month-section { margin-bottom: 8px; }
+    #album .month-heading { display: flex; align-items: baseline; gap: 8px; margin: 0 0 14px 2px; }
+    #album .month-heading-num { font-family: 'Playfair Display', serif; font-style: italic; font-size: 26px; color: var(--parchment); }
+    #album .month-heading-year { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.2em; color: var(--tide-gold-soft); text-transform: uppercase; }
+    #album .month-heading-count { margin-left: auto; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); }
+
+    #album .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    #album .grid-item { text-align: center; }
+    #album .grid-frame {
+      position: relative; padding: 7px;
+      background: var(--card-bg); border: 1px solid var(--line); border-radius: 5px;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.35);
+      cursor: pointer; transition: transform 0.25s ease;
+    }
+    #album .grid-frame:hover { transform: translateY(-2px); }
+    #album .grid-photo { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; overflow: hidden; background: var(--sea-2); }
+    #album .grid-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #album .grid-day { margin-top: 8px; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--tide-gold); opacity: 0.8; }
+
+    #album .divider { display: flex; align-items: center; gap: 12px; margin: 32px 2px 24px; color: var(--tide-gold-soft); }
+    #album .divider::before, #album .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line)); }
+    #album .divider::after { background: linear-gradient(90deg, var(--line), transparent); }
+    #album .divider span { font-size: 10px; opacity: 0.7; }
+
+    #album .album-loading, #album .album-empty { text-align: center; padding: 60px 20px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
+
+    /* 全屏放大：不跟著淺海模式變色，照片瀏覽維持深底才看得清楚 */
+    .album-lightbox {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(5,8,18,0.94);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .album-lightbox.show { opacity: 1; pointer-events: all; }
+    .album-lightbox-photo {
+      width: min(84vw, 420px); max-height: 78vh; aspect-ratio: 4 / 5;
+      border-radius: 3px; overflow: hidden; position: relative;
+      background: var(--sea-2);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 90px -10px rgba(201,168,76,0.15);
+      transform: scale(0.92); transition: transform 0.35s cubic-bezier(0.2,0.7,0.3,1);
+    }
+    .album-lightbox.show .album-lightbox-photo { transform: scale(1); }
+    .album-lightbox-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .album-lightbox-caption {
+      position: absolute; left: 0; right: 0; bottom: 0; text-align: center; padding: 60px 26px 28px;
+      background: linear-gradient(180deg, transparent, rgba(5,8,18,0.55) 40%, rgba(5,8,18,0.92) 100%);
+    }
+    .album-lightbox-text {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px;
+      color: #f8f2e8; line-height: 1.7; max-width: 340px; margin: 0 auto;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+    .album-lightbox-time { margin-top: 10px; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--tide-gold); opacity: 0.95; }
+    .album-lightbox-close {
+      position: absolute; top: 22px; right: 22px; width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(15,20,40,0.6); border: 1px solid var(--tide-gold-soft);
+      color: #f8f2e8; font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .album-lightbox-close:hover { border-color: var(--tide-gold); transform: rotate(90deg); }
+
     #desk .notes-card { background: linear-gradient(155deg, rgba(40,32,18,0.7), rgba(30,22,12,0.8)); border-color: rgba(180,140,60,0.1); min-height: 160px; display: flex; flex-direction: column; }
     #desk .notes-top { padding: 16px 14px 10px; border-bottom: 1px solid rgba(180,140,60,0.08); }
     #desk .notes-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 18px; color: var(--parchment); }
@@ -3574,7 +3645,7 @@
           <div class="album-cell">——</div>
           <div class="album-cell add" onclick="showUploadSheet()">＋</div>
         </div>
-        <div class="album-footer">
+        <div class="album-footer" onclick="goTo('album')" style="cursor:pointer">
           <span>view all photos</span>
           <span class="album-arrow">›</span>
         </div>
@@ -3635,6 +3706,42 @@
           <div class="c-thumb">——</div>
           <div class="c-thumb add">＋</div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 相冊（深海博物館風格，數據來自/relay/desk的album數組） -->
+<div class="screen" id="album">
+  <div class="page">
+    <div class="head">
+      <div class="head-back" onclick="goTo('desk')">‹</div>
+      <div class="head-titles">
+        <div class="head-en">Album</div>
+        <div class="head-zh">相 册</div>
+      </div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="museum-header">
+      <div class="museum-eyebrow">ryven's collection</div>
+      <div class="museum-title">Album</div>
+      <div class="museum-zh">相 册</div>
+      <div class="museum-rule"></div>
+    </div>
+
+    <div class="gallery" id="album-gallery">
+      <div class="album-loading">加載中…</div>
+    </div>
+  </div>
+
+  <div class="album-lightbox" id="album-lightbox" onclick="if(event.target===this) closeAlbumLightbox()">
+    <button class="album-lightbox-close" onclick="closeAlbumLightbox()">✕</button>
+    <div class="album-lightbox-photo">
+      <img id="album-lightbox-img" alt="">
+      <div class="album-lightbox-caption">
+        <div class="album-lightbox-text" id="album-lightbox-text"></div>
+        <div class="album-lightbox-time" id="album-lightbox-time"></div>
       </div>
     </div>
   </div>
@@ -5104,6 +5211,7 @@ async function loadChatHistory() {
     if (id==='depths') loadDepthsPage();
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
+    if (id==='album') loadAlbumPage();
   }
   function goHome() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -6248,6 +6356,100 @@ async function loadChatHistory() {
     const emptyCells = Array.from({length: emptyCount}, () => '<div class="album-cell">——</div>').join('');
     grid.innerHTML = cells + emptyCells + '<div class="album-cell add" onclick="showUploadSheet()">＋</div>';
   }
+
+  // ===== #album：相冊全屏頁，數據直接讀/relay/desk的album數組（跟desk卡片是同一份數據，各自獨立GET） =====
+  let albumPhotosFlat = []; // 按月分組展開後的一維列表，openAlbumLightbox(i)按下標取
+
+  async function loadAlbumPage() {
+    const gallery = document.getElementById('album-gallery');
+    gallery.innerHTML = '<div class="album-loading">加載中…</div>';
+    try {
+      const res = await fetch('https://ryven.homes/relay/desk', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      renderAlbumGallery(Array.isArray(data.album) ? data.album : []);
+    } catch(e) {
+      console.error('相冊加載失敗', e);
+      gallery.innerHTML = '<div class="album-empty">加載失敗</div>';
+    }
+  }
+
+  function renderAlbumGallery(photos) {
+    const gallery = document.getElementById('album-gallery');
+    if (!photos.length) {
+      gallery.innerHTML = '<div class="album-empty">還沒有照片</div>';
+      return;
+    }
+    // 新到舊排序，再按年月分組
+    const sorted = photos.slice().sort((a, b) => new Date(b.uploaded_at || 0) - new Date(a.uploaded_at || 0));
+    const groups = [];
+    const groupMap = {};
+    sorted.forEach(p => {
+      const d = p.uploaded_at ? new Date(p.uploaded_at) : new Date();
+      const validDate = !isNaN(d);
+      const key = validDate ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : '未知';
+      if (!groupMap[key]) {
+        groupMap[key] = {
+          key,
+          num: validDate ? String(d.getMonth()+1).padStart(2,'0') : '——',
+          year: validDate ? String(d.getFullYear()) : '',
+          photos: []
+        };
+        groups.push(groupMap[key]);
+      }
+      groupMap[key].photos.push(p);
+    });
+
+    albumPhotosFlat = [];
+    let idx = 0;
+    const html = groups.map((g, gi) => {
+      const cellsHtml = g.photos.map(p => {
+        const myIdx = idx++;
+        albumPhotosFlat.push(p);
+        const d = p.uploaded_at ? new Date(p.uploaded_at) : null;
+        const dayLabel = (d && !isNaN(d)) ? `${g.num} / ${String(d.getDate()).padStart(2,'0')}` : '';
+        return `
+          <div class="grid-item">
+            <div class="grid-frame" onclick="openAlbumLightbox(${myIdx})">
+              <div class="grid-photo"><img src="${(p.url||'').replace(/"/g,'&quot;')}" alt="" loading="lazy"></div>
+            </div>
+            <div class="grid-day">${dayLabel}</div>
+          </div>`;
+      }).join('');
+      const dividerHtml = gi < groups.length - 1 ? '<div class="divider"><span>✦</span></div>' : '';
+      return `
+        <div class="month-section">
+          <div class="month-heading">
+            <span class="month-heading-num">${g.num}</span>
+            <span class="month-heading-year">${g.year}</span>
+            <span class="month-heading-count">共 ${g.photos.length} 張</span>
+          </div>
+          <div class="grid">${cellsHtml}</div>
+        </div>${dividerHtml}`;
+    }).join('');
+
+    gallery.innerHTML = html;
+  }
+
+  function openAlbumLightbox(i) {
+    const p = albumPhotosFlat[i];
+    if (!p) return;
+    document.getElementById('album-lightbox-img').src = p.url || '';
+    document.getElementById('album-lightbox-text').textContent = p.note || '（沒有留言）';
+    const d = p.uploaded_at ? new Date(p.uploaded_at) : null;
+    document.getElementById('album-lightbox-time').textContent = (d && !isNaN(d))
+      ? `${d.getFullYear()} · ${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getDate()).padStart(2,'0')}`
+      : '';
+    document.getElementById('album-lightbox').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAlbumLightbox() {
+    document.getElementById('album-lightbox').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAlbumLightbox(); });
 
   async function saveDeskData() {
     try {
