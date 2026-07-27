@@ -2493,6 +2493,11 @@
     #library .section-divider::before, #library .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
     #library .lib-status { grid-column: span 2; text-align: center; padding: 40px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
 
+    #library .lib-scrolltop-btn { position: fixed; right: 20px; bottom: 28px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--tide-gold-soft); background: var(--sea-1); color: var(--tide-gold); font-size: 18px; line-height: 1; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 10px 26px rgba(0,0,0,0.35); z-index: 30; opacity: 0; transform: translateY(6px); transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.2s; }
+    #library .lib-scrolltop-btn.show { display: flex; opacity: 1; transform: translateY(0); }
+    #library .lib-scrolltop-btn:hover { border-color: var(--tide-gold); }
+    body.light #library .lib-scrolltop-btn { background: var(--card-bg); box-shadow: 0 10px 26px rgba(0,0,0,0.12); }
+
     /* ══════════════════════ 珍珠詳情 (#pearl-detail) ══════════════════════ */
     #pearl-detail .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; }
     #pearl-detail .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
@@ -3411,6 +3416,8 @@
       <div class="lib-status">加载中…</div>
     </div>
   </div>
+
+  <button class="lib-scrolltop-btn" id="lib-scrolltop-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 </div>
 
 <!-- 珍珠詳情 -->
@@ -5258,14 +5265,23 @@ async function loadChatHistory() {
 }
 
   // 导航
-  function goTo(id) {
+  // 進pearl-detail前記住library當時的滾動位置，從pearl-detail返回library時要恢復
+  let libraryScrollY = null;
+
+  async function goTo(id) {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    window.scrollTo(0,0);
+
+    // 只有library/pearl-detail之間的來回才用得到libraryScrollY；
+    // 中途去了別的頁面就讓它失效，不然之後隨便從哪裡進library都可能跳去不相干的舊位置
+    if (id !== 'library' && id !== 'pearl-detail') libraryScrollY = null;
+    const restoringLibraryScroll = (id === 'library' && libraryScrollY != null);
+    if (!restoringLibraryScroll) window.scrollTo(0,0);
+
     if (id==='memory') { loadMemoryLibraryCard(); loadMemoryDiffCard(); loadMemoryDeskCard(); loadMemoryDiaryCard(); }
     if (id==='calendar') renderCalendar();
     if (id==='diary') loadDiaryPage();
-    if (id==='library') loadLibrary();
+    if (id==='library') await loadLibrary();
     if (id==='pearl-detail') renderPearlDetail();
     if (id==='differences') loadDifferences();
     if (id==='desk') loadDesk();
@@ -5275,6 +5291,11 @@ async function loadChatHistory() {
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
     if (id==='album') loadAlbumPage();
+
+    if (restoringLibraryScroll) {
+      window.scrollTo(0, libraryScrollY);
+      libraryScrollY = null;
+    }
   }
   function goHome() {
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -6074,9 +6095,17 @@ async function loadChatHistory() {
   function libOpenPearl(id) {
     const bucket = libraryBuckets.find(b => b.id === id);
     if (!bucket) return;
+    libraryScrollY = window.scrollY; // 記住進pearl-detail前library的滾動位置，返回時要恢復
     window.currentPearl = bucket;
     goTo('pearl-detail');
   }
+
+  window.addEventListener('scroll', () => {
+    const btn = document.getElementById('lib-scrolltop-btn');
+    if (!btn) return;
+    const libraryActive = document.getElementById('library').classList.contains('active');
+    btn.classList.toggle('show', libraryActive && window.scrollY > 300);
+  }, { passive: true });
 
   // ===== 珍珠詳情 =====
   let editing = false;
