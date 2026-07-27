@@ -3336,7 +3336,7 @@
         <div class="card-cn">書 桌</div>
       </div>
       <div class="desk-row">
-        <div class="desk-em-num"><span class="em">📸</span><span class="g" id="memdesk-notes-count">XX</span></div>
+        <div class="desk-em-num"><span class="em">📸</span><span class="g" id="memdesk-photos-count">XX</span></div>
         <div class="desk-mid">
           <div class="desk-lbl">張碎片纸</div>
           <div class="desk-tags"><span class="desk-tag" id="memdesk-books-count">XX 本書</span></div>
@@ -3463,7 +3463,7 @@
         <div class="imp-row" id="pearlImpRow"></div>
         <span id="pearlImpVal">XX</span>
       </div>
-      <div class="meta-item"><div class="dot"></div>激活 <span class="TODO">XX</span> 次</div>
+      <div class="meta-item" id="pearlFedCountRow" style="display:none"><div class="dot"></div>激活 <span id="pearlFedCount"></span> 次</div>
       <div class="meta-item"><div class="dot"></div><span class="TODO">XX</span></div>
     </div>
 
@@ -5072,6 +5072,8 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- 上傳.xlsx/.xls文件時提取內容用，只有extractSheetText()這一處用到；放最前面先加載，不用排在pdf.js/mammoth後面等它們下載完 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- 上傳PDF文件時提取文字用，只有extractPdfText()這一處用到 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -5081,8 +5083,6 @@
 </script>
 <!-- 上傳.docx文件時提取文字用，只有extractDocxText()這一處用到；mammoth只支持.docx，不支持舊版.doc二進制格式 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<!-- 上傳.xlsx/.xls文件時提取內容用，只有extractSheetText()這一處用到 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   // 气泡
   const bubblesEl = document.getElementById('bubbles');
@@ -5356,10 +5356,10 @@ async function loadChatHistory() {
       const key = depthsDateKey(d.getFullYear(), d.getMonth(), d.getDate());
       const rec = data[key];
       const nory = rec && rec.nory != null ? rec.nory : null;
+      const ryven = rec && rec.ryven != null ? rec.ryven : null;
       const x = (6 - i) * stepX;
       goldPoints.push({ x, y: nory != null ? 15 + (1 - nory) * 55 : 45 });
-      const offsetNory = nory != null ? Math.min(1, nory + 0.1) : null;
-      greenPoints.push({ x, y: offsetNory != null ? 15 + (1 - offsetNory) * 55 : 45 });
+      greenPoints.push({ x, y: ryven != null ? 15 + (1 - ryven) * 55 : 45 });
     }
 
     goldPath.setAttribute('d', depthsSmoothPath(goldPoints));
@@ -6259,6 +6259,14 @@ async function loadChatHistory() {
 
     document.getElementById('pearlCreated').textContent = libFormatDate(pearl.created);
     document.getElementById('pearlLastActive').textContent = libFormatDate(pearl.last_active);
+
+    const fedCountRow = document.getElementById('pearlFedCountRow');
+    if (pearl.fed_count) {
+      document.getElementById('pearlFedCount').textContent = pearl.fed_count;
+      fedCountRow.style.display = 'flex';
+    } else {
+      fedCountRow.style.display = 'none';
+    }
   }
 
   async function savePearlEdit() {
@@ -6709,9 +6717,9 @@ async function loadChatHistory() {
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
-      const notes = data.notes || [];
+      const album = data.album || [];
       const books = data.books || [];
-      document.getElementById('memdesk-notes-count').textContent = notes.length;
+      document.getElementById('memdesk-photos-count').textContent = album.length;
       document.getElementById('memdesk-books-count').textContent = books.length + ' 本書';
     } catch(e) {
       console.error('Desk 卡數據加載失敗', e);
