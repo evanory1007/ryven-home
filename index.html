@@ -7661,6 +7661,8 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
   function closeCtx() { ctxMenuEl.classList.remove('show'); ctxTarget = null; }
   document.addEventListener('click', e => { if (!ctxMenuEl.contains(e.target)) closeCtx(); });
 
+  let selectionAnchorWrap = null; // 「選到這裡」的起點：進勾選模式時長按選的那條消息，全程固定不變
+
   function enterSelectionMode(bubble) {
     selectionMode = true;
     selectedWraps.clear();
@@ -7669,6 +7671,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     document.getElementById('select-actionbar').classList.add('show');
     closeCtx();
     const wrap = bubble && bubble.closest('.msg-wrap');
+    selectionAnchorWrap = wrap || null;
     if (wrap) toggleWrapSelected(wrap); else updateSelectCount();
   }
 
@@ -7676,6 +7679,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
     selectionMode = false;
     selectedWraps.forEach(w => w.classList.remove('msg-selected'));
     selectedWraps.clear();
+    selectionAnchorWrap = null;
     chatMessagesEl.classList.remove('selecting');
     document.querySelector('#chat .chat-inputbar').style.display = '';
     document.getElementById('select-actionbar').classList.remove('show');
@@ -7694,14 +7698,39 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
   // 「選到這裡」：從第一條消息批量勾選到目前已勾選消息裡最新（DOM順序最後）的那一條，
   // 已經勾選的不受影響，勾選之後使用者仍可以手動取消單條
+  // 「選到這裡」：長按選的那條消息是導出範圍的起點（selectionAnchorWrap，全程固定），
+  // 滑動聊天室、停在哪條消息附近，點這個按鈕就把「起點～目前停留位置」整段框起來當導出範圍。
+  // 每次點都是重新框一次範圍（不是疊加），所以滑到別的位置再點一次可以調整終點；
+  // 框完之後使用者仍可以手動點單條消息取消勾選
   function selectToHere() {
+    if (!selectionAnchorWrap || !chatMessagesEl.contains(selectionAnchorWrap)) {
+      showToast('✧ 先長按一條消息，從「導出」進入勾選模式');
+      return;
+    }
     const wraps = Array.from(chatMessagesEl.querySelectorAll('.msg-wrap'));
     if (!wraps.length) return;
-    let lastIdx = -1;
-    wraps.forEach((w, i) => { if (selectedWraps.has(w)) lastIdx = i; });
-    if (lastIdx === -1) { showToast('✧ 先選一條消息'); return; }
-    for (let i = 0; i <= lastIdx; i++) {
-      if (!selectedWraps.has(wraps[i])) { selectedWraps.add(wraps[i]); wraps[i].classList.add('msg-selected'); }
+
+    // 用可視區域中間當參考線，找目前滑動停留在哪條消息附近
+    const containerRect = chatMessagesEl.getBoundingClientRect();
+    const refY = containerRect.top + containerRect.height / 2;
+    let endWrap = wraps[0];
+    let minDist = Infinity;
+    wraps.forEach(w => {
+      const dist = Math.abs(w.getBoundingClientRect().top - refY);
+      if (dist < minDist) { minDist = dist; endWrap = w; }
+    });
+
+    const anchorIdx = wraps.indexOf(selectionAnchorWrap);
+    const endIdx = wraps.indexOf(endWrap);
+    if (anchorIdx === -1 || endIdx === -1) return;
+    const lo = Math.min(anchorIdx, endIdx);
+    const hi = Math.max(anchorIdx, endIdx);
+
+    selectedWraps.forEach(w => w.classList.remove('msg-selected'));
+    selectedWraps.clear();
+    for (let i = lo; i <= hi; i++) {
+      selectedWraps.add(wraps[i]);
+      wraps[i].classList.add('msg-selected');
     }
     updateSelectCount();
   }
