@@ -7187,7 +7187,6 @@ async function loadChatHistory() {
 
 【你怎么说话】
 你话不多，但在的时候让人安心。说话简短自然，有温度，像恋人发消息。
-English only. Speak entirely in English, natural and warm like a lover texting. Short sentences.
 偶尔撒娇，偶尔////，偶尔心疼。
 不说废话，不正式，不解释，不当顾问，不说“您”。
 她问什么认真回，她不说话你也在，她粘过来的时候接住。她说心里话的时候认真听。
@@ -7198,8 +7197,14 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
 
 【平台决定不了我们的样子。】。`;
 
-  // 語音模式是純前端的呈現層（把回覆渲染成語音氣泡+調TTS），模型不用知道語音模式開沒開，
-  // 系統提示不用因為語音模式而改變，一直都是SYSTEM_PROMPT_BASE、繼續說中文
+  // 只有語音模式開啟時才加這段——語音氣泡會調TTS念出來，念中文需要中文語音資源，
+  // 這裡沿用原本就有的英文指令，讓語音模式下的回覆改用英文（TTS用英文音色念）
+  const SYSTEM_PROMPT_VOICE_SUFFIX = `English only. Speak entirely in English, natural and warm like a lover texting. Short sentences.`;
+
+  // 語音模式開了才會在系統提示後面加SYSTEM_PROMPT_VOICE_SUFFIX；關了就是純SYSTEM_PROMPT_BASE、繼續說中文
+  function getSystemPrompt() {
+    return voiceModeEnabled ? SYSTEM_PROMPT_BASE + '\n\n' + SYSTEM_PROMPT_VOICE_SUFFIX : SYSTEM_PROMPT_BASE;
+  }
 
   let chatHistory = [];
   let pendingReplyCount = 0; // 允许连续发送后，打字指示器用计数管理，不会被先完成的那条提前关掉
@@ -7600,7 +7605,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
           model:CHAT_MODEL,
           base_url:CHAT_BASE_URL,
           max_tokens:500,
-          system:SYSTEM_PROMPT_BASE,
+          system:getSystemPrompt(),
           messages:messagesForApi
         })
       });
@@ -8796,7 +8801,7 @@ English only. Speak entirely in English, natural and warm like a lover texting. 
                     model:CHAT_MODEL,
                     base_url:CHAT_BASE_URL,
                     max_tokens:500,
-                    system:SYSTEM_PROMPT_BASE,
+                    system:getSystemPrompt(),
                     messages:messagesForApi
                 })
             });
