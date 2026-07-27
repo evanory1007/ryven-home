@@ -3466,7 +3466,7 @@
         <span id="pearlImpVal">XX</span>
       </div>
       <div class="meta-item" id="pearlFedCountRow" style="display:none"><div class="dot"></div>激活 <span id="pearlFedCount"></span> 次</div>
-      <div class="meta-item"><div class="dot"></div><span class="TODO">XX</span></div>
+      <div class="meta-item" id="pearlFedCountSep" style="display:none"><div class="dot"></div><span class="TODO">XX</span></div>
     </div>
 
     <div class="divider"></div>
@@ -6263,11 +6263,14 @@ async function loadChatHistory() {
     document.getElementById('pearlLastActive').textContent = libFormatDate(pearl.last_active);
 
     const fedCountRow = document.getElementById('pearlFedCountRow');
+    const fedCountSep = document.getElementById('pearlFedCountSep');
     if (pearl.fed_count) {
       document.getElementById('pearlFedCount').textContent = pearl.fed_count;
       fedCountRow.style.display = 'flex';
+      fedCountSep.style.display = 'flex';
     } else {
       fedCountRow.style.display = 'none';
+      fedCountSep.style.display = 'none';
     }
   }
 
