@@ -8806,14 +8806,16 @@ async function loadChatHistory() {
         resultText = '已補記那天的深淺';
         displayContent = `${input.date}：深淺 ${input.ryven_value}`;
       } else if (name === 'write_diary') {
-        // relay.py存日记需要date才知道存进哪一天，不依赖模型传参，前端自己算今天的日期（YYYY-MM-DD，跟depthsTodayKey()同款格式）
+        // relay.py存日记需要date才知道存进哪一天：模型传了date就用模型指定的那天（方便補記過去的日記），
+        // 没传才用前端自己算的今天日期（YYYY-MM-DD，跟depthsTodayKey()同款格式）
+        const diaryDate = input.date || depthsTodayKey();
         const res = await fetch('https://ryven.homes/relay/ryven/diary', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-          body: JSON.stringify({ text: input.content, mood: input.mood, date: depthsTodayKey() })
+          body: JSON.stringify({ text: input.content, mood: input.mood, date: diaryDate })
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
-        resultText = '已寫下今天的日記';
+        resultText = `已寫下${diaryDate}的日記`;
         displayContent = input.content || '';
       } else if (name === 'hold_memory') {
         const res = await fetch('https://ryven.homes/relay/ombre/create', {
