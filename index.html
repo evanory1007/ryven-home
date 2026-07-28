@@ -842,6 +842,28 @@
     }
     .sidebar-api-input::placeholder { color:rgba(168,152,128,0.4); font-family: 'Cormorant Garamond', serif; font-style: italic; }
     .sidebar-api-input:focus { border-bottom-color: var(--tide-gold); }
+
+    .chat-search-results { margin-top: 10px; max-height: 320px; overflow-y: auto; }
+    .chat-search-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); padding: 8px 0; opacity: 0.7; }
+    .chat-search-result { padding: 9px 10px; border-radius: 10px; cursor: pointer; margin-bottom: 4px; transition: background 0.2s; }
+    .chat-search-result:hover { background: rgba(201,168,76,0.08); }
+    .chat-search-result-who { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.2em; color: var(--tide-gold-soft); text-transform: uppercase; margin-bottom: 3px; }
+    .chat-search-result-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--parchment-dim); line-height: 1.5; }
+    .chat-search-result-text mark { background: rgba(201,168,76,0.35); color: var(--tide-gold); border-radius: 3px; padding: 0 2px; }
+
+    .chat-load-more {
+      text-align: center; padding: 10px; margin: 4px 0 14px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px;
+      color: var(--tide-gold-soft); cursor: pointer; border: 1px solid var(--line); border-radius: 20px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .chat-load-more:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+
+    @keyframes chatSearchFlash {
+      0%, 100% { background: transparent; }
+      30% { background: rgba(201,168,76,0.22); }
+    }
+    .search-highlight-flash .msg-bubble { animation: chatSearchFlash 1.6s ease; }
     .sidebar-btn {
       width:100%;
       padding:10px;
@@ -4226,6 +4248,12 @@
       </div>
 
       <div class="sidebar-section">
+        <div class="sidebar-label"><span>搜索</span><small>search</small></div>
+        <input class="sidebar-api-input" id="chat-search-input" type="text" placeholder="搜索已加載的聊天記錄…" oninput="searchChatMessages(this.value)" />
+        <div class="chat-search-results" id="chat-search-results"></div>
+      </div>
+
+      <div class="sidebar-section">
         <div class="sidebar-label"><span>備註</span><small>nickname</small></div>
         <div class="sidebar-prose" id="nickname-display" onclick="editNickname()" style="cursor:pointer">
           <strong class="js-ryven-name" id="nickname-value">Ryven</strong>
@@ -5463,70 +5491,177 @@ async function loadChatHistory() {
     if (messages.length === lastLoadedMsgCount) return;
     lastLoadedMsgCount = messages.length;
     if (messages.length > 0) {
-      document.getElementById('chat-messages').innerHTML = '';
-      lastMsgDateKey = null;
-      lastMsgRow = null;
+      // chatHistory直接就是分頁渲染/搜索的資料來源，不額外拷貝一份——
+      // 這樣sendMessage()等即時發送路徑照舊只要push進chatHistory，不用另外同步第二份陣列
       chatHistory = [];
-      const estimateBase = Date.now();
-      for (let idx = 0; idx < messages.length; idx++) {
-        const msg = messages[idx];
-        // 修复前泄漏进relay的改名指令文本（实际文案是"用户刚刚把你的名字改成了..."），历史数据里可能还留着，过滤掉不渲染成气泡
-        if (typeof msg.content === 'string' && msg.content.includes('用户刚刚把你的名字改成了')) continue;
-        // 旧数据没存 timestamp：按在数组里的位置从现在往前推算，每条间隔1分钟，
-        // 至少保证时间递增、不会全堆在同一刻；有真实 timestamp 的正常消息不受影响
-        const realTime = msg.timestamp || msg.created_at;
-        const msgTime = realTime || (estimateBase - (messages.length - 1 - idx) * 60000);
-        // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
-        // 数组里如果还带了text block（发图时输入框有文字一起发的），先补一个文字气泡再显示图片气泡
-        const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
-        const documentBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'document') : null;
-        if (msg.role === 'system') {
-          // 改名提示这类系统消息：小字提示样式，不是聊天气泡，走insertSysMsg()而不是addMessage()
-          insertSysMsg(msg.content, msgTime);
-        } else if (documentBlock) {
-          // 上传文件消息：渲染成文件小方块气泡，不能走下面假设content是字符串的文字气泡逻辑
-          const filename = documentBlock.title || '文件';
-          const fileExt = (filename.split('.').pop() || '').toLowerCase();
-          const fileText = (documentBlock.source && documentBlock.source.data) || '';
-          addFileBubble(filename, fileExt, fileText, msgTime);
-        } else if (imageBlock) {
-          const textBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'text') : null;
-          if (textBlock && textBlock.text) addMessage(msg.role, textBlock.text, msgTime, undefined, undefined, true);
-          renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
-        } else if (msg.role === 'assistant' || msg.role === 'ryven') {
-          // 历史里存的工具调用记录（toolCalls字段）：重新加载时补渲染出对应的折叠节点，
-          // 直接标记完成✓状态（不是重新执行工具，只是还原当时的调用记录）
-          if (Array.isArray(msg.toolCalls)) {
-            msg.toolCalls.forEach(tc => {
-              if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
-            });
-          }
-          // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
-          // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
-          // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
-          let thinkAdded = false;
-          const segments = splitIntoSentences(msg.content);
-          if (segments.length === 0) {
-            addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking, true);
-            thinkAdded = true;
-          } else {
-            segments.forEach((seg, i) => {
-              addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, true);
-              thinkAdded = true;
-            });
-          }
-        } else {
-          addMessage(msg.role, msg.content, msgTime, undefined, undefined, true);
-        }
+      messages.forEach(msg => {
         chatHistory.push(msg);
         if (msg.role === 'user') msgCount++;
-      }
+      });
+      chatRenderStartIndex = Math.max(0, messages.length - CHAT_PAGE_SIZE);
+      renderChatMessagesRange();
       // 全部渲染完只滚一次到底部，而不是每条消息都强制reflow一次
       document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
     }
   } catch(e) {
     console.error('加载历史失败', e);
   }
+}
+
+// 從chatRenderStartIndex重新渲染到chatHistory結尾，全清空重畫。
+// "加載更多"往前擴大範圍時也走這個函式整段重畫，而不是精細地只prepend新增那批——
+// 這樣完全複用既有的日期分隔線/氣泡連續分組邏輯，不用另外處理"往前插"時邊界要接上誰的問題
+function renderChatMessagesRange() {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+  lastMsgDateKey = null;
+  lastMsgRow = null;
+
+  if (chatRenderStartIndex > 0) {
+    const btn = document.createElement('div');
+    btn.className = 'chat-load-more';
+    btn.textContent = `↑ 加載更多（還有 ${chatRenderStartIndex} 條）`;
+    btn.onclick = loadMoreChatHistory;
+    container.appendChild(btn);
+  }
+
+  const estimateBase = Date.now();
+  for (let idx = chatRenderStartIndex; idx < chatHistory.length; idx++) {
+    const msg = chatHistory[idx];
+    // 修复前泄漏进relay的改名指令文本（实际文案是"用户刚刚把你的名字改成了..."），历史数据里可能还留着，过滤掉不渲染成气泡
+    if (typeof msg.content === 'string' && msg.content.includes('用户刚刚把你的名字改成了')) continue;
+    // 旧数据没存 timestamp：按在数组里的位置从现在往前推算，每条间隔1分钟，
+    // 至少保证时间递增、不会全堆在同一刻；有真实 timestamp 的正常消息不受影响
+    const realTime = msg.timestamp || msg.created_at;
+    const msgTime = realTime || (estimateBase - (chatHistory.length - 1 - idx) * 60000);
+    // content 是数组、且含 image block：贴纸/图片消息，渲染成图片气泡，不能走下面假设 content 是字符串的文字气泡逻辑
+    // 数组里如果还带了text block（发图时输入框有文字一起发的），先补一个文字气泡再显示图片气泡
+    const imageBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'image') : null;
+    const documentBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'document') : null;
+    const beforeCount = container.children.length;
+    if (msg.role === 'system') {
+      // 改名提示这类系统消息：小字提示样式，不是聊天气泡，走insertSysMsg()而不是addMessage()
+      insertSysMsg(msg.content, msgTime);
+    } else if (documentBlock) {
+      // 上传文件消息：渲染成文件小方块气泡，不能走下面假设content是字符串的文字气泡逻辑
+      const filename = documentBlock.title || '文件';
+      const fileExt = (filename.split('.').pop() || '').toLowerCase();
+      const fileText = (documentBlock.source && documentBlock.source.data) || '';
+      addFileBubble(filename, fileExt, fileText, msgTime);
+    } else if (imageBlock) {
+      const textBlock = Array.isArray(msg.content) ? msg.content.find(b => b && b.type === 'text') : null;
+      if (textBlock && textBlock.text) addMessage(msg.role, textBlock.text, msgTime, undefined, undefined, true);
+      renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
+    } else if (msg.role === 'assistant' || msg.role === 'ryven') {
+      // 历史里存的工具调用记录（toolCalls字段）：重新加载时补渲染出对应的折叠节点，
+      // 直接标记完成✓状态（不是重新执行工具，只是还原当时的调用记录）
+      if (Array.isArray(msg.toolCalls)) {
+        msg.toolCalls.forEach(tc => {
+          if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
+        });
+      }
+      // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
+      // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
+      // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
+      let thinkAdded = false;
+      const segments = splitIntoSentences(msg.content);
+      if (segments.length === 0) {
+        addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking, true);
+        thinkAdded = true;
+      } else {
+        segments.forEach((seg, i) => {
+          addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, true);
+          thinkAdded = true;
+        });
+      }
+    } else {
+      addMessage(msg.role, msg.content, msgTime, undefined, undefined, true);
+    }
+    // 這條訊息這輪新增出來的所有DOM節點(日期分隔線/思考框/氣泡...)都標上msg-index，搜索結果點擊要靠它定位
+    for (let c = beforeCount; c < container.children.length; c++) {
+      container.children[c].dataset.msgIndex = String(idx);
+    }
+  }
+}
+
+// "加載更多"：往前擴大渲染範圍、整段重畫，並保住畫面視覺位置不跳動
+function loadMoreChatHistory() {
+  const container = document.getElementById('chat-messages');
+  const prevScrollHeight = container.scrollHeight;
+  const prevScrollTop = container.scrollTop;
+
+  chatRenderStartIndex = Math.max(0, chatRenderStartIndex - CHAT_PAGE_SIZE);
+  renderChatMessagesRange();
+
+  container.scrollTop = container.scrollHeight - prevScrollHeight + prevScrollTop;
+}
+
+// 從message content裡抠出純文字，給搜索用（圖片/文件消息抠不出文字內容的就跳過）
+function getMessageSearchText(msg) {
+  if (typeof msg.content === 'string') return msg.content;
+  if (Array.isArray(msg.content)) {
+    const textBlock = msg.content.find(b => b && b.type === 'text');
+    if (textBlock && textBlock.text) return textBlock.text;
+    const docBlock = msg.content.find(b => b && b.type === 'document');
+    if (docBlock) return docBlock.title || '';
+  }
+  return '';
+}
+
+function chatSearchSnippet(text, query) {
+  const lower = text.toLowerCase();
+  const qLower = query.toLowerCase();
+  const pos = lower.indexOf(qLower);
+  if (pos === -1) return escapeToolContent(text.slice(0, 60));
+  const start = Math.max(0, pos - 20);
+  const end = Math.min(text.length, pos + query.length + 20);
+  const before = escapeToolContent(text.slice(start, pos));
+  const match = escapeToolContent(text.slice(pos, pos + query.length));
+  const after = escapeToolContent(text.slice(pos + query.length, end));
+  return `${start > 0 ? '…' : ''}${before}<mark>${match}</mark>${after}${end < text.length ? '…' : ''}`;
+}
+
+// 側邊欄搜索：只在已經拉到記憶體裡的chatHistory內找（不管目前分頁渲染到哪），輸入框oninput觸發
+function searchChatMessages(query) {
+  const resultsEl = document.getElementById('chat-search-results');
+  const q = query.trim();
+  if (!q) { resultsEl.innerHTML = ''; return; }
+  const qLower = q.toLowerCase();
+  const matches = [];
+  chatHistory.forEach((msg, idx) => {
+    const text = getMessageSearchText(msg);
+    if (text && text.toLowerCase().includes(qLower)) matches.push({ idx, text });
+  });
+  if (!matches.length) {
+    resultsEl.innerHTML = '<div class="chat-search-empty">沒有找到符合的訊息</div>';
+    return;
+  }
+  resultsEl.innerHTML = matches.slice(0, 30).map(m => {
+    const who = chatHistory[m.idx].role === 'user' ? 'Nory' : 'Ryven';
+    return `<div class="chat-search-result" data-idx="${m.idx}"><div class="chat-search-result-who">${who}</div><div class="chat-search-result-text">${chatSearchSnippet(m.text, q)}</div></div>`;
+  }).join('');
+  resultsEl.querySelectorAll('.chat-search-result').forEach(el => {
+    el.addEventListener('click', () => jumpToSearchResult(Number(el.dataset.idx)));
+  });
+}
+
+// 點搜索結果：如果目標訊息還沒在渲染範圍內，先擴大範圍蓋住它再重畫，然後滾過去閃一下提示位置
+async function jumpToSearchResult(idx) {
+  await goTo('chat');
+  // 直接強制關閉，不用toggleSidebar()——那個是純toggle，萬一側邊欄當下不是開著的反而會被打開
+  document.getElementById('chat-sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+  if (idx < chatRenderStartIndex) {
+    chatRenderStartIndex = Math.max(0, idx - 5);
+    renderChatMessagesRange();
+  }
+  setTimeout(() => {
+    const el = document.querySelector(`#chat-messages [data-msg-index="${idx}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('search-highlight-flash');
+    setTimeout(() => el.classList.remove('search-highlight-flash'), 1800);
+  }, 80);
 }
 
   // 导航
@@ -7475,6 +7610,8 @@ async function loadChatHistory() {
   let pendingReplyCount = 0; // 允许连续发送后，打字指示器用计数管理，不会被先完成的那条提前关掉
   let lastMsgRow = null; // 追蹤最後一條消息行的DOM引用，取代每次都querySelectorAll('.msg-wrap')全量掃描
   let lastLoadedMsgCount = -1; // loadChatHistory()緩存標記：歷史消息數沒變就跳過整個重渲染
+  let chatRenderStartIndex = 0; // #chat-messages目前渲染範圍的起點：[chatRenderStartIndex, chatHistory.length)，分頁/搜索都直接用chatHistory本身
+  const CHAT_PAGE_SIZE = 100;
 
   if (CHAT_API_KEY) {
     setTimeout(() => {
@@ -7513,6 +7650,7 @@ async function loadChatHistory() {
     chatHistory = []; msgCount = 0; totalTokens = 0;
     lastMsgDateKey = null;
     lastMsgRow = null;
+    chatRenderStartIndex = 0;
     // 清空只是本地清屏，服务器历史没删；重置缓存标记，不然下次进聊天室因为消息数「没变」被误判成不用重渲染
     lastLoadedMsgCount = -1;
     document.getElementById('chat-messages').innerHTML = `<div class="api-notice" id="api-notice" ${CHAT_API_KEY?'style="display:none"':''}>💙 在右上角選單填入 API Key 後 Ryven 就能回話了</div>`;
