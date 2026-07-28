@@ -9064,7 +9064,7 @@ async function loadChatHistory() {
         let fullText = '';
         let roundCount = 0;
         const allToolCalls = []; // 累積這次交換裡所有輪次的工具調用（name+input），最終跟這條assistant消息一起存進歷史
-        const MAX_TOOL_ROUNDS = 6; // 安全上限：連續調工具超過這個次數還沒給最終回覆就放棄
+        const MAX_TOOL_ROUNDS = 20; // 安全上限：連續調工具超過這個次數還沒給最終回覆就放棄（提高上限讓Ryven能完整玩完一局遊戲，比如二十一點多輪要牌）
 
         while (true) {
             roundCount++;
