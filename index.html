@@ -8870,6 +8870,16 @@ async function loadChatHistory() {
     // 所以每次要動思考框之前都先確認它還在文檔裡，不在的話用累積到目前的thinkingText就地重建一個新的接著顯示
     const exchangeId = 'ex-' + Date.now() + Math.random().toString(36).slice(2, 8);
 
+    // 「正在思考」指示器要在第一個氣泡真的出現時才消失，不是fetch一有回應（headers到、甚至只是thinking_delta）就關掉——
+    // 不然工具調用要跑好幾輪、遲遲沒有真正氣泡時，指示器會提早消失、畫面空在那裡。用旗標保證整次交換只遞減一次計數器
+    let pendingCountDecremented = false;
+    function decrementPendingReplyCount() {
+        if (pendingCountDecremented) return;
+        pendingCountDecremented = true;
+        pendingReplyCount = Math.max(0, pendingReplyCount - 1);
+        if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
+    }
+
     function ensureThinkRow() {
         if (thinkRow && document.body.contains(thinkRow)) return streamThinkId;
         streamThinkId = 'think-' + Date.now() + Math.random().toString(36).slice(2, 8);
@@ -8902,6 +8912,7 @@ async function loadChatHistory() {
             roundCount++;
             if (roundCount > MAX_TOOL_ROUNDS) {
                 addMessage('assistant', '🌙 …工具調用太多次了，先停一下');
+                decrementPendingReplyCount();
                 break;
             }
 
@@ -8924,10 +8935,6 @@ async function loadChatHistory() {
             if (!res.ok) throw new Error('API error ' + res.status);
 
             if (roundCount === 1) {
-                // 用计数器而不是直接隐藏：如果还有别的消息也在等首字节，指示器不能被这条先归位的抢先关掉
-                pendingReplyCount = Math.max(0, pendingReplyCount - 1);
-                if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
-
                 // 思考行：整個交換共用一個，之後每輪的thinking_delta都往同一個框裡累加
                 ensureThinkRow();
             }
@@ -9017,7 +9024,7 @@ async function loadChatHistory() {
                                 // 流結束後再用 splitIntoSentences() 拆句，逐句建語音氣泡+調TTS（見迴圈外面）
                                 currentText += chunk;
                                 currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
-                                if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                                if (!currentBubble.appended) { appendPendingBubble(messagesEl, currentBubble); decrementPendingReplyCount(); }
                             } else {
                                 for (const ch of chunk) {
                                     const isClosingMark = /[」』"'）》】]/.test(ch);
@@ -9033,7 +9040,7 @@ async function loadChatHistory() {
                                     // 关键顺序：先把内容写进(还没插入DOM的)气泡，再append——绝不能appended-then-filled，
                                     // 不然appendPendingBubble()里强制reflow(scrollTop=scrollHeight)那一下，浏览器就可能画出还是空的那一帧
                                     currentBubble.bubble.innerHTML = (currentText.replace(/^\n+/, '').trim() || '…').replace(/\n/g, '<br>');
-                                    if (!currentBubble.appended) appendPendingBubble(messagesEl, currentBubble);
+                                    if (!currentBubble.appended) { appendPendingBubble(messagesEl, currentBubble); decrementPendingReplyCount(); }
                                     if (currentText.trim() !== '' && isNaturalBreakPoint(currentText)) {
                                         // 先不切，等下一个字符确认不是收尾符号再切（trim后是空的就不算，纯标点/换行没有真实内容）
                                         pendingCut = true;
@@ -9077,6 +9084,7 @@ async function loadChatHistory() {
                     // 最后新建的气泡如果从没收到内容，从没append过，直接丢弃就好；整条什么都没收到时兜底显示…
                     currentBubble.bubble.innerHTML = '…';
                     appendPendingBubble(messagesEl, currentBubble);
+                    decrementPendingReplyCount();
                 }
                 break;
             } else {
@@ -9117,8 +9125,7 @@ async function loadChatHistory() {
         }).catch(() => {});
 
     } catch(e) {
-        pendingReplyCount = Math.max(0, pendingReplyCount - 1);
-        if (pendingReplyCount === 0) document.getElementById('typing-indicator').classList.remove('show');
+        decrementPendingReplyCount();
         addMessage('assistant', '🌙 …暫時連不上，等一下再試試');
     }
 }
