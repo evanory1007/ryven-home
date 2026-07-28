@@ -1946,12 +1946,12 @@
     #leisure .nav-item-en { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--parchment-ghost); }
     #leisure .nav-item.active .nav-item-en { color: var(--tide-gold); }
 
-    /* ══════════════════════ 遊戲室 (#game-room / #game-play) ══════════════════════ */
-    #game-room .page, #game-play .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
-    #game-room .head, #game-play .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
-    #game-room .head-back, #game-play .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
-    #game-room .head-back:hover, #game-play .head-back:hover { border-color: var(--tide-gold-soft); }
-    #game-room .head-title, #game-play .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+    /* ══════════════════════ 遊戲室 (#game-room) ══════════════════════ */
+    #game-room .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
+    #game-room .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
+    #game-room .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
+    #game-room .head-back:hover { border-color: var(--tide-gold-soft); }
+    #game-room .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
 
     #game-room .game-card-list { display: flex; flex-direction: column; gap: 14px; }
     #game-room .game-card {
@@ -1964,28 +1964,6 @@
     #game-room .game-card-em { font-size: 32px; filter: drop-shadow(0 0 6px rgba(201,168,76,0.25)); }
     #game-room .game-card-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
     #game-room .game-card-en { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.25em; color: var(--tide-gold-soft); text-transform: uppercase; margin-top: 3px; }
-
-    #game-play .game-output {
-      height: calc(100vh - 200px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
-      padding: 16px; background: rgba(15,20,40,0.5); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 14px;
-    }
-    #game-play .game-line { font-family: 'Cormorant Garamond', serif; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
-    #game-play .game-line.cmd { color: var(--tide-gold-soft); font-style: italic; }
-    #game-play .game-line.output { color: var(--parchment); }
-    #game-play .game-line.error { color: rgba(210,160,160,0.8); }
-    #game-play .game-input-row { display: flex; gap: 8px; }
-    #game-play .game-input {
-      flex: 1; background: rgba(15,20,40,0.4); border: 1px solid var(--line); border-radius: 12px;
-      padding: 10px 14px; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-size: 14px; outline: none; transition: border-color 0.2s;
-    }
-    #game-play .game-input:focus { border-color: var(--tide-gold-soft); }
-    #game-play .game-input::placeholder { color: rgba(168,152,128,0.4); }
-    #game-play .game-send-btn {
-      width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--tide-gold-soft);
-      background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.12)); color: var(--tide-gold);
-      font-size: 15px; cursor: pointer; transition: background 0.2s;
-    }
-    #game-play .game-send-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(201,168,76,0.2)); }
 
     /* ══════════════════════ 艦橋 (#helm) ══════════════════════ */
     #helm::before {
@@ -4810,39 +4788,21 @@
     </div>
 
     <div class="game-card-list">
-      <div class="game-card" onclick="openGame('fishing')">
+      <div class="game-card" onclick="startGameViaChat('fishing')">
         <div class="game-card-em">🎣</div>
         <div class="game-card-name">釣魚</div>
         <div class="game-card-en">Fishing</div>
       </div>
-      <div class="game-card" onclick="openGame('slots')">
+      <div class="game-card" onclick="startGameViaChat('slots')">
         <div class="game-card-em">🎰</div>
         <div class="game-card-name">老虎機</div>
         <div class="game-card-en">Slots</div>
       </div>
-      <div class="game-card" onclick="openGame('blackjack')">
+      <div class="game-card" onclick="startGameViaChat('blackjack')">
         <div class="game-card-em">🃏</div>
         <div class="game-card-name">二十一點</div>
         <div class="game-card-en">Blackjack</div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- 遊戲界面 -->
-<div class="screen" id="game-play">
-  <div class="page">
-    <div class="head">
-      <div class="head-back" onclick="goTo('game-room')">‹</div>
-      <div class="head-title" id="game-title">遊戲</div>
-      <div style="width:36px"></div>
-    </div>
-
-    <div class="game-output" id="game-output"></div>
-
-    <div class="game-input-row">
-      <input class="game-input" id="game-input" type="text" placeholder="輸入指令…" onkeydown="if(event.key==='Enter')sendGameCommandFromInput()" />
-      <button class="game-send-btn" onclick="sendGameCommandFromInput()">➤</button>
     </div>
   </div>
 </div>
@@ -10231,58 +10191,19 @@ function toggleTarotPanel() {
 }
 
 // ===== 遊戲室 =====
-// 老虎機/二十一點共用/relay/game/arcade，cmd格式："slots spin [bet]" / "bj deal [bet]"；釣魚是獨立端點/relay/game/fishing
-const GAME_META = {
-  fishing:   { title: '🎣 釣魚 · Fishing',    endpoint: 'https://ryven.homes/relay/game/fishing', startCmd: '開始' },
-  slots:     { title: '🎰 老虎機 · Slots',     endpoint: 'https://ryven.homes/relay/game/arcade',  startCmd: 'slots spin 10' },
-  blackjack: { title: '🃏 二十一點 · Blackjack', endpoint: 'https://ryven.homes/relay/game/arcade',  startCmd: 'bj deal 10' }
+// 點卡片不再進獨立遊戲畫面，改成跳去聊天室、自動填一句開場白幫忙發出去，交給Ryven用play_fishing/play_arcade工具接手
+const GAME_CHAT_OPENERS = {
+  fishing: '我們去釣魚吧，先看看狀態',
+  slots: '我們玩老虎機，給我500幣',
+  blackjack: '來一局二十一點，給我500幣'
 };
-let currentGame = null;
 
-async function openGame(game) {
-  currentGame = game;
-  const meta = GAME_META[game];
-  document.getElementById('game-output').innerHTML = '';
-  document.getElementById('game-title').textContent = meta ? meta.title : '遊戲';
-  await goTo('game-play');
-  await sendGameCommand(meta.startCmd, false);
-}
-
-function appendGameLine(text, type) {
-  const el = document.getElementById('game-output');
-  const line = document.createElement('div');
-  line.className = 'game-line ' + type;
-  line.textContent = text;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-}
-
-async function sendGameCommand(cmd, echo = true) {
-  const meta = GAME_META[currentGame];
-  if (!meta || !cmd || !cmd.trim()) return;
-  if (echo) appendGameLine('> ' + cmd, 'cmd');
-  try {
-    const res = await fetch(meta.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-      body: JSON.stringify({ cmd })
-    });
-    if (!res.ok) throw new Error('bad status ' + res.status);
-    const data = await res.json();
-    const text = data.message || data.result || data.output || JSON.stringify(data);
-    appendGameLine(text, 'output');
-  } catch(e) {
-    console.error('遊戲指令失敗', e);
-    appendGameLine('🌙 連不上，稍後再試', 'error');
-  }
-}
-
-function sendGameCommandFromInput() {
-  const input = document.getElementById('game-input');
-  const cmd = input.value.trim();
-  if (!cmd) return;
-  input.value = '';
-  sendGameCommand(cmd);
+async function startGameViaChat(game) {
+  const opener = GAME_CHAT_OPENERS[game];
+  if (!opener) return;
+  await goTo('chat');
+  document.getElementById('chat-input').value = opener;
+  sendMessage();
 }
 
   // 主题切换
