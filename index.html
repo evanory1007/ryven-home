@@ -3021,6 +3021,32 @@
     #diary .letter-text { font-family: 'Cormorant Garamond', serif; font-size: 15.5px; line-height: 1.8; color: var(--parchment-dim); margin-bottom: 10px; position: relative; white-space: pre-wrap; }
     #diary .nory-sign { display: flex; justify-content: flex-start; margin-top: 4px; }
     #diary .nory-sign-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: rgba(201,168,76,0.35); letter-spacing: 0.08em; }
+
+    /* Ryven給Nory日記留的評論：單條、可編輯，跟下面通用的「留言」(env-comments)是不同的兩回事 */
+    #diary .diary-comment-section { padding: 8px 16px 12px; border-top: 1px dashed rgba(109,184,160,0.15); }
+    #diary .diary-comment-display { display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 20px; }
+    #diary .diary-comment-body { flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; line-height: 1.6; display: none; }
+    #diary .diary-comment-section.has-comment .diary-comment-body { display: block; }
+    #diary .diary-comment-label { color: var(--tide-green); }
+    #diary .diary-comment-text { color: var(--parchment-dim); }
+    #diary .diary-comment-empty { flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); opacity: 0.6; }
+    #diary .diary-comment-section.has-comment .diary-comment-empty { display: none; }
+    #diary .diary-comment-edit-icon { font-size: 12px; opacity: 0.5; flex-shrink: 0; transition: opacity 0.2s; }
+    #diary .diary-comment-display:hover .diary-comment-edit-icon { opacity: 1; }
+    #diary .diary-comment-edit-row { display: flex; gap: 8px; margin-top: 6px; }
+    #diary .diary-comment-input {
+      flex: 1; background: rgba(15,20,40,0.4); border: 1px solid rgba(109,184,160,0.2); border-radius: 10px;
+      padding: 7px 12px; font-size: 12px; color: var(--parchment); outline: none;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; transition: border-color 0.2s;
+    }
+    #diary .diary-comment-input:focus { border-color: rgba(109,184,160,0.5); }
+    #diary .diary-comment-input::placeholder { color: var(--parchment-ghost); }
+    #diary .diary-comment-save-btn {
+      width: 30px; height: 30px; border-radius: 50%; background: rgba(109,184,160,0.12); border: 1px solid rgba(109,184,160,0.25);
+      display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: var(--tide-green);
+      flex-shrink: 0; transition: background 0.2s;
+    }
+    #diary .diary-comment-save-btn:hover { background: rgba(109,184,160,0.22); }
     #diary .wax-seal { display: flex; justify-content: flex-end; padding-right: 4px; margin-top: 4px; position: relative; }
     #diary .wax-circle { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(109,184,160,0.5), rgba(46,74,120,0.4)); border: 1px solid rgba(109,184,160,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(109,184,160,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.08); }
 
@@ -6046,7 +6072,10 @@ async function jumpToSearchResult(idx) {
   }
 
   function diarySaveEntry(dayKey, text, moods) {
-    diaryData[dayKey] = { text, moods };
+    // Ryven可能已經留過評論——這裡整條覆蓋前先把comment字段接過來，不然改寫日記正文會把評論一起沖掉
+    const existing = diaryData[dayKey];
+    const comment = (existing && typeof existing === 'object') ? existing.comment : undefined;
+    diaryData[dayKey] = comment ? { text, moods, comment } : { text, moods };
     saveNoryDiaryToServer(diaryData);
   }
 
@@ -6165,6 +6194,17 @@ async function jumpToSearchResult(idx) {
             <div class="letter-text"></div>
             <div class="nory-sign"><div class="nory-sign-text">— Nory</div></div>
           </div>
+          <div class="diary-comment-section" data-daykey="${key}">
+            <div class="diary-comment-display" onclick="diaryToggleCommentEdit(this)">
+              <span class="diary-comment-body"><span class="diary-comment-label">Ryven · </span><span class="diary-comment-text"></span></span>
+              <span class="diary-comment-empty">點這裡幫Ryven留句話…</span>
+              <span class="diary-comment-edit-icon">✏️</span>
+            </div>
+            <div class="diary-comment-edit-row" style="display:none">
+              <input class="diary-comment-input" placeholder="Ryven想說的話…" />
+              <div class="diary-comment-save-btn" onclick="diarySaveComment(this)">✓</div>
+            </div>
+          </div>
           <div class="env-comments">
             <div class="comments-toggle">💬 查看留言</div>
             <div class="comments-list"></div>
@@ -6236,8 +6276,55 @@ async function jumpToSearchResult(idx) {
       if (!isRyven) {
         el.querySelector('.env-btn.edit').addEventListener('click', () => diaryOpenCompose(key));
         el.querySelector('.env-btn.del').addEventListener('click', () => diaryConfirmDelete(key));
+        diaryFillComment(el, key);
       }
     });
+  }
+
+  // Ryven給這篇Nory日記留的評論：從diaryData[key].comment讀，填進顯示區跟編輯輸入框
+  function diaryFillComment(cardEl, key) {
+    const section = cardEl.querySelector('.diary-comment-section');
+    if (!section) return;
+    const entry = diaryData[key];
+    const comment = (entry && typeof entry === 'object') ? (entry.comment || '') : '';
+    section.classList.toggle('has-comment', !!comment);
+    section.querySelector('.diary-comment-text').textContent = comment;
+    section.querySelector('.diary-comment-input').value = comment;
+  }
+
+  function diaryToggleCommentEdit(displayEl) {
+    const section = displayEl.closest('.diary-comment-section');
+    section.querySelector('.diary-comment-display').style.display = 'none';
+    const editRow = section.querySelector('.diary-comment-edit-row');
+    editRow.style.display = 'flex';
+    const input = editRow.querySelector('.diary-comment-input');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+
+  async function diarySaveComment(saveBtn) {
+    const section = saveBtn.closest('.diary-comment-section');
+    const key = section.dataset.daykey;
+    const comment = section.querySelector('.diary-comment-input').value.trim();
+    try {
+      const res = await fetch('https://ryven.homes/relay/diary/nory/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ date: key, comment })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      // 本地diaryData同步更新，不用重新整頁拉一次；舊資料可能是純字符串形態，先轉成物件再掛comment上去
+      if (typeof diaryData[key] === 'string') diaryData[key] = { text: diaryData[key], moods: [] };
+      else if (!diaryData[key]) diaryData[key] = { text: '', moods: [] };
+      diaryData[key].comment = comment;
+      section.querySelector('.diary-comment-edit-row').style.display = 'none';
+      section.querySelector('.diary-comment-display').style.display = 'flex';
+      diaryFillComment(section.closest('.diary-card'), key);
+      showToast('✦ 已保存');
+    } catch(e) {
+      console.error('日記評論保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+    }
   }
 
   function diaryToggleComments(el) {
