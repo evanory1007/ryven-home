@@ -2008,13 +2008,45 @@
     #game-room .ach-text { font-size: 12px; color: var(--parchment-ghost); flex: 1; }
     #game-room .ach-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(201,168,76,0.12); color: var(--tide-gold); border: 1px solid rgba(201,168,76,0.2); white-space: nowrap; }
 
+    #game-room .game-btn-row { display: flex; gap: 8px; margin-top: 4px; }
     #game-room .game-btn {
-      width: 100%; padding: 10px; margin-top: 4px;
+      flex: 1; padding: 10px;
       background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
       color: var(--tide-gold); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px;
       cursor: pointer; text-align: center; transition: background 0.2s;
     }
     #game-room .game-btn:hover { background: rgba(201,168,76,0.16); }
+    #game-room .game-btn.secondary { background: transparent; border-color: var(--line); color: var(--parchment-dim); }
+    #game-room .game-btn.secondary:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+
+    /* ══════════════════════ 遊戲室：自己玩 (#game-solo) ══════════════════════ */
+    #game-solo .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
+    #game-solo .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
+    #game-solo .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
+    #game-solo .head-back:hover { border-color: var(--tide-gold-soft); }
+    #game-solo .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+
+    #game-solo .game-output {
+      height: calc(100vh - 200px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+      padding: 16px; background: rgba(15,20,40,0.5); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 14px;
+    }
+    #game-solo .game-line { font-family: 'Cormorant Garamond', serif; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+    #game-solo .game-line.cmd { color: var(--tide-gold-soft); font-style: italic; }
+    #game-solo .game-line.output { color: var(--parchment); }
+    #game-solo .game-line.error { color: rgba(210,160,160,0.8); }
+    #game-solo .game-input-row { display: flex; gap: 8px; }
+    #game-solo .game-input {
+      flex: 1; background: rgba(15,20,40,0.4); border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 14px; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    #game-solo .game-input:focus { border-color: var(--tide-gold-soft); }
+    #game-solo .game-input::placeholder { color: rgba(168,152,128,0.4); }
+    #game-solo .game-send-btn {
+      width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--tide-gold-soft);
+      background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.12)); color: var(--tide-gold);
+      font-size: 15px; cursor: pointer; transition: background 0.2s;
+    }
+    #game-solo .game-send-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(201,168,76,0.2)); }
 
     /* ══════════════════════ 艦橋 (#helm) ══════════════════════ */
     #helm::before {
@@ -2550,6 +2582,11 @@
     .lib-drawer-clear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
     .lib-drawer-close { flex-shrink: 0; background: none; border: none; color: var(--parchment-ghost); font-size: 22px; line-height: 1; cursor: pointer; }
     .lib-drawer .tags-wrap { padding: 4px 20px 24px; margin-bottom: 0; }
+    .lib-drawer-section-label {
+      padding: 0 20px 8px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px;
+      letter-spacing: 0.1em; color: var(--parchment-ghost); opacity: 0.75;
+    }
+    .lib-drawer #lib-importance-wrap { padding: 0 20px 20px; }
     .lib-drawer-footer { margin-top: auto; padding: 14px 20px 24px; border-top: 1px solid var(--line); }
     .lib-drawer-cleanup-btn { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid rgba(201,168,76,0.25); background: none; color: var(--tide-gold); font-size: 12px; letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; }
     .lib-drawer-cleanup-btn:hover { border-color: var(--tide-gold); background: rgba(201,168,76,0.06); }
@@ -3502,10 +3539,17 @@
     <div class="lib-drawer-overlay" id="lib-drawer-overlay" onclick="toggleLibDrawer()"></div>
     <div class="lib-drawer" id="lib-drawer">
       <div class="lib-drawer-header">
-        <div class="lib-drawer-title">篩選標籤</div>
-        <button class="lib-drawer-clear" id="lib-drawer-clear" onclick="libClearTags()" style="display:none">清除</button>
+        <div class="lib-drawer-title">篩選</div>
+        <button class="lib-drawer-clear" id="lib-drawer-clear" onclick="libClearAllFilters()" style="display:none">清除</button>
         <button class="lib-drawer-close" onclick="toggleLibDrawer()">×</button>
       </div>
+      <div class="lib-drawer-section-label">重要程度 · importance</div>
+      <div class="tags-wrap" id="lib-importance-wrap">
+        <div class="tag-chip" data-imp="low" onclick="libToggleImportance('low')">低 1-3</div>
+        <div class="tag-chip" data-imp="mid" onclick="libToggleImportance('mid')">中 4-6</div>
+        <div class="tag-chip" data-imp="high" onclick="libToggleImportance('high')">高 7-10</div>
+      </div>
+      <div class="lib-drawer-section-label">分類 · category</div>
       <div class="tags-wrap" id="lib-tags-wrap"></div>
       <div class="lib-drawer-footer">
         <button class="lib-drawer-cleanup-btn" onclick="libCleanDuplicates()">🧹 清理重複</button>
@@ -4885,7 +4929,10 @@
           <div class="stat"><div class="stat-label">點數</div><div class="stat-value" id="fishing-stat-points">XX</div></div>
         </div>
         <div class="game-fish" id="fishing-recent-tags"></div>
-        <div class="game-btn" onclick="startGameViaChat('fishing')">一起去釣魚 →</div>
+        <div class="game-btn-row">
+          <div class="game-btn" onclick="startGameViaChat('fishing')">一起玩</div>
+          <div class="game-btn secondary" onclick="openSoloGame('fishing')">自己玩</div>
+        </div>
       </div>
 
       <!-- 老虎機戰績 -->
@@ -4903,7 +4950,10 @@
           <div class="stat"><div class="stat-label">勝率</div><div class="stat-value" id="slots-stat-winrate">XX</div></div>
         </div>
         <div id="slots-achievements"></div>
-        <div class="game-btn" style="margin-top:12px" onclick="startGameViaChat('slots')">一起去賭 →</div>
+        <div class="game-btn-row" style="margin-top:12px">
+          <div class="game-btn" onclick="startGameViaChat('slots')">一起玩</div>
+          <div class="game-btn secondary" onclick="openSoloGame('slots')">自己玩</div>
+        </div>
       </div>
 
       <!-- 二十一點戰績 -->
@@ -4921,9 +4971,30 @@
           <div class="stat"><div class="stat-label">Blackjack</div><div class="stat-value" id="bj-stat-blackjacks">XX</div></div>
         </div>
         <div id="bj-achievements"></div>
-        <div class="game-btn" style="margin-top:12px" onclick="startGameViaChat('blackjack')">一起去玩牌 →</div>
+        <div class="game-btn-row" style="margin-top:12px">
+          <div class="game-btn" onclick="startGameViaChat('blackjack')">一起玩</div>
+          <div class="game-btn secondary" onclick="openSoloGame('blackjack')">自己玩</div>
+        </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- 遊戲室：自己玩 -->
+<div class="screen" id="game-solo">
+  <div class="page">
+    <div class="head">
+      <div class="head-back" onclick="goTo('game-room')">‹</div>
+      <div class="head-title" id="game-solo-title">遊戲</div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="game-output" id="game-solo-output"></div>
+
+    <div class="game-input-row">
+      <input class="game-input" id="game-solo-input" type="text" placeholder="輸入指令…" onkeydown="if(event.key==='Enter')sendSoloGameCommandFromInput()" />
+      <button class="game-send-btn" onclick="sendSoloGameCommandFromInput()">➤</button>
     </div>
   </div>
 </div>
@@ -6275,7 +6346,20 @@ async function jumpToSearchResult(idx) {
 
   // ===== 記憶庫 =====
   let libraryBuckets = [];
-  let libActiveTags = new Set(); // 多選：抽屜裡選中的標籤集合，空集合＝不按標籤篩選
+  // 標籤合併成5大類，點大類時比對bucket的domain/tags是否含有對應關鍵詞（雙向包含比對，容錯一點）。
+  // 這份關鍵詞表目前是憑類別名稱+已知的少數幾個真實tag（自省/恋爱/编程/心理）猜的，不是從真實數據裡完整統計出來的，
+  // 之後看實際domain/tags裡還出現什麼詞可以再擴充
+  const LIB_CATEGORIES = [
+    { key: 'daily',        label: '🌊日常', keywords: ['日常','生活','起居','飲食','饮食','运动','運動','睡眠','工作','學習','学习'] },
+    { key: 'relationship', label: '💜关系', keywords: ['关系','關係','恋爱','戀愛','感情','家人','朋友','情感'] },
+    { key: 'creative',     label: '🎨创作', keywords: ['创作','創作','写作','寫作','绘画','繪畫','音乐','音樂','编程','編程','设计','設計','插画','插畫'] },
+    { key: 'home',         label: '🏠家',   keywords: ['家','家庭','房子','家务','家務','宠物','寵物'] },
+    { key: 'inner',        label: '🧠内心', keywords: ['内心','內心','自省','心理','情绪','情緒','思考','梦','夢','焦虑','焦慮'] }
+  ];
+  let libActiveCategories = new Set(); // 多選：抽屜裡選中的分類集合，空集合＝不按分類篩選
+
+  const LIB_IMPORTANCE_RANGES = { low: [1,3], mid: [4,6], high: [7,10] };
+  let libActiveImportance = null; // null | 'low' | 'mid' | 'high'，單選（點同一個再點一次取消）
   const libDomainEmojiMap = { '自省':'🪸', '恋爱':'💚', '编程':'🐚', '心理':'🌊' };
 
   function libDomainEmoji(domain) { return libDomainEmojiMap[domain] || '✦'; }
@@ -6321,8 +6405,10 @@ async function jumpToSearchResult(idx) {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       libraryBuckets = data.result || [];
-      libActiveTags = new Set();
+      libActiveCategories = new Set();
+      libActiveImportance = null;
       renderLibraryTags();
+      renderLibraryImportance();
       renderLibrary(libraryBuckets);
     } catch(e) {
       console.error('記憶庫加載失敗', e);
@@ -6378,30 +6464,50 @@ async function jumpToSearchResult(idx) {
     }
   }
 
-  // 抽屜裡的標籤chip：多選，點一下切換選中/取消
+  // 抽屜裡的分類chip：固定5大類（不像以前依bucket數據動態生成），多選，點一下切換選中/取消
   function renderLibraryTags() {
     const wrap = document.getElementById('lib-tags-wrap');
-    const domains = new Set();
-    libraryBuckets.forEach(b => libDomainList(b).forEach(d => domains.add(d)));
-    const chips = Array.from(domains).map(d =>
-      `<div class="tag-chip${libActiveTags.has(d)?' active':''}" data-tag="${d.replace(/"/g,'&quot;')}">${d}</div>`
-    );
-    wrap.innerHTML = chips.length ? chips.join('') : '<div class="lib-status">還沒有標籤</div>';
+    wrap.innerHTML = LIB_CATEGORIES.map(c =>
+      `<div class="tag-chip${libActiveCategories.has(c.key)?' active':''}" data-cat="${c.key}">${c.label}</div>`
+    ).join('');
     wrap.querySelectorAll('.tag-chip').forEach(chip => {
-      chip.addEventListener('click', () => libToggleTag(chip.getAttribute('data-tag')));
+      chip.addEventListener('click', () => libToggleCategory(chip.getAttribute('data-cat')));
     });
     updateLibFilterBtnUI();
   }
 
-  function libToggleTag(tag) {
-    if (libActiveTags.has(tag)) libActiveTags.delete(tag); else libActiveTags.add(tag);
+  function libToggleCategory(key) {
+    if (libActiveCategories.has(key)) libActiveCategories.delete(key); else libActiveCategories.add(key);
     renderLibraryTags();
     libFilterAndRender();
   }
 
-  function libClearTags() {
-    libActiveTags.clear();
+  // bucket的domain/tags任一個字串，跟這個分類的關鍵詞任一個雙向包含，就算匹配這個分類
+  function libCategoryMatches(bucket, categoryKey) {
+    const cat = LIB_CATEGORIES.find(c => c.key === categoryKey);
+    if (!cat) return false;
+    return libDomainList(bucket).some(d => cat.keywords.some(kw => d.includes(kw) || kw.includes(d)));
+  }
+
+  // 重要程度3檔：單選，點同一個再點一次取消
+  function renderLibraryImportance() {
+    document.querySelectorAll('#lib-importance-wrap .tag-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.imp === libActiveImportance);
+    });
+  }
+
+  function libToggleImportance(level) {
+    libActiveImportance = libActiveImportance === level ? null : level;
+    renderLibraryImportance();
+    updateLibFilterBtnUI();
+    libFilterAndRender();
+  }
+
+  function libClearAllFilters() {
+    libActiveCategories.clear();
+    libActiveImportance = null;
     renderLibraryTags();
+    renderLibraryImportance();
     libFilterAndRender();
   }
 
@@ -6414,18 +6520,22 @@ async function jumpToSearchResult(idx) {
     const btn = document.getElementById('lib-filter-btn');
     const countEl = document.getElementById('lib-filter-btn-count');
     const clearBtn = document.getElementById('lib-drawer-clear');
-    const n = libActiveTags.size;
+    const n = libActiveCategories.size + (libActiveImportance ? 1 : 0);
     if (btn) btn.classList.toggle('active', n > 0);
     if (countEl) { countEl.style.display = n > 0 ? 'flex' : 'none'; countEl.textContent = n; }
     if (clearBtn) clearBtn.style.display = n > 0 ? 'inline-block' : 'none';
   }
 
   // 搜索关键词匹配標題/內容/domain/tags（libDomainList已经合并了domain+tags），
-  // 跟抽屜裡選中的標籤是交叉過濾（都要滿足）
+  // 跟抽屜裡選中的分類/重要程度是交叉過濾（都要滿足）
   function libFilterAndRender() {
     const q = (document.getElementById('lib-search-input').value || '').trim().toLowerCase();
     let filtered = libraryBuckets;
-    if (libActiveTags.size) filtered = filtered.filter(b => libDomainList(b).some(d => libActiveTags.has(d)));
+    if (libActiveCategories.size) filtered = filtered.filter(b => Array.from(libActiveCategories).some(key => libCategoryMatches(b, key)));
+    if (libActiveImportance) {
+      const [min, max] = LIB_IMPORTANCE_RANGES[libActiveImportance];
+      filtered = filtered.filter(b => (b.importance||0) >= min && (b.importance||0) <= max);
+    }
     if (q) filtered = filtered.filter(b =>
       (b.name||'').toLowerCase().includes(q) ||
       (b.content_preview||'').toLowerCase().includes(q) ||
@@ -10484,6 +10594,59 @@ async function startGameViaChat(game) {
   await goTo('chat');
   document.getElementById('chat-input').value = opener;
   sendMessage();
+}
+
+// ===== 遊戲室：自己玩（獨立界面，指令直接打給遊戲端點，不經過AI） =====
+const GAME_SOLO_META = {
+  fishing:   { title: '🎣 釣魚 · Fishing',      endpoint: 'https://ryven.homes/relay/game/fishing' },
+  slots:     { title: '🎰 老虎機 · Slots',       endpoint: 'https://ryven.homes/relay/game/arcade' },
+  blackjack: { title: '🃏 二十一點 · Blackjack', endpoint: 'https://ryven.homes/relay/game/arcade' }
+};
+let currentSoloGame = null;
+
+async function openSoloGame(game) {
+  currentSoloGame = game;
+  const meta = GAME_SOLO_META[game];
+  document.getElementById('game-solo-output').innerHTML = '';
+  document.getElementById('game-solo-title').textContent = meta ? meta.title : '遊戲';
+  await goTo('game-solo');
+}
+
+function appendSoloGameLine(text, type) {
+  const el = document.getElementById('game-solo-output');
+  const line = document.createElement('div');
+  line.className = 'game-line ' + type;
+  line.textContent = text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendSoloGameCommand(cmd) {
+  const meta = GAME_SOLO_META[currentSoloGame];
+  if (!meta || !cmd || !cmd.trim()) return;
+  appendSoloGameLine('> ' + cmd, 'cmd');
+  try {
+    const res = await fetch(meta.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+      body: JSON.stringify({ cmd })
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    const text = data.message || data.result || data.output || JSON.stringify(data);
+    appendSoloGameLine(text, 'output');
+  } catch(e) {
+    console.error('遊戲指令失敗', e);
+    appendSoloGameLine('🌙 連不上，稍後再試', 'error');
+  }
+}
+
+function sendSoloGameCommandFromInput() {
+  const input = document.getElementById('game-solo-input');
+  const cmd = input.value.trim();
+  if (!cmd) return;
+  input.value = '';
+  sendSoloGameCommand(cmd);
 }
 
 // fish id（relay.py的fish_list回傳的是id，比如"silver_pike"）→ 中文名/稀有度映射表。
