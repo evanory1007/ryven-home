@@ -10305,7 +10305,7 @@ async function loadGameRoom() {
     });
     if (!res.ok) throw new Error('bad status ' + res.status);
     const data = await res.json();
-    document.getElementById('fishing-stat-species').textContent = `${data.caught_species ?? 0}/${data.total_species ?? 0}`;
+    document.getElementById('fishing-stat-species').textContent = `${data.encyclopedia ?? 0}/${data.encyclopedia_total ?? 0}`;
     document.getElementById('fishing-stat-casts').textContent = data.total_casts ?? 0;
     document.getElementById('fishing-stat-points').textContent = data.points ?? 0;
 
