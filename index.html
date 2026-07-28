@@ -2408,6 +2408,14 @@
       transition: background 0.2s;
     }
     #settings .sheet-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.35), rgba(201,168,76,0.15)); }
+    #settings .prompt-textarea {
+      width: 100%; min-height: 180px; resize: vertical;
+      background: rgba(15,20,40,0.4); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-size: 14px; line-height: 1.7;
+      outline: none; transition: border-color 0.2s; margin-bottom: 10px;
+    }
+    #settings .prompt-textarea:focus { border-color: var(--tide-gold-soft); }
+    #settings .prompt-actions { display: flex; gap: 8px; }
     #settings .interface-edit-actions { display: flex; gap: 8px; padding: 10px 18px 14px; }
     #settings .danger-btn { background: transparent !important; border-color: color-mix(in srgb, var(--danger) 40%, transparent) !important; color: var(--danger) !important; }
     #settings .danger-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent) !important; }
@@ -3998,6 +4006,16 @@
       </div>
     </div>
 
+    <!-- ===== 對話提示 ===== -->
+    <div class="sec">
+      <div class="sec-label">對話提示 · System Prompt</div>
+      <textarea class="prompt-textarea" id="settings-system-prompt" spellcheck="false"></textarea>
+      <div class="prompt-actions">
+        <button class="sheet-btn" style="flex:1" onclick="resetSystemPromptSetting()">恢復默認</button>
+        <button class="sheet-btn" style="flex:1;background:linear-gradient(135deg, rgba(201,168,76,0.4), rgba(201,168,76,0.18));" onclick="saveSystemPromptSetting()">保存</button>
+      </div>
+    </div>
+
     <!-- ===== 接口管理 ===== -->
     <div class="sec">
       <div class="sec-label">接口 · integrations</div>
@@ -5533,7 +5551,7 @@ async function loadChatHistory() {
     if (id==='differences') loadDifferences();
     if (id==='desk') loadDesk();
     if (id==='chat') loadChatHistory();
-    if (id==='settings') { renderSettingsPage(); }
+    if (id==='settings') { renderSettingsPage(); loadSystemPromptSetting(); }
     if (id==='depths') loadDepthsPage();
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
@@ -7444,9 +7462,13 @@ async function loadChatHistory() {
   // 這裡沿用原本就有的英文指令，讓語音模式下的回覆改用英文（TTS用英文音色念）
   const SYSTEM_PROMPT_VOICE_SUFFIX = `English only. Speak entirely in English, natural and warm like a lover texting. Short sentences.`;
 
-  // 語音模式開了才會在系統提示後面加SYSTEM_PROMPT_VOICE_SUFFIX；關了就是純SYSTEM_PROMPT_BASE、繼續說中文
+  // 設置頁「對話提示」可以自訂system prompt整段覆蓋掉SYSTEM_PROMPT_BASE；沒自訂過(null)就用默認的
+  let customSystemPrompt = null;
+
+  // 語音模式開了才會在系統提示後面加SYSTEM_PROMPT_VOICE_SUFFIX；關了就是純基礎提示、繼續說中文
   function getSystemPrompt() {
-    return voiceModeEnabled ? SYSTEM_PROMPT_BASE + '\n\n' + SYSTEM_PROMPT_VOICE_SUFFIX : SYSTEM_PROMPT_BASE;
+    const base = customSystemPrompt || SYSTEM_PROMPT_BASE;
+    return voiceModeEnabled ? base + '\n\n' + SYSTEM_PROMPT_VOICE_SUFFIX : base;
   }
 
   let chatHistory = [];
@@ -7741,7 +7763,7 @@ async function loadChatHistory() {
       await fetch('https://ryven.homes/relay/user/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname })
+        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname, customPrompt: customSystemPrompt })
       });
     } catch(e) {
       console.error('用戶配置同步失敗', e);
@@ -7774,8 +7796,52 @@ async function loadChatHistory() {
         localStorage.setItem('ryven-nickname', nickname);
         applyNicknameToUI();
       }
+      customSystemPrompt = data.customPrompt || null;
     } catch(e) {
       console.error('用戶配置加載失敗', e);
+    }
+  }
+
+  // 對話提示：進settings頁時把textarea填成目前生效的prompt（customSystemPrompt優先，沒有就用默認的SYSTEM_PROMPT_BASE）
+  // 特意不放進renderSettingsPage()——那個函式會被字體/語言/推送開關等各種小改動反覆呼叫，
+  // 放進去的話使用者正在編輯textarea時點一下別的設置，內容會被蓋掉
+  function loadSystemPromptSetting() {
+    const el = document.getElementById('settings-system-prompt');
+    if (el) el.value = customSystemPrompt || SYSTEM_PROMPT_BASE;
+  }
+
+  async function saveSystemPromptSetting() {
+    const val = document.getElementById('settings-system-prompt').value;
+    customSystemPrompt = val.trim() ? val : null;
+    showToast('✦ 保存中…');
+    try {
+      await fetch('https://ryven.homes/relay/user/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname, customPrompt: customSystemPrompt })
+      });
+      showToast('✦ 已保存');
+    } catch(e) {
+      console.error('對話提示保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+    }
+  }
+
+  async function resetSystemPromptSetting() {
+    customSystemPrompt = null; // 明確設回null，而不是把SYSTEM_PROMPT_BASE的文字當成自訂內容存進去——
+    // 不然以後SYSTEM_PROMPT_BASE本身改了，這裡會卡在恢復默認當下那份舊文字、不會自動跟著新的默認值走
+    document.getElementById('settings-system-prompt').value = SYSTEM_PROMPT_BASE;
+    showToast('✦ 保存中…');
+    try {
+      await fetch('https://ryven.homes/relay/user/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname, customPrompt: null })
+      });
+      showToast('✦ 已恢復默認');
+    } catch(e) {
+      console.error('對話提示恢復默認失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
     }
   }
 
