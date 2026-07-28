@@ -1953,17 +1953,46 @@
     #game-room .head-back:hover { border-color: var(--tide-gold-soft); }
     #game-room .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
 
-    #game-room .game-card-list { display: flex; flex-direction: column; gap: 14px; }
+    #game-room .arcade-title { text-align: center; margin-bottom: 4px; }
+    #game-room .arcade-title-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; color: var(--parchment); letter-spacing: 0.02em; }
+    #game-room .arcade-title-cn { font-size: 11px; letter-spacing: 0.5em; color: var(--tide-gold-soft); margin-top: 2px; }
+    #game-room .arcade-rule { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--tide-gold), transparent); margin: 12px auto 24px; }
+
+    #game-room .game-cards { display: flex; flex-direction: column; gap: 14px; }
     #game-room .game-card {
-      display: flex; align-items: center; gap: 16px; padding: 20px;
-      background: linear-gradient(135deg, rgba(36,48,96,0.35), rgba(26,31,58,0.55));
-      border: 1px solid rgba(201,168,76,0.12); border-radius: 16px; cursor: pointer;
-      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+      background: linear-gradient(135deg, rgba(36,48,96,0.5), rgba(15,20,40,0.7));
+      border: 1px solid rgba(201,168,76,0.15); border-radius: 14px; padding: 18px;
+      transition: border-color 0.25s, box-shadow 0.25s;
     }
-    #game-room .game-card:hover { transform: translateY(-3px); border-color: var(--tide-gold-soft); box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 16px rgba(201,168,76,0.06); }
-    #game-room .game-card-em { font-size: 32px; filter: drop-shadow(0 0 6px rgba(201,168,76,0.25)); }
-    #game-room .game-card-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
-    #game-room .game-card-en { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.25em; color: var(--tide-gold-soft); text-transform: uppercase; margin-top: 3px; }
+    #game-room .game-card:hover { border-color: var(--tide-gold-soft); box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 16px rgba(201,168,76,0.06); }
+    #game-room .game-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    #game-room .game-icon { font-size: 26px; width: 46px; height: 46px; flex-shrink: 0; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    #game-room .game-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
+    #game-room .game-sub { font-size: 9px; letter-spacing: 0.3em; color: var(--tide-gold-soft); text-transform: uppercase; margin-top: 3px; }
+
+    #game-room .game-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    #game-room .stat { background: rgba(10,14,31,0.5); border-radius: 8px; padding: 8px 10px; }
+    #game-room .stat-label { font-size: 10px; color: var(--parchment-ghost); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+    #game-room .stat-value { font-size: 14px; color: var(--tide-gold); font-weight: 500; }
+
+    #game-room .game-fish { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    #game-room .fish-tag { font-size: 11px; padding: 3px 9px; border-radius: 20px; background: rgba(109,184,160,0.1); border: 1px solid rgba(109,184,160,0.25); color: var(--tide-green); }
+    #game-room .fish-tag.rare { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3); color: var(--tide-gold); }
+    #game-room .fish-tag.epic { background: rgba(167,120,201,0.1); border-color: rgba(167,120,201,0.3); color: #a778c9; }
+
+    #game-room .achievement { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    #game-room .achievement:last-child { border-bottom: none; }
+    #game-room .ach-icon { font-size: 16px; width: 26px; text-align: center; flex-shrink: 0; }
+    #game-room .ach-text { font-size: 12px; color: var(--parchment-ghost); flex: 1; }
+    #game-room .ach-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(201,168,76,0.12); color: var(--tide-gold); border: 1px solid rgba(201,168,76,0.2); white-space: nowrap; }
+
+    #game-room .game-btn {
+      width: 100%; padding: 10px; margin-top: 4px;
+      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
+      color: var(--tide-gold); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px;
+      cursor: pointer; text-align: center; transition: background 0.2s;
+    }
+    #game-room .game-btn:hover { background: rgba(201,168,76,0.16); }
 
     /* ══════════════════════ 艦橋 (#helm) ══════════════════════ */
     #helm::before {
@@ -4778,7 +4807,7 @@
   </div>
 </div>
 
-<!-- 遊戲室 -->
+<!-- 遊戲室：戰績/成就展示 -->
 <div class="screen" id="game-room">
   <div class="page">
     <div class="head">
@@ -4787,22 +4816,68 @@
       <div style="width:36px"></div>
     </div>
 
-    <div class="game-card-list">
-      <div class="game-card" onclick="startGameViaChat('fishing')">
-        <div class="game-card-em">🎣</div>
-        <div class="game-card-name">釣魚</div>
-        <div class="game-card-en">Fishing</div>
+    <div class="arcade-title">
+      <div class="arcade-title-en">Game Room</div>
+      <div class="arcade-title-cn">深 海 遊 戲 廳</div>
+    </div>
+    <div class="arcade-rule"></div>
+
+    <div class="game-cards">
+
+      <!-- 釣魚檔案 -->
+      <div class="game-card">
+        <div class="game-card-head">
+          <div class="game-icon">🎣</div>
+          <div>
+            <div class="game-name">釣魚檔案</div>
+            <div class="game-sub">Fishing Log</div>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat"><div class="stat-label">圖鑑</div><div class="stat-value" id="fishing-stat-species">XX</div></div>
+          <div class="stat"><div class="stat-label">總竿數</div><div class="stat-value" id="fishing-stat-casts">XX</div></div>
+          <div class="stat"><div class="stat-label">點數</div><div class="stat-value" id="fishing-stat-points">XX</div></div>
+        </div>
+        <div class="game-fish" id="fishing-recent-tags"></div>
+        <div class="game-btn" onclick="startGameViaChat('fishing')">一起去釣魚 →</div>
       </div>
-      <div class="game-card" onclick="startGameViaChat('slots')">
-        <div class="game-card-em">🎰</div>
-        <div class="game-card-name">老虎機</div>
-        <div class="game-card-en">Slots</div>
+
+      <!-- 老虎機戰績 -->
+      <div class="game-card">
+        <div class="game-card-head">
+          <div class="game-icon">🎰</div>
+          <div>
+            <div class="game-name">老虎機戰績</div>
+            <div class="game-sub">Slots Record</div>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat"><div class="stat-label">籌碼</div><div class="stat-value" id="slots-stat-chips">XX</div></div>
+          <div class="stat"><div class="stat-label">最高倍數</div><div class="stat-value" id="slots-stat-max">XX</div></div>
+          <div class="stat"><div class="stat-label">勝率</div><div class="stat-value" id="slots-stat-winrate">XX</div></div>
+        </div>
+        <div id="slots-achievements"></div>
+        <div class="game-btn" style="margin-top:12px" onclick="startGameViaChat('slots')">一起去賭 →</div>
       </div>
-      <div class="game-card" onclick="startGameViaChat('blackjack')">
-        <div class="game-card-em">🃏</div>
-        <div class="game-card-name">二十一點</div>
-        <div class="game-card-en">Blackjack</div>
+
+      <!-- 二十一點戰績 -->
+      <div class="game-card">
+        <div class="game-card-head">
+          <div class="game-icon">🃏</div>
+          <div>
+            <div class="game-name">二十一點戰績</div>
+            <div class="game-sub">Blackjack Record</div>
+          </div>
+        </div>
+        <div class="game-stats">
+          <div class="stat"><div class="stat-label">勝場</div><div class="stat-value" id="bj-stat-wins">XX</div></div>
+          <div class="stat"><div class="stat-label">敗場</div><div class="stat-value" id="bj-stat-losses">XX</div></div>
+          <div class="stat"><div class="stat-label">Blackjack</div><div class="stat-value" id="bj-stat-blackjacks">XX</div></div>
+        </div>
+        <div id="bj-achievements"></div>
+        <div class="game-btn" style="margin-top:12px" onclick="startGameViaChat('blackjack')">一起去玩牌 →</div>
       </div>
+
     </div>
   </div>
 </div>
@@ -5463,6 +5538,7 @@ async function loadChatHistory() {
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
     if (id==='album') loadAlbumPage();
+    if (id==='game-room') loadGameRoom();
 
     if (restoringLibraryScroll) {
       window.scrollTo(0, libraryScrollY);
@@ -10204,6 +10280,82 @@ async function startGameViaChat(game) {
   await goTo('chat');
   document.getElementById('chat-input').value = opener;
   sendMessage();
+}
+
+// 遊戲室戰績/成就：GET /relay/game/fishing-save + /relay/game/arcade-save，兩份數據各自獨立失敗互不影響
+async function loadGameRoom() {
+  try {
+    const res = await fetch('https://ryven.homes/relay/game/fishing-save', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    document.getElementById('fishing-stat-species').textContent = `${data.caught_species ?? 0}/${data.total_species ?? 0}`;
+    document.getElementById('fishing-stat-casts').textContent = data.total_casts ?? 0;
+    document.getElementById('fishing-stat-points').textContent = data.points ?? 0;
+
+    const fish = data.recent_fish || [];
+    const tagsEl = document.getElementById('fishing-recent-tags');
+    tagsEl.innerHTML = fish.length
+      ? fish.map(() => `<span class="fish-tag"></span>`).join('')
+      : '<span class="fish-tag" style="opacity:0.5">還沒有釣到魚</span>';
+    tagsEl.querySelectorAll('.fish-tag').forEach((el, i) => {
+      if (!fish[i]) return;
+      const rarityClass = fishRarityClass(fish[i].rarity);
+      if (rarityClass) el.classList.add(rarityClass);
+      el.textContent = `${fish[i].name} · ${fish[i].rarity}`;
+    });
+  } catch(e) {
+    console.error('釣魚檔案加載失敗', e);
+  }
+
+  try {
+    const res = await fetch('https://ryven.homes/relay/game/arcade-save', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+
+    const slots = data.slots || {};
+    document.getElementById('slots-stat-chips').textContent = slots.chips ?? 0;
+    document.getElementById('slots-stat-max').textContent = slots.max_multiplier != null ? `×${slots.max_multiplier}` : 'XX';
+    document.getElementById('slots-stat-winrate').textContent = slots.win_rate != null ? `${Math.round(slots.win_rate * 100)}%` : 'XX';
+    renderAchievements('slots-achievements', slots.achievements || []);
+
+    const bj = data.blackjack || {};
+    document.getElementById('bj-stat-wins').textContent = bj.wins ?? 0;
+    document.getElementById('bj-stat-losses').textContent = bj.losses ?? 0;
+    document.getElementById('bj-stat-blackjacks').textContent = bj.blackjacks != null ? `${bj.blackjacks}次` : 'XX';
+    renderAchievements('bj-achievements', bj.achievements || []);
+  } catch(e) {
+    console.error('遊戲戰績加載失敗', e);
+  }
+}
+
+function fishRarityClass(rarity) {
+  if (rarity === '史詩') return 'epic';
+  if (rarity === '稀有') return 'rare';
+  return '';
+}
+
+function renderAchievements(containerId, achievements) {
+  const el = document.getElementById(containerId);
+  if (!achievements.length) { el.innerHTML = ''; return; }
+  el.innerHTML = achievements.map(() => `
+    <div class="achievement">
+      <span class="ach-icon"></span>
+      <span class="ach-text"></span>
+      <span class="ach-badge"></span>
+    </div>
+  `).join('');
+  el.querySelectorAll('.achievement').forEach((row, i) => {
+    const a = achievements[i];
+    row.querySelector('.ach-icon').textContent = a.icon || '🏅';
+    row.querySelector('.ach-text').textContent = a.text || '';
+    const badge = row.querySelector('.ach-badge');
+    badge.textContent = a.unlocked ? '已解鎖' : '未解鎖';
+    badge.style.opacity = a.unlocked ? '1' : '0.4';
+  });
 }
 
   // 主题切换
