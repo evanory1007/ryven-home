@@ -10282,6 +10282,21 @@ async function startGameViaChat(game) {
   sendMessage();
 }
 
+// fish id（relay.py的fish_list回傳的是id，比如"silver_pike"）→ 中文名/稀有度映射表。
+// 目前只有silver_pike是確認過的，其餘幾筆先照mockup裡出現過的魚名猜的，之後看實際fish_list裡出現什麼id再擴充/修正；
+// 沒收錄的id就直接顯示id本身，不會憑空編一個中文名
+const FISH_ID_MAP = {
+  silver_pike:    { name: '銀梭魚', rarity: '少見' },
+  moonlight_carp: { name: '月光鯉', rarity: '常見' },
+  glow_jelly:     { name: '夜光水母', rarity: '稀有' },
+  abyss_eel:      { name: '深淵鰻', rarity: '史詩' }
+};
+function fishTagInfo(id) {
+  const entry = FISH_ID_MAP[id];
+  if (!entry) return { text: id, cls: '' };
+  return { text: `${entry.name} · ${entry.rarity}`, cls: fishRarityClass(entry.rarity) };
+}
+
 // 遊戲室戰績/成就：GET /relay/game/fishing-save + /relay/game/arcade-save，兩份數據各自獨立失敗互不影響
 async function loadGameRoom() {
   try {
@@ -10294,16 +10309,16 @@ async function loadGameRoom() {
     document.getElementById('fishing-stat-casts').textContent = data.total_casts ?? 0;
     document.getElementById('fishing-stat-points').textContent = data.points ?? 0;
 
-    const fish = data.recent_fish || [];
+    const fishIds = data.fish_list || [];
     const tagsEl = document.getElementById('fishing-recent-tags');
-    tagsEl.innerHTML = fish.length
-      ? fish.map(() => `<span class="fish-tag"></span>`).join('')
+    tagsEl.innerHTML = fishIds.length
+      ? fishIds.map(() => `<span class="fish-tag"></span>`).join('')
       : '<span class="fish-tag" style="opacity:0.5">還沒有釣到魚</span>';
     tagsEl.querySelectorAll('.fish-tag').forEach((el, i) => {
-      if (!fish[i]) return;
-      const rarityClass = fishRarityClass(fish[i].rarity);
-      if (rarityClass) el.classList.add(rarityClass);
-      el.textContent = `${fish[i].name} · ${fish[i].rarity}`;
+      if (!fishIds[i]) return;
+      const info = fishTagInfo(fishIds[i]);
+      if (info.cls) el.classList.add(info.cls);
+      el.textContent = info.text;
     });
   } catch(e) {
     console.error('釣魚檔案加載失敗', e);
