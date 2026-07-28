@@ -8678,6 +8678,12 @@ async function loadChatHistory() {
           body: JSON.stringify({ text: input.content })
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
+        // 推送通知是額外的提醒，失敗不影響信箋本身已經寫入成功
+        fetch('https://ryven.homes/relay/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ text: input.content })
+        }).catch(e => console.error('推送通知發送失敗', e));
         resultText = '已經留言給Nory了';
         displayContent = input.content || '';
       } else if (name === 'record_my_depth') {
