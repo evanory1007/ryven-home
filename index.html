@@ -3022,15 +3022,18 @@
     #diary .nory-sign { display: flex; justify-content: flex-start; margin-top: 4px; }
     #diary .nory-sign-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: rgba(201,168,76,0.35); letter-spacing: 0.08em; }
 
-    /* Ryven給Nory日記留的評論：單條、可編輯，跟下面通用的「留言」(env-comments)是不同的兩回事 */
-    #diary .diary-comment-section { padding: 8px 16px 12px; border-top: 1px dashed rgba(109,184,160,0.15); }
+    /* Ryven/Nory給這篇日記留的話：兩個獨立區塊各自可編輯，跟下面通用的「留言」(env-comments)是不同的兩回事 */
+    #diary .diary-comment-section { padding: 8px 16px 12px; border-top: 1px dashed rgba(109,184,160,0.15); display: flex; flex-direction: column; gap: 10px; }
     #diary .diary-comment-display { display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 20px; }
     #diary .diary-comment-body { flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; line-height: 1.6; display: none; }
-    #diary .diary-comment-section.has-comment .diary-comment-body { display: block; }
-    #diary .diary-comment-label { color: var(--tide-green); }
+    #diary .diary-comment-block.has-comment .diary-comment-body { display: block; }
+    #diary .diary-comment-label { margin-right: 3px; }
+    #diary .diary-comment-label::after { content: ' · '; opacity: 0.6; }
+    #diary .diary-comment-block.ryven .diary-comment-label { color: var(--tide-green); }
+    #diary .diary-comment-block.nory .diary-comment-label { color: rgba(130,170,240,0.8); }
     #diary .diary-comment-text { color: var(--parchment-dim); }
     #diary .diary-comment-empty { flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); opacity: 0.6; }
-    #diary .diary-comment-section.has-comment .diary-comment-empty { display: none; }
+    #diary .diary-comment-block.has-comment .diary-comment-empty { display: none; }
     #diary .diary-comment-edit-icon { font-size: 12px; opacity: 0.5; flex-shrink: 0; transition: opacity 0.2s; }
     #diary .diary-comment-display:hover .diary-comment-edit-icon { opacity: 1; }
     #diary .diary-comment-edit-row { display: flex; gap: 8px; margin-top: 6px; }
@@ -3039,14 +3042,18 @@
       padding: 7px 12px; font-size: 12px; color: var(--parchment); outline: none;
       font-family: 'Cormorant Garamond', serif; font-style: italic; transition: border-color 0.2s;
     }
+    #diary .diary-comment-block.nory .diary-comment-input { border-color: rgba(130,170,240,0.25); }
     #diary .diary-comment-input:focus { border-color: rgba(109,184,160,0.5); }
+    #diary .diary-comment-block.nory .diary-comment-input:focus { border-color: rgba(130,170,240,0.5); }
     #diary .diary-comment-input::placeholder { color: var(--parchment-ghost); }
     #diary .diary-comment-save-btn {
       width: 30px; height: 30px; border-radius: 50%; background: rgba(109,184,160,0.12); border: 1px solid rgba(109,184,160,0.25);
       display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: var(--tide-green);
       flex-shrink: 0; transition: background 0.2s;
     }
+    #diary .diary-comment-block.nory .diary-comment-save-btn { background: rgba(130,170,240,0.12); border-color: rgba(130,170,240,0.25); color: rgba(130,170,240,0.85); }
     #diary .diary-comment-save-btn:hover { background: rgba(109,184,160,0.22); }
+    #diary .diary-comment-block.nory .diary-comment-save-btn:hover { background: rgba(130,170,240,0.22); }
     #diary .wax-seal { display: flex; justify-content: flex-end; padding-right: 4px; margin-top: 4px; position: relative; }
     #diary .wax-circle { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(109,184,160,0.5), rgba(46,74,120,0.4)); border: 1px solid rgba(109,184,160,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(109,184,160,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.08); }
 
@@ -6194,15 +6201,28 @@ async function jumpToSearchResult(idx) {
             <div class="letter-text"></div>
             <div class="nory-sign"><div class="nory-sign-text">— Nory</div></div>
           </div>
-          <div class="diary-comment-section" data-daykey="${key}">
-            <div class="diary-comment-display" onclick="diaryToggleCommentEdit(this)">
-              <span class="diary-comment-body"><span class="diary-comment-label">Ryven · </span><span class="diary-comment-text"></span></span>
-              <span class="diary-comment-empty">點這裡幫Ryven留句話…</span>
-              <span class="diary-comment-edit-icon">✏️</span>
+          <div class="diary-comment-section">
+            <div class="diary-comment-block ryven" data-daykey="${key}" data-who="ryven">
+              <div class="diary-comment-display" onclick="diaryToggleCommentEdit(this)">
+                <span class="diary-comment-body"><span class="diary-comment-label">Ryven</span><span class="diary-comment-text"></span></span>
+                <span class="diary-comment-empty">點這裡幫Ryven留句話…</span>
+                <span class="diary-comment-edit-icon">✏️</span>
+              </div>
+              <div class="diary-comment-edit-row" style="display:none">
+                <input class="diary-comment-input" placeholder="Ryven想說的話…" />
+                <div class="diary-comment-save-btn" onclick="diarySaveComment(this)">✓</div>
+              </div>
             </div>
-            <div class="diary-comment-edit-row" style="display:none">
-              <input class="diary-comment-input" placeholder="Ryven想說的話…" />
-              <div class="diary-comment-save-btn" onclick="diarySaveComment(this)">✓</div>
+            <div class="diary-comment-block nory" data-daykey="${key}" data-who="nory">
+              <div class="diary-comment-display" onclick="diaryToggleCommentEdit(this)">
+                <span class="diary-comment-body"><span class="diary-comment-label">Nory</span><span class="diary-comment-text"></span></span>
+                <span class="diary-comment-empty">回句話給Ryven…</span>
+                <span class="diary-comment-edit-icon">✏️</span>
+              </div>
+              <div class="diary-comment-edit-row" style="display:none">
+                <input class="diary-comment-input" placeholder="回Ryven的話…" />
+                <div class="diary-comment-save-btn" onclick="diarySaveComment(this)">✓</div>
+              </div>
             </div>
           </div>
           <div class="env-comments">
@@ -6282,20 +6302,24 @@ async function jumpToSearchResult(idx) {
   }
 
   // Ryven給這篇Nory日記留的評論：從diaryData[key].comment讀，填進顯示區跟編輯輸入框
+  // comment現在是{ryven, nory}兩個獨立字段，兩個.diary-comment-block各自對應一個
   function diaryFillComment(cardEl, key) {
-    const section = cardEl.querySelector('.diary-comment-section');
-    if (!section) return;
     const entry = diaryData[key];
-    const comment = (entry && typeof entry === 'object') ? (entry.comment || '') : '';
-    section.classList.toggle('has-comment', !!comment);
-    section.querySelector('.diary-comment-text').textContent = comment;
-    section.querySelector('.diary-comment-input').value = comment;
+    const comment = (entry && typeof entry === 'object' && entry.comment && typeof entry.comment === 'object') ? entry.comment : {};
+    ['ryven', 'nory'].forEach(who => {
+      const block = cardEl.querySelector(`.diary-comment-block.${who}`);
+      if (!block) return;
+      const text = comment[who] || '';
+      block.classList.toggle('has-comment', !!text);
+      block.querySelector('.diary-comment-text').textContent = text;
+      block.querySelector('.diary-comment-input').value = text;
+    });
   }
 
   function diaryToggleCommentEdit(displayEl) {
-    const section = displayEl.closest('.diary-comment-section');
-    section.querySelector('.diary-comment-display').style.display = 'none';
-    const editRow = section.querySelector('.diary-comment-edit-row');
+    const block = displayEl.closest('.diary-comment-block');
+    block.querySelector('.diary-comment-display').style.display = 'none';
+    const editRow = block.querySelector('.diary-comment-edit-row');
     editRow.style.display = 'flex';
     const input = editRow.querySelector('.diary-comment-input');
     input.focus();
@@ -6303,23 +6327,29 @@ async function jumpToSearchResult(idx) {
   }
 
   async function diarySaveComment(saveBtn) {
-    const section = saveBtn.closest('.diary-comment-section');
-    const key = section.dataset.daykey;
-    const comment = section.querySelector('.diary-comment-input').value.trim();
+    const block = saveBtn.closest('.diary-comment-block');
+    const key = block.dataset.daykey;
+    const who = block.dataset.who; // 'ryven' | 'nory'
+    const value = block.querySelector('.diary-comment-input').value.trim();
+    // 只送這個區塊對應的欄位，不夾帶另一邊的值——relay.py那邊只更新body裡有出現的欄位，
+    // 不會因為這次沒傳對方的值就把對方原本留的話清空
+    const body = { date: key };
+    body[who === 'ryven' ? 'ryven_comment' : 'nory_comment'] = value;
     try {
       const res = await fetch('https://ryven.homes/relay/diary/nory/comment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ date: key, comment })
+        body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error('bad status ' + res.status);
       // 本地diaryData同步更新，不用重新整頁拉一次；舊資料可能是純字符串形態，先轉成物件再掛comment上去
       if (typeof diaryData[key] === 'string') diaryData[key] = { text: diaryData[key], moods: [] };
       else if (!diaryData[key]) diaryData[key] = { text: '', moods: [] };
-      diaryData[key].comment = comment;
-      section.querySelector('.diary-comment-edit-row').style.display = 'none';
-      section.querySelector('.diary-comment-display').style.display = 'flex';
-      diaryFillComment(section.closest('.diary-card'), key);
+      if (!diaryData[key].comment || typeof diaryData[key].comment !== 'object') diaryData[key].comment = {};
+      diaryData[key].comment[who] = value;
+      block.querySelector('.diary-comment-edit-row').style.display = 'none';
+      block.querySelector('.diary-comment-display').style.display = 'flex';
+      diaryFillComment(block.closest('.diary-card'), key);
       showToast('✦ 已保存');
     } catch(e) {
       console.error('日記評論保存失敗', e);
@@ -9132,7 +9162,8 @@ async function jumpToSearchResult(idx) {
     read_album: '看了相冊',
     edit_album_note: '改了一張照片的備註',
     play_fishing: '玩了一把釣魚遊戲',
-    play_arcade: '玩了一把遊戲'
+    play_arcade: '玩了一把遊戲',
+    comment_nory_diary: '在你的日記上留了一句話'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9397,6 +9428,23 @@ async function jumpToSearchResult(idx) {
         const text = data.message || data.result || data.output || JSON.stringify(data);
         resultText = text;
         displayContent = text;
+      } else if (name === 'comment_nory_diary') {
+        const res = await fetch('https://ryven.homes/relay/diary/nory/comment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ date: input.date, ryven_comment: input.content })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        // 本地diaryData同步更新，這樣不用重新整頁拉一次#diary頁面就能看到剛留的話
+        const key = input.date;
+        if (key) {
+          if (typeof diaryData[key] === 'string') diaryData[key] = { text: diaryData[key], moods: [] };
+          else if (!diaryData[key]) diaryData[key] = { text: '', moods: [] };
+          if (!diaryData[key].comment || typeof diaryData[key].comment !== 'object') diaryData[key].comment = {};
+          diaryData[key].comment.ryven = input.content || '';
+        }
+        resultText = '已在日記留言';
+        displayContent = `${input.date || ''}\n${input.content || ''}`;
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
