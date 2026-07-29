@@ -1831,11 +1831,12 @@
 
     #leisure .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; position: relative; z-index: 1; }
     #leisure .game-card {
-      background: var(--card-bg);
-      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(26,31,58,0.8), rgba(36,48,96,0.6));
+      border: 1px solid rgba(74,111,165,0.2);
       border-radius: 16px; padding: 24px 16px; text-align: center; cursor: pointer;
       transition: all 0.3s ease; position: relative; overflow: hidden;
     }
+    body.light #leisure .game-card { background: var(--glass-card); border-color: var(--line); }
     #leisure .game-card::after {
       content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0;
       background: linear-gradient(to top, var(--tide-gold-ghost), transparent);
@@ -1848,11 +1849,12 @@
     #leisure .game-desc { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; position: relative; z-index: 1; }
 
     #leisure .sticker-card {
-      background: var(--card-bg);
-      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(26,31,58,0.8), rgba(36,48,96,0.6));
+      border: 1px solid rgba(74,111,165,0.2);
       border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;
       cursor: pointer; transition: all 0.3s ease; margin-bottom: 30px; position: relative; overflow: hidden; z-index: 1;
     }
+    body.light #leisure .sticker-card { background: var(--glass-card); border-color: var(--line); }
     #leisure .sticker-card::after {
       content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0;
       background: linear-gradient(to top, var(--tide-gold-ghost), transparent);
@@ -1911,9 +1913,10 @@
     /* ══════════════════════ #tarot（塔羅，從#leisure抽出來的獨立畫面）══════════════════════ */
     #tarot .today {
       padding: 18px 20px 16px;
-      background: var(--card-bg);
+      background: linear-gradient(180deg, rgba(46,74,158,0.10), rgba(26,31,58,0.4));
       border: 1px solid var(--line); border-radius: 4px; position: relative; margin-bottom: 20px;
     }
+    body.light #tarot .today { background: linear-gradient(160deg, rgba(255,255,255,0.72), rgba(216,224,240,0.55)); }
     #tarot .today::before { content: ''; position: absolute; top: 0; left: 20px; width: 32px; height: 1px; background: var(--tide-gold); opacity: 0.6; }
     #tarot .today-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
     #tarot .today-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
@@ -1937,12 +1940,13 @@
     #tarot .today-question-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(201,168,76,0.2)); }
     #tarot .card-slot {
       aspect-ratio: 2/3;
-      background: var(--card-bg);
+      background: linear-gradient(160deg, rgba(46,74,158,0.35), rgba(15,20,40,0.7));
       border: 1px solid rgba(201,168,76,0.35); border-radius: 4px;
       display: flex; flex-direction: column; align-items: center; justify-content: space-between;
       padding: 12px 4px; text-align: center; position: relative; cursor: default;
       transition: transform 0.3s, border-color 0.3s;
     }
+    body.light #tarot .card-slot { background: linear-gradient(160deg, rgba(255,255,255,0.72), rgba(216,224,240,0.55)); }
     #tarot .card-slot:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.7); }
     #tarot .card-slot-tag { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
     #tarot .card-slot-em { font-size: 26px; filter: drop-shadow(0 0 4px rgba(201,168,76,0.3)); }
@@ -1955,7 +1959,8 @@
     #stickers .reef-title-cn { font-size: 11px; letter-spacing: 0.5em; color: var(--tide-gold-soft); margin-top: 2px; }
     #stickers .reef-count { text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--tide-gold); opacity: 0.8; margin: 10px 0 22px; }
     #stickers .reef-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-    #stickers .reef-thumb { aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--card-bg); }
+    #stickers .reef-thumb { aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: rgba(26,31,58,0.4); }
+    body.light #stickers .reef-thumb { background: var(--glass-card); }
     #stickers .reef-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     #stickers .reef-empty { grid-column: 1 / -1; text-align: center; padding: 40px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
     #stickers .reef-upload-btn {
@@ -4987,7 +4992,7 @@
 <div class="screen" id="game-solo">
   <div class="page">
     <div class="head">
-      <div class="head-back" onclick="goTo('game-room')">‹</div>
+      <div class="head-back" onclick="closeSoloGame()">‹</div>
       <div class="head-title" id="game-solo-title">遊戲</div>
       <div style="width:36px"></div>
     </div>
@@ -10922,13 +10927,22 @@ const GAME_SOLO_META = {
   blackjack: { title: '🃏 二十一點 · Blackjack', endpoint: 'https://ryven.homes/relay/game/arcade' }
 };
 let currentSoloGame = null;
+// #game-solo的返回按鈕要回到「打開它之前所在的畫面」——這個畫面可能是#leisure（新版遊戲卡片直接進solo game）
+// 也可能是#game-room（原本「自己玩」按鈕那條路），所以每次open時當場記錄下來，不能寫死成固定目標
+let soloGameReturnScreen = 'game-room';
 
 async function openSoloGame(game) {
   currentSoloGame = game;
+  const activeEl = document.querySelector('.screen.active');
+  soloGameReturnScreen = (activeEl && activeEl.id) || 'game-room';
   const meta = GAME_SOLO_META[game];
   document.getElementById('game-solo-output').innerHTML = '';
   document.getElementById('game-solo-title').textContent = meta ? meta.title : '遊戲';
   await goTo('game-solo');
+}
+
+function closeSoloGame() {
+  goTo(soloGameReturnScreen || 'game-room');
 }
 
 function appendSoloGameLine(text, type) {
@@ -10968,19 +10982,24 @@ function sendSoloGameCommandFromInput() {
   sendSoloGameCommand(cmd);
 }
 
-// fish id（relay.py的fish_list回傳的是id，比如"silver_pike"）→ 中文名/稀有度映射表。
-// 目前只有silver_pike是確認過的，其餘幾筆先照mockup裡出現過的魚名猜的，之後看實際fish_list裡出現什麼id再擴充/修正；
-// 沒收錄的id就直接顯示id本身，不會憑空編一個中文名
+// fish_list裡的元素實際是物件（比如{id:"silver_pike", name:"銀梭魚", rarity:"少見"}），不是單純的id字串——
+// 之前把它當id字串塞進FISH_ID_MAP查表，查不到就把整個物件塞進textContent，畫面上顯示成"[object Object]"。
+// 物件本身通常已經帶了name/rarity可以直接用；FISH_ID_MAP只在真的收到純字串id時當備援查表用
 const FISH_ID_MAP = {
   silver_pike:    { name: '銀梭魚', rarity: '少見' },
   moonlight_carp: { name: '月光鯉', rarity: '常見' },
   glow_jelly:     { name: '夜光水母', rarity: '稀有' },
   abyss_eel:      { name: '深淵鰻', rarity: '史詩' }
 };
-function fishTagInfo(id) {
-  const entry = FISH_ID_MAP[id];
-  if (!entry) return { text: id, cls: '' };
-  return { text: `${entry.name} · ${entry.rarity}`, cls: fishRarityClass(entry.rarity) };
+function fishTagInfo(entry) {
+  if (entry && typeof entry === 'object') {
+    const name = entry.name || entry.id || '未知魚';
+    const rarity = entry.rarity || '';
+    return { text: rarity ? `${name} · ${rarity}` : name, cls: fishRarityClass(rarity) };
+  }
+  const mapped = FISH_ID_MAP[entry];
+  if (!mapped) return { text: String(entry), cls: '' };
+  return { text: `${mapped.name} · ${mapped.rarity}`, cls: fishRarityClass(mapped.rarity) };
 }
 
 // 遊戲室戰績/成就：GET /relay/game/fishing-save + /relay/game/arcade-save，兩份數據各自獨立失敗互不影響
