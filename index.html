@@ -2567,6 +2567,11 @@
     #settings .deep-row-sub { font-size: 10px; color: var(--parchment-ghost); margin-top: 2px; }
     #settings .deep-btn { padding: 6px 14px; background: transparent; border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent); border-radius: 20px; color: var(--danger); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; cursor: pointer; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
     #settings .deep-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: var(--danger); }
+    #settings .chat-size-track { width: 100%; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); margin: 8px 0 4px; overflow: hidden; }
+    #settings .chat-size-fill { height: 100%; width: 0%; border-radius: 3px; background: var(--tide-green); transition: width 0.4s ease, background 0.3s ease; }
+    #settings .chat-size-fill.warn { background: #d4a94a; }
+    #settings .chat-size-fill.danger { background: var(--danger); }
+    body.light #settings .chat-size-track { background: rgba(0,0,0,0.08); }
 
     #settings .avatar-lightbox { position: fixed; inset: 0; background: rgba(10,14,31,0.85); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
     #settings .avatar-lightbox.show { opacity: 1; pointer-events: all; }
@@ -4299,7 +4304,14 @@
             <div class="deep-row-title">導出所有記憶</div>
             <div class="deep-row-sub">把海裡的珍珠打包帶走</div>
           </div>
-          <button class="deep-btn" onclick="showToast('🐚 還在建設中')">導出</button>
+          <button class="deep-btn" onclick="exportChatHistory()">導出</button>
+        </div>
+        <div class="deep-row deep-size-row">
+          <div class="deep-row-left" style="flex:1">
+            <div class="deep-row-title">對話記錄佔用</div>
+            <div class="chat-size-track"><div class="chat-size-fill" id="chat-size-bar"></div></div>
+            <div class="deep-row-sub" id="chat-size-label">計算中…</div>
+          </div>
         </div>
         <div class="deep-row">
           <div class="deep-row-left">
@@ -5694,6 +5706,65 @@ async function loadChatHistory() {
   }
 }
 
+// 深水區「導出所有記憶」：把完整對話歷史拉下來存成一份可讀的txt文件
+async function exportChatHistory() {
+  showToast('🐚 導出中…');
+  try {
+    const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    const messages = data.messages || [];
+    const lines = messages.map(msg => {
+      const who = msg.role === 'user' ? (nickname || 'Nory') : 'Ryven';
+      const ts = msg.timestamp || msg.created_at || '';
+      const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+      return `[${ts}] ${who}：${content}`;
+    });
+    const blob = new Blob([lines.join('\n\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ryven-chat-history-${new Date().toISOString().slice(0,10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('✦ 已導出');
+  } catch(e) {
+    console.error('導出對話記錄失敗', e);
+    showToast('🌙 導出失敗，稍後再試');
+  }
+}
+
+// 深水區進度條：對話歷史（JSON化後估算）佔用大小，上限1000KB，超50%變黃、超80%變紅
+async function updateChatSizeBar() {
+  const bar = document.getElementById('chat-size-bar');
+  const label = document.getElementById('chat-size-label');
+  if (!bar || !label) return;
+  label.textContent = '計算中…';
+  try {
+    const res = await fetch(`https://ryven.homes/relay/chat/history?session_id=${sessionId}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    const messages = data.messages || [];
+    const kb = new Blob([JSON.stringify(messages)]).size / 1024;
+    const CAP_KB = 1000;
+    const pct = Math.max(0, Math.min(100, (kb / CAP_KB) * 100));
+    bar.style.width = pct + '%';
+    bar.classList.remove('warn', 'danger');
+    if (pct > 80) bar.classList.add('danger');
+    else if (pct > 50) bar.classList.add('warn');
+    label.textContent = `${kb.toFixed(1)} KB / ${CAP_KB} KB · ${messages.length} 條`;
+  } catch(e) {
+    console.error('對話記錄大小計算失敗', e);
+    label.textContent = '🌙 無法計算';
+  }
+}
+
 // 從chatRenderStartIndex重新渲染到chatHistory結尾，全清空重畫。
 // "加載更多"往前擴大範圍時也走這個函式整段重畫，而不是精細地只prepend新增那批——
 // 這樣完全複用既有的日期分隔線/氣泡連續分組邏輯，不用另外處理"往前插"時邊界要接上誰的問題
@@ -5872,7 +5943,7 @@ async function jumpToSearchResult(idx) {
     if (id==='differences') loadDifferences();
     if (id==='desk') loadDesk();
     if (id==='chat') loadChatHistory();
-    if (id==='settings') { renderSettingsPage(); loadSystemPromptSetting(); }
+    if (id==='settings') { renderSettingsPage(); loadSystemPromptSetting(); updateChatSizeBar(); }
     if (id==='depths') loadDepthsPage();
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
