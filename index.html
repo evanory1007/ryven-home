@@ -1122,6 +1122,9 @@
       font-size: 11px; flex-shrink: 0;
       overflow: hidden;
     }
+    /* 自訂頭像圖片共用：.msg-avatar-sm/.env-avatar/.comment-ava/.profile-avatar都可能塞一個<img class="avatar-img">進去，
+       object-fit:cover負責裁切避免變形，border-radius:inherit讓圖片自己也是圓的（保險——不是只靠父層overflow:hidden） */
+    .avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
     /* 气泡+时间戳同列，这样时间戳能跟着气泡的实际宽度左/右对齐，而不是靠固定padding硬凑 */
     .msg-col { display: flex; flex-direction: column; max-width: 75%; min-width: 0; }
     .msg-row.from-ryven .msg-col { align-items: flex-start; }
@@ -5668,7 +5671,7 @@ function renderImageBubble(role, src, timestampMs, skipScroll) {
   wrap.dataset.ts = msgDate.getTime();
   wrap.innerHTML = `
     <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
-      <div class="msg-avatar-sm" data-avatar="${isMe ? 'nory' : 'ryven'}"${avatarBgAttr(isMe ? 'nory' : 'ryven')}>${avatarEmoji(isMe ? 'nory' : 'ryven')}</div>
+      <div class="msg-avatar-sm" data-avatar="${isMe ? 'nory' : 'ryven'}">${avatarInnerHtml(isMe ? 'nory' : 'ryven')}</div>
       <div class="msg-col">
         <div class="img-bubble"><img alt=""><div class="img-overlay">🔍</div></div>
         <div class="msg-time">${time}</div>
@@ -6313,7 +6316,7 @@ async function jumpToSearchResult(idx) {
         <div class="envelope">
           <div class="envelope-flap">
             <div class="flap-inner">
-              <div class="env-avatar" data-avatar="ryven"${avatarBgAttr('ryven')}>${avatarEmoji('ryven')}</div>
+              <div class="env-avatar" data-avatar="ryven">${avatarInnerHtml('ryven')}</div>
               <div class="env-meta">
                 <div class="env-name"></div>
                 <div class="env-time"></div>
@@ -6341,7 +6344,7 @@ async function jumpToSearchResult(idx) {
         <div class="envelope">
           <div class="envelope-flap">
             <div class="flap-inner">
-              <div class="env-avatar" data-avatar="nory"${avatarBgAttr('nory')}>${avatarEmoji('nory')}</div>
+              <div class="env-avatar" data-avatar="nory">${avatarInnerHtml('nory')}</div>
               <div class="env-meta">
                 <div class="env-name">Nory</div>
                 <div class="env-time"></div>
@@ -8098,7 +8101,7 @@ async function jumpToSearchResult(idx) {
     wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm" data-avatar="${isMe ? 'nory' : 'ryven'}"${avatarBgAttr(isMe ? 'nory' : 'ryven')}>${avatarEmoji(isMe ? 'nory' : 'ryven')}</div>
+        <div class="msg-avatar-sm" data-avatar="${isMe ? 'nory' : 'ryven'}">${avatarInnerHtml(isMe ? 'nory' : 'ryven')}</div>
         <div class="msg-col">
           ${bubbleHTML}
           <div class="msg-time">${time}</div>
@@ -8132,7 +8135,7 @@ async function jumpToSearchResult(idx) {
     wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row from-ryven${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm" data-avatar="ryven"${avatarBgAttr('ryven')}>${avatarEmoji('ryven')}</div>
+        <div class="msg-avatar-sm" data-avatar="ryven">${avatarInnerHtml('ryven')}</div>
         <div class="msg-col">
           <div class="msg-bubble voice-msg-bubble loading">
             <div class="voice-play-btn">
@@ -8870,7 +8873,7 @@ async function jumpToSearchResult(idx) {
     wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row from-me${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm" data-avatar="nory"${avatarBgAttr('nory')}>${avatarEmoji('nory')}</div>
+        <div class="msg-avatar-sm" data-avatar="nory">${avatarInnerHtml('nory')}</div>
         <div class="msg-col">
           <div class="msg-bubble file-msg-bubble" onclick="toggleThink('${expandId}')">
             <div class="file-bubble-icon">${meta.icon}</div>
@@ -9124,7 +9127,7 @@ async function jumpToSearchResult(idx) {
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
       <div class="msg-row from-me${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm" data-avatar="nory"${avatarBgAttr('nory')}>${avatarEmoji('nory')}</div>
+        <div class="msg-avatar-sm" data-avatar="nory">${avatarInnerHtml('nory')}</div>
         <div class="msg-col">
           <div class="msg-bubble" style="padding:0;">
             <div class="voice-bubble"><div class="voice-play">▶</div><div class="voice-wave" id="${waveId}"></div><div class="voice-dur">${durStr}</div></div>
@@ -9213,7 +9216,7 @@ async function jumpToSearchResult(idx) {
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
       <div class="msg-row from-ryven">
-        <div class="msg-avatar-sm" data-avatar="ryven"${avatarBgAttr('ryven')}>${avatarEmoji('ryven')}</div>
+        <div class="msg-avatar-sm" data-avatar="ryven">${avatarInnerHtml('ryven')}</div>
         <div class="msg-col">
           <div class="msg-bubble"></div>
           <div class="msg-time"></div>
@@ -11143,27 +11146,22 @@ function settingsSaveName(who) {
 // 圖片優先——只要ryven-avatar-img-*有值就顯示圖片，換表情/移除圖片時要記得同步清掉或設置圖片key。
 // 這套邏輯不只settings頁自己用：聊天氣泡(.msg-avatar-sm)、日記卡(.env-avatar/.comment-ava)也共用同一份，
 // 渲染時都帶上data-avatar="nory"或"ryven"屬性，換頭像後靠refreshRenderedAvatars()統一刷新畫面上已經存在的那些。
+// 自訂圖片用真正的<img class="avatar-img" object-fit:cover>而不是CSS background-image——
+// border-radius+overflow:hidden+background-image這個組合在部分WebKit/iOS版本上有圓形裁切失效的已知問題
+// （圖片會露出方形邊角/底部沒被裁掉），用<img>搭配object-fit才是穩定可靠的跨瀏覽器做法。
 function avatarEmoji(who) {
     if (localStorage.getItem(`ryven-avatar-img-${who}`)) return '';
     return localStorage.getItem(who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven') || (who === 'nory' ? '🐻' : '💚');
 }
-// 拼HTML字串時塞進標籤裡用，例如 `<div class="msg-avatar-sm" data-avatar="nory"${avatarBgAttr('nory')}>`
-function avatarBgAttr(who) {
+// 拼HTML字串時當作容器內容用，例如 `<div class="msg-avatar-sm" data-avatar="nory">${avatarInnerHtml('nory')}</div>`
+function avatarInnerHtml(who) {
     const img = localStorage.getItem(`ryven-avatar-img-${who}`);
-    return img ? ` style="background-image:url('${img}');background-size:cover;background-position:center;"` : '';
+    if (img) return `<img class="avatar-img" src="${img.replace(/"/g, '&quot;')}" alt="">`;
+    return avatarEmoji(who);
 }
 function applyAvatarToEl(el, who) {
     if (!el) return;
-    const img = localStorage.getItem(`ryven-avatar-img-${who}`);
-    if (img) {
-        el.style.backgroundImage = `url('${img}')`;
-        el.style.backgroundSize = 'cover';
-        el.style.backgroundPosition = 'center';
-        el.textContent = '';
-    } else {
-        el.style.backgroundImage = '';
-        el.textContent = avatarEmoji(who);
-    }
+    el.innerHTML = avatarInnerHtml(who);
 }
 function refreshRenderedAvatars() {
     document.querySelectorAll('[data-avatar]').forEach(el => applyAvatarToEl(el, el.dataset.avatar));
@@ -11231,19 +11229,17 @@ function settingsOpenAvatarLightbox(who) {
     const img = localStorage.getItem(`ryven-avatar-img-${who}`);
     const el = document.getElementById('settings-avatar-lightbox-emoji');
     if (img) {
-        el.textContent = '';
-        el.style.backgroundImage = `url(${img})`;
-        el.style.backgroundSize = 'cover';
-        el.style.backgroundPosition = 'center';
+        el.innerHTML = `<img class="avatar-img" src="${img.replace(/"/g, '&quot;')}" alt="">`;
         el.style.width = '220px';
         el.style.height = '220px';
         el.style.borderRadius = '50%';
+        el.style.overflow = 'hidden';
     } else {
-        el.style.backgroundImage = '';
         el.style.width = '';
         el.style.height = '';
         el.style.borderRadius = '';
-        el.textContent = document.getElementById(`settings-${who}-avatar`).textContent;
+        el.style.overflow = '';
+        el.textContent = avatarEmoji(who);
     }
     document.getElementById('settings-avatar-lightbox').classList.add('show');
 }
