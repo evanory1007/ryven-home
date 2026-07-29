@@ -5670,7 +5670,13 @@ function renderChatMessagesRange() {
         }
       }
     } else {
-      addMessage(msg.role, msg.content, msgTime, undefined, undefined, true);
+      // content可能是純text block的陣列（比如文件上傳訊息，見handleFileUpload）——
+      // addMessage()只認字串，直接塞陣列進去text.replace()會炸掉，炸的話這個for迴圈整個停在這，
+      // 後面所有訊息都不會再渲染。這裡先正規化成字串
+      const plainContent = Array.isArray(msg.content)
+        ? ((msg.content.find(b => b && b.type === 'text') || {}).text || '')
+        : msg.content;
+      addMessage(msg.role, plainContent, msgTime, undefined, undefined, true);
     }
     // 這條訊息這輪新增出來的所有DOM節點(日期分隔線/思考框/氣泡...)都標上msg-index，搜索結果點擊要靠它定位
     for (let c = beforeCount; c < container.children.length; c++) {
