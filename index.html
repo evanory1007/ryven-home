@@ -10789,13 +10789,22 @@ let currentSoloGame = null;
 let soloGameReturnScreen = 'leisure';
 
 // 每種遊戲的常用指令做成快捷按鈕，點了直接送出（不用自己打字）。
-// fishing的「開始」「收竿」、slots的「slots spin N」、blackjack的「bj deal N」都是play_fishing/play_arcade
-// 這兩個RYVEN_TOOLS工具描述裡給過的確認格式；blackjack的「bj hit」「bj stand」是標準二十一點玩牌動作的
-// 慣用寫法，沒有實際跟relay.py核對過，如果跟後端對不上再依遊戲當下輸出的提示調整
+// fishing這份是照使用者給的完整cmd()詞表挑的——只挑不需要參數、任何時候呼叫都合法的指令
+// （狀態/商店/抛竿/漁篓/圖鑑/釣點/賣光），buy/goto<地點id>/dive/choose/surface/open/look這些
+// 需要具體id（餌id、地點id、宝箱uid...）的，id是動態的、玩到當下才知道，沒辦法預先做成固定按鈕，
+// 留給輸入框手動打字（看cmd('goto')/cmd('shop')等指令回傳的清單決定要打什麼）。
+// slots的「slots spin N」、blackjack的「bj deal N」是play_arcade工具描述裡給過的確認格式；
+// blackjack的「bj hit」「bj stand」是標準二十一點玩牌動作的慣用寫法，沒有實際跟relay.py核對過，
+// 如果跟後端對不上再依遊戲當下輸出的提示調整
 const GAME_CMD_PRESETS = {
   fishing: [
-    { label: '開始', cmd: '開始' },
-    { label: '收竿', cmd: '收竿' }
+    { label: '抛竿', cmd: 'cast' },
+    { label: '狀態', cmd: 'status' },
+    { label: '商店', cmd: 'shop' },
+    { label: '漁篓', cmd: 'inventory' },
+    { label: '圖鑑', cmd: 'encyclopedia' },
+    { label: '釣點', cmd: 'goto' },
+    { label: '賣光', cmd: 'sell all' }
   ],
   slots: [
     { label: '下注 10', cmd: 'slots spin 10' },
