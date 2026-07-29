@@ -1535,6 +1535,11 @@
     .upload-option-label { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--parchment); }
     .upload-option-label small { display: block; font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.15em; color: var(--parchment-ghost); margin-top: 2px; }
 
+    /* ── 浅海模式覆盖：上傳選單裡「上傳圖片/上傳文件」两行是寫死的深色玻璃底，
+       .sheet-panel本身用var(--sea-2)已經會跟著轉，但裡面這兩行選項一直是深色，很突兀 ── */
+    body.light .upload-option { background: var(--glass-card); }
+    body.light .upload-option:hover { background: var(--glass-strong); }
+
     /* ─── 貼紙托盘 ─── */
     .sticker-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; max-height: 320px; overflow-y: auto; }
     .sticker-thumb { aspect-ratio: 1; border-radius: 12px; overflow: hidden; cursor: pointer; position: relative; border: 1px solid var(--line); background: rgba(26,31,58,0.4); transition: border-color 0.2s, transform 0.2s; }
