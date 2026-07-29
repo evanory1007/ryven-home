@@ -6233,15 +6233,15 @@ async function jumpToSearchResult(idx) {
       tagsEl.innerHTML = entry.moods.map(() => '<span class="mood-tag"></span>').join('');
       tagsEl.querySelectorAll('.mood-tag').forEach((tagEl, i) => { tagEl.textContent = entry.moods[i]; });
 
+      // 留言功能兩種卡片共用：留言是按日期存的（diary_nory.json裡對應日期的comment字段），
+      // 不分是Nory的信封還是Ryven的信封在顯示，所以diarySendComment()/diaryFillComments()對兩邊都通用
       el.querySelector('.comments-toggle').addEventListener('click', function() { diaryToggleComments(this); });
+      el.querySelector('.comment-send').addEventListener('click', function() { diarySendComment(this); });
+      diaryFillComments(el, key);
 
       if (!isRyven) {
         el.querySelector('.env-btn.edit').addEventListener('click', () => diaryOpenCompose(key));
         el.querySelector('.env-btn.del').addEventListener('click', () => diaryConfirmDelete(key));
-        el.querySelector('.comment-send').addEventListener('click', function() { diarySendComment(this); });
-        diaryFillComments(el, key);
-      } else {
-        el.querySelector('.comment-send').addEventListener('click', () => showToast('🐚 功能開發中'));
       }
     });
   }
