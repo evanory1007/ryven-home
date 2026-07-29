@@ -136,13 +136,27 @@
     * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
-      background: linear-gradient(180deg, var(--sea-0) 0%, var(--sea-1) 30%, var(--sea-2) 70%, var(--sea-3) 100%);
+      background: linear-gradient(180deg, #0a0e1f 0%, #0f1428 30%, #1a1f3a 60%, #243060 100%);
+      background-attachment: fixed;
       color: var(--silver);
       font-family: 'DM Sans', sans-serif;
       font-weight: 300;
       min-height: 100vh;
       overflow-x: hidden;
     }
+    /* 淺海模式維持原本的淺色主題背景，深海這套統一背景只在深色模式顯示 */
+    body.light { background: linear-gradient(180deg, var(--sea-0) 0%, var(--sea-1) 30%, var(--sea-2) 70%, var(--sea-3) 100%); }
+
+    /* 全站光線折射層：深色模式限定，斜線緩慢左右漂移 */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(115deg, transparent, transparent 40px, rgba(201,168,76,0.015) 40px, rgba(201,168,76,0.015) 42px);
+      animation: siteLightShift 20s ease-in-out infinite;
+      pointer-events: none; z-index: 0;
+    }
+    body.light::before { content: none; }
+    @keyframes siteLightShift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(30px); } }
 
     /* 全局背景噪点纹理 */
     .noise-overlay {
@@ -156,10 +170,17 @@
     }
     body.light .noise-overlay { opacity: 0.05; }
 
+    /* 全站上升氣泡：深色模式限定，跟下面.fish共用同一套"固定在body底下、不隨畫面切換"的效果 */
     .bubbles { position:fixed; inset:0; z-index:0; pointer-events:none; }
-    .bubble { position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 30%, #c9a84c, #4a6fa5, transparent); opacity:0; animation:float-up linear infinite; }
-    body.light .bubble { background: radial-gradient(circle at 30% 30%, rgba(74,111,165,0.2), transparent); }
-    @keyframes float-up { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:var(--bub-opacity, 0.15)} 90%{opacity:calc(var(--bub-opacity, 0.15) * 0.4)} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
+    .bubble { position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.05); opacity:0; animation:float-up linear infinite; }
+    body.light .bubbles { display: none; }
+    @keyframes float-up { 0%{transform:translateY(100vh) translateX(0) scale(0.6);opacity:0} 10%{opacity:var(--bub-opacity, 0.6)} 90%{opacity:calc(var(--bub-opacity, 0.6) * 0.4)} 100%{transform:translateY(-10vh) translateX(20px) scale(1);opacity:0} }
+
+    /* 全站游魚：深色模式限定，從右往左游 */
+    .fish { position: fixed; animation: siteFishSwimLeft linear infinite; pointer-events: none; z-index: 0; opacity: 0.4; }
+    .fish svg { width: 30px; height: 16px; }
+    body.light .fish { display: none; }
+    @keyframes siteFishSwimLeft { 0% { transform: translateX(calc(100vw + 50px)); } 100% { transform: translateX(-150px); } }
 
     /* 页面容器 */
     .screen { display:none; position:relative; z-index:1; min-height:100vh; }
@@ -1808,27 +1829,6 @@
     #leisure .page-title { text-align: center; margin-bottom: 8px; letter-spacing: 6px; font-size: 13px; color: var(--parchment-dim); text-transform: uppercase; }
     #leisure .page-subtitle { text-align: center; font-size: 12px; color: var(--parchment-ghost); font-style: italic; margin-bottom: 32px; }
 
-    /* 裝飾用氣泡/魚——position:fixed但巢狀在.screen底下，#leisure不是active screen時整棵子樹display:none，不會漏到別的畫面 */
-    #leisure .leisure-bubble {
-      position: fixed; border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.05);
-      animation: leisureBubbleRise linear infinite;
-      pointer-events: none; z-index: 0;
-    }
-    @keyframes leisureBubbleRise {
-      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
-    }
-    #leisure .leisure-fish { position: fixed; animation: leisureFishSwimLeft linear infinite; pointer-events: none; z-index: 0; opacity: 0.4; }
-    #leisure .leisure-fish svg { width: 30px; height: 16px; }
-    @keyframes leisureFishSwimLeft {
-      0% { transform: translateX(calc(100vw + 50px)); }
-      100% { transform: translateX(-150px); }
-    }
-
     #leisure .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; position: relative; z-index: 1; }
     #leisure .game-card {
       background: linear-gradient(135deg, rgba(26,31,58,0.8), rgba(36,48,96,0.6));
@@ -1903,12 +1903,11 @@
     #leisure .nav-item-en { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--parchment-ghost); }
     #leisure .nav-item.active .nav-item-en { color: var(--tide-gold); }
 
-    /* ══════════════════════ 遊戲室 (#game-room) ══════════════════════ */
-    #game-room .page, #tarot .page, #stickers .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
-    #game-room .head, #tarot .head, #stickers .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
-    #game-room .head-back, #tarot .head-back, #stickers .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
-    #game-room .head-back:hover, #tarot .head-back:hover, #stickers .head-back:hover { border-color: var(--tide-gold-soft); }
-    #game-room .head-title, #tarot .head-title, #stickers .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+    #tarot .page, #stickers .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
+    #tarot .head, #stickers .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
+    #tarot .head-back, #stickers .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
+    #tarot .head-back:hover, #stickers .head-back:hover { border-color: var(--tide-gold-soft); }
+    #tarot .head-title, #stickers .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
 
     /* ══════════════════════ #tarot（塔羅，從#leisure抽出來的獨立畫面）══════════════════════ */
     #tarot .today {
@@ -1969,50 +1968,6 @@
       font-style: italic; font-size: 14px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
     }
     #stickers .reef-upload-btn:hover { background: rgba(201,168,76,0.2); border-color: var(--tide-gold); }
-
-    #game-room .arcade-title { text-align: center; margin-bottom: 4px; }
-    #game-room .arcade-title-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; color: var(--parchment); letter-spacing: 0.02em; }
-    #game-room .arcade-title-cn { font-size: 11px; letter-spacing: 0.5em; color: var(--tide-gold-soft); margin-top: 2px; }
-    #game-room .arcade-rule { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--tide-gold), transparent); margin: 12px auto 24px; }
-
-    #game-room .game-cards { display: flex; flex-direction: column; gap: 14px; }
-    #game-room .game-card {
-      background: linear-gradient(135deg, rgba(36,48,96,0.5), rgba(15,20,40,0.7));
-      border: 1px solid rgba(201,168,76,0.15); border-radius: 14px; padding: 18px;
-      transition: border-color 0.25s, box-shadow 0.25s;
-    }
-    #game-room .game-card:hover { border-color: var(--tide-gold-soft); box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 16px rgba(201,168,76,0.06); }
-    #game-room .game-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-    #game-room .game-icon { font-size: 26px; width: 46px; height: 46px; flex-shrink: 0; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    #game-room .game-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
-    #game-room .game-sub { font-size: 9px; letter-spacing: 0.3em; color: var(--tide-gold-soft); text-transform: uppercase; margin-top: 3px; }
-
-    #game-room .game-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    #game-room .stat { background: rgba(10,14,31,0.5); border-radius: 8px; padding: 8px 10px; }
-    #game-room .stat-label { font-size: 10px; color: var(--parchment-ghost); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
-    #game-room .stat-value { font-size: 14px; color: var(--tide-gold); font-weight: 500; }
-
-    #game-room .game-fish { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-    #game-room .fish-tag { font-size: 11px; padding: 3px 9px; border-radius: 20px; background: rgba(109,184,160,0.1); border: 1px solid rgba(109,184,160,0.25); color: var(--tide-green); }
-    #game-room .fish-tag.rare { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3); color: var(--tide-gold); }
-    #game-room .fish-tag.epic { background: rgba(167,120,201,0.1); border-color: rgba(167,120,201,0.3); color: #a778c9; }
-
-    #game-room .achievement { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-    #game-room .achievement:last-child { border-bottom: none; }
-    #game-room .ach-icon { font-size: 16px; width: 26px; text-align: center; flex-shrink: 0; }
-    #game-room .ach-text { font-size: 12px; color: var(--parchment-ghost); flex: 1; }
-    #game-room .ach-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(201,168,76,0.12); color: var(--tide-gold); border: 1px solid rgba(201,168,76,0.2); white-space: nowrap; }
-
-    #game-room .game-btn-row { display: flex; gap: 8px; margin-top: 4px; }
-    #game-room .game-btn {
-      flex: 1; padding: 10px;
-      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
-      color: var(--tide-gold); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px;
-      cursor: pointer; text-align: center; transition: background 0.2s;
-    }
-    #game-room .game-btn:hover { background: rgba(201,168,76,0.16); }
-    #game-room .game-btn.secondary { background: transparent; border-color: var(--line); color: var(--parchment-dim); }
-    #game-room .game-btn.secondary:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
 
     /* ══════════════════════ 遊戲室：自己玩 (#game-solo) ══════════════════════ */
     #game-solo .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
@@ -3160,6 +3115,28 @@
 </div>
 <div class="noise-overlay"></div>
 <div class="bubbles" id="bubbles"></div>
+<!-- 全站游魚裝飾，深色模式限定（body.light時CSS直接display:none） -->
+<div class="fish" style="top: 20%; animation-duration: 25s; animation-delay: 0s;">
+  <svg viewBox="0 0 40 20" fill="rgba(201,168,76,0.5)">
+    <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
+    <path d="M36 10 L40 6 L40 14 Z"/>
+    <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
+  </svg>
+</div>
+<div class="fish" style="top: 55%; animation-duration: 30s; animation-delay: 8s;">
+  <svg viewBox="0 0 40 20" fill="rgba(74,111,165,0.4)">
+    <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
+    <path d="M36 10 L40 6 L40 14 Z"/>
+    <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
+  </svg>
+</div>
+<div class="fish" style="top: 75%; animation-duration: 28s; animation-delay: 15s;">
+  <svg viewBox="0 0 40 20" fill="rgba(212,197,169,0.3)">
+    <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
+    <path d="M36 10 L40 6 L40 14 Z"/>
+    <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
+  </svg>
+</div>
 
 <!-- 首页 (v5) -->
 <div class="screen active" id="home">
@@ -4746,38 +4723,6 @@
       <div class="gear" onclick="goTo('settings')">⚙</div>
     </div>
 
-    <!-- 裝飾用氣泡+魚，純CSS動畫，不影響互動 -->
-    <div class="leisure-bubble" style="width:6px;height:6px;left:15%;animation-duration:18s;animation-delay:0s;"></div>
-    <div class="leisure-bubble" style="width:4px;height:4px;left:35%;animation-duration:22s;animation-delay:3s;"></div>
-    <div class="leisure-bubble" style="width:8px;height:8px;left:55%;animation-duration:16s;animation-delay:1s;"></div>
-    <div class="leisure-bubble" style="width:3px;height:3px;left:72%;animation-duration:25s;animation-delay:5s;"></div>
-    <div class="leisure-bubble" style="width:5px;height:5px;left:88%;animation-duration:20s;animation-delay:2s;"></div>
-    <div class="leisure-bubble" style="width:7px;height:7px;left:8%;animation-duration:19s;animation-delay:7s;"></div>
-    <div class="leisure-bubble" style="width:4px;height:4px;left:45%;animation-duration:23s;animation-delay:4s;"></div>
-    <div class="leisure-bubble" style="width:6px;height:6px;left:65%;animation-duration:17s;animation-delay:6s;"></div>
-
-    <div class="leisure-fish" style="top: 20%; animation-duration: 25s; animation-delay: 0s;">
-      <svg viewBox="0 0 40 20" fill="rgba(201,168,76,0.5)">
-        <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
-        <path d="M36 10 L40 6 L40 14 Z"/>
-        <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
-      </svg>
-    </div>
-    <div class="leisure-fish" style="top: 55%; animation-duration: 30s; animation-delay: 8s;">
-      <svg viewBox="0 0 40 20" fill="rgba(74,111,165,0.4)">
-        <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
-        <path d="M36 10 L40 6 L40 14 Z"/>
-        <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
-      </svg>
-    </div>
-    <div class="leisure-fish" style="top: 75%; animation-duration: 28s; animation-delay: 15s;">
-      <svg viewBox="0 0 40 20" fill="rgba(212,197,169,0.3)">
-        <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
-        <path d="M36 10 L40 6 L40 14 Z"/>
-        <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
-      </svg>
-    </div>
-
     <div class="page-title">L E I S U R E</div>
     <div class="page-subtitle">海底游乐场 · 沉下来玩</div>
 
@@ -4901,90 +4846,6 @@
     </div>
 
     <button class="reef-upload-btn" onclick="stickerTriggerUpload()">✦ 上傳新表情包</button>
-  </div>
-</div>
-
-<!-- 遊戲室：戰績/成就展示 -->
-<div class="screen" id="game-room">
-  <div class="page">
-    <div class="head">
-      <div class="head-back" onclick="goTo('leisure')">‹</div>
-      <div class="head-title">遊戲室</div>
-      <div style="width:36px"></div>
-    </div>
-
-    <div class="arcade-title">
-      <div class="arcade-title-en">Game Room</div>
-      <div class="arcade-title-cn">深 海 遊 戲 廳</div>
-    </div>
-    <div class="arcade-rule"></div>
-
-    <div class="game-cards">
-
-      <!-- 釣魚檔案 -->
-      <div class="game-card">
-        <div class="game-card-head">
-          <div class="game-icon">🎣</div>
-          <div>
-            <div class="game-name">釣魚檔案</div>
-            <div class="game-sub">Fishing Log</div>
-          </div>
-        </div>
-        <div class="game-stats">
-          <div class="stat"><div class="stat-label">圖鑑</div><div class="stat-value" id="fishing-stat-species">XX</div></div>
-          <div class="stat"><div class="stat-label">總竿數</div><div class="stat-value" id="fishing-stat-casts">XX</div></div>
-          <div class="stat"><div class="stat-label">點數</div><div class="stat-value" id="fishing-stat-points">XX</div></div>
-        </div>
-        <div class="game-fish" id="fishing-recent-tags"></div>
-        <div class="game-btn-row">
-          <div class="game-btn" onclick="startGameViaChat('fishing')">一起玩</div>
-          <div class="game-btn secondary" onclick="openSoloGame('fishing')">自己玩</div>
-        </div>
-      </div>
-
-      <!-- 老虎機戰績 -->
-      <div class="game-card">
-        <div class="game-card-head">
-          <div class="game-icon">🎰</div>
-          <div>
-            <div class="game-name">老虎機戰績</div>
-            <div class="game-sub">Slots Record</div>
-          </div>
-        </div>
-        <div class="game-stats">
-          <div class="stat"><div class="stat-label">籌碼</div><div class="stat-value" id="slots-stat-chips">XX</div></div>
-          <div class="stat"><div class="stat-label">最高倍數</div><div class="stat-value" id="slots-stat-max">XX</div></div>
-          <div class="stat"><div class="stat-label">勝率</div><div class="stat-value" id="slots-stat-winrate">XX</div></div>
-        </div>
-        <div id="slots-achievements"></div>
-        <div class="game-btn-row" style="margin-top:12px">
-          <div class="game-btn" onclick="startGameViaChat('slots')">一起玩</div>
-          <div class="game-btn secondary" onclick="openSoloGame('slots')">自己玩</div>
-        </div>
-      </div>
-
-      <!-- 二十一點戰績 -->
-      <div class="game-card">
-        <div class="game-card-head">
-          <div class="game-icon">🃏</div>
-          <div>
-            <div class="game-name">二十一點戰績</div>
-            <div class="game-sub">Blackjack Record</div>
-          </div>
-        </div>
-        <div class="game-stats">
-          <div class="stat"><div class="stat-label">勝場</div><div class="stat-value" id="bj-stat-wins">XX</div></div>
-          <div class="stat"><div class="stat-label">敗場</div><div class="stat-value" id="bj-stat-losses">XX</div></div>
-          <div class="stat"><div class="stat-label">Blackjack</div><div class="stat-value" id="bj-stat-blackjacks">XX</div></div>
-        </div>
-        <div id="bj-achievements"></div>
-        <div class="game-btn-row" style="margin-top:12px">
-          <div class="game-btn" onclick="startGameViaChat('blackjack')">一起玩</div>
-          <div class="game-btn secondary" onclick="openSoloGame('blackjack')">自己玩</div>
-        </div>
-      </div>
-
-    </div>
   </div>
 </div>
 
@@ -5391,7 +5252,7 @@
     b.className = 'bubble';
     const size = Math.random()*12+4; // 4-16px
     const duration = Math.random()*12+8; // 8-20s
-    const peakOpacity = (Math.random()*0.25+0.15).toFixed(2); // 0.15-0.4
+    const peakOpacity = (Math.random()*0.4+0.5).toFixed(2); // 0.5-0.9，跟深海設計稿裡氣泡動畫要接近全不透明的視覺一致
     b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${duration}s;animation-delay:${Math.random()*10}s;--bub-opacity:${peakOpacity};`;
     bubblesEl.appendChild(b);
   }
@@ -5877,7 +5738,6 @@ async function jumpToSearchResult(idx) {
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
     if (id==='album') loadAlbumPage();
-    if (id==='game-room') loadGameRoom();
     if (id==='leisure') loadLeisurePage();
     if (id==='stickers') stickerLoadList();
 
@@ -10904,22 +10764,6 @@ function drawTarot() {
   showToast('✧ 抽到了 ' + picks.join(' · '));
 }
 
-// ===== 遊戲室 =====
-// 點卡片不再進獨立遊戲畫面，改成跳去聊天室、自動填一句開場白幫忙發出去，交給Ryven用play_fishing/play_arcade工具接手
-const GAME_CHAT_OPENERS = {
-  fishing: '我們去釣魚吧，先看看狀態',
-  slots: '我們玩老虎機，給我500幣',
-  blackjack: '來一局二十一點，給我500幣'
-};
-
-async function startGameViaChat(game) {
-  const opener = GAME_CHAT_OPENERS[game];
-  if (!opener) return;
-  await goTo('chat');
-  document.getElementById('chat-input').value = opener;
-  sendMessage();
-}
-
 // ===== 遊戲室：自己玩（獨立界面，指令直接打給遊戲端點，不經過AI） =====
 const GAME_SOLO_META = {
   fishing:   { title: '🎣 釣魚 · Fishing',      endpoint: 'https://ryven.homes/relay/game/fishing' },
@@ -10927,14 +10771,14 @@ const GAME_SOLO_META = {
   blackjack: { title: '🃏 二十一點 · Blackjack', endpoint: 'https://ryven.homes/relay/game/arcade' }
 };
 let currentSoloGame = null;
-// #game-solo的返回按鈕要回到「打開它之前所在的畫面」——這個畫面可能是#leisure（新版遊戲卡片直接進solo game）
-// 也可能是#game-room（原本「自己玩」按鈕那條路），所以每次open時當場記錄下來，不能寫死成固定目標
-let soloGameReturnScreen = 'game-room';
+// #game-solo的返回按鈕要回到「打開它之前所在的畫面」——目前只有#leisure的遊戲卡片會進來，
+// 但還是當場記錄下來而不是寫死，避免以後又多一個入口時要再改一次
+let soloGameReturnScreen = 'leisure';
 
 async function openSoloGame(game) {
   currentSoloGame = game;
   const activeEl = document.querySelector('.screen.active');
-  soloGameReturnScreen = (activeEl && activeEl.id) || 'game-room';
+  soloGameReturnScreen = (activeEl && activeEl.id) || 'leisure';
   const meta = GAME_SOLO_META[game];
   document.getElementById('game-solo-output').innerHTML = '';
   document.getElementById('game-solo-title').textContent = meta ? meta.title : '遊戲';
@@ -10942,7 +10786,7 @@ async function openSoloGame(game) {
 }
 
 function closeSoloGame() {
-  goTo(soloGameReturnScreen || 'game-room');
+  goTo(soloGameReturnScreen || 'leisure');
 }
 
 function appendSoloGameLine(text, type) {
@@ -10980,102 +10824,6 @@ function sendSoloGameCommandFromInput() {
   if (!cmd) return;
   input.value = '';
   sendSoloGameCommand(cmd);
-}
-
-// fish_list裡的元素實際是物件（比如{id:"silver_pike", name:"銀梭魚", rarity:"少見"}），不是單純的id字串——
-// 之前把它當id字串塞進FISH_ID_MAP查表，查不到就把整個物件塞進textContent，畫面上顯示成"[object Object]"。
-// 物件本身通常已經帶了name/rarity可以直接用；FISH_ID_MAP只在真的收到純字串id時當備援查表用
-const FISH_ID_MAP = {
-  silver_pike:    { name: '銀梭魚', rarity: '少見' },
-  moonlight_carp: { name: '月光鯉', rarity: '常見' },
-  glow_jelly:     { name: '夜光水母', rarity: '稀有' },
-  abyss_eel:      { name: '深淵鰻', rarity: '史詩' }
-};
-function fishTagInfo(entry) {
-  if (entry && typeof entry === 'object') {
-    const name = entry.name || entry.id || '未知魚';
-    const rarity = entry.rarity || '';
-    return { text: rarity ? `${name} · ${rarity}` : name, cls: fishRarityClass(rarity) };
-  }
-  const mapped = FISH_ID_MAP[entry];
-  if (!mapped) return { text: String(entry), cls: '' };
-  return { text: `${mapped.name} · ${mapped.rarity}`, cls: fishRarityClass(mapped.rarity) };
-}
-
-// 遊戲室戰績/成就：GET /relay/game/fishing-save + /relay/game/arcade-save，兩份數據各自獨立失敗互不影響
-async function loadGameRoom() {
-  try {
-    const res = await fetch('https://ryven.homes/relay/game/fishing-save', {
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-    if (!res.ok) throw new Error('bad status ' + res.status);
-    const data = await res.json();
-    document.getElementById('fishing-stat-species').textContent = `${data.encyclopedia ?? 0}/${data.encyclopedia_total ?? 0}`;
-    document.getElementById('fishing-stat-casts').textContent = data.total_casts ?? 0;
-    document.getElementById('fishing-stat-points').textContent = data.points ?? 0;
-
-    const fishIds = data.fish_list || [];
-    const tagsEl = document.getElementById('fishing-recent-tags');
-    tagsEl.innerHTML = fishIds.length
-      ? fishIds.map(() => `<span class="fish-tag"></span>`).join('')
-      : '<span class="fish-tag" style="opacity:0.5">還沒有釣到魚</span>';
-    tagsEl.querySelectorAll('.fish-tag').forEach((el, i) => {
-      if (!fishIds[i]) return;
-      const info = fishTagInfo(fishIds[i]);
-      if (info.cls) el.classList.add(info.cls);
-      el.textContent = info.text;
-    });
-  } catch(e) {
-    console.error('釣魚檔案加載失敗', e);
-  }
-
-  try {
-    const res = await fetch('https://ryven.homes/relay/game/arcade-save', {
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-    if (!res.ok) throw new Error('bad status ' + res.status);
-    const data = await res.json();
-
-    const slots = data.slots || {};
-    document.getElementById('slots-stat-chips').textContent = slots.chips ?? 0;
-    document.getElementById('slots-stat-max').textContent = slots.max_multiplier != null ? `×${slots.max_multiplier}` : 'XX';
-    document.getElementById('slots-stat-winrate').textContent = slots.win_rate != null ? `${Math.round(slots.win_rate * 100)}%` : 'XX';
-    renderAchievements('slots-achievements', slots.achievements || []);
-
-    const bj = data.blackjack || {};
-    document.getElementById('bj-stat-wins').textContent = bj.wins ?? 0;
-    document.getElementById('bj-stat-losses').textContent = bj.losses ?? 0;
-    document.getElementById('bj-stat-blackjacks').textContent = bj.blackjacks != null ? `${bj.blackjacks}次` : 'XX';
-    renderAchievements('bj-achievements', bj.achievements || []);
-  } catch(e) {
-    console.error('遊戲戰績加載失敗', e);
-  }
-}
-
-function fishRarityClass(rarity) {
-  if (rarity === '史詩') return 'epic';
-  if (rarity === '稀有') return 'rare';
-  return '';
-}
-
-function renderAchievements(containerId, achievements) {
-  const el = document.getElementById(containerId);
-  if (!achievements.length) { el.innerHTML = ''; return; }
-  el.innerHTML = achievements.map(() => `
-    <div class="achievement">
-      <span class="ach-icon"></span>
-      <span class="ach-text"></span>
-      <span class="ach-badge"></span>
-    </div>
-  `).join('');
-  el.querySelectorAll('.achievement').forEach((row, i) => {
-    const a = achievements[i];
-    row.querySelector('.ach-icon').textContent = a.icon || '🏅';
-    row.querySelector('.ach-text').textContent = a.text || '';
-    const badge = row.querySelector('.ach-badge');
-    badge.textContent = a.unlocked ? '已解鎖' : '未解鎖';
-    badge.style.opacity = a.unlocked ? '1' : '0.4';
-  });
 }
 
 // ===== #leisure 新版首頁：成就條 + 表情包收藏數 =====
