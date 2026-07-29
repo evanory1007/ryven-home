@@ -1283,6 +1283,8 @@
       animation: fadeIn 0.2s ease;
     }
     .tool-expand pre { white-space: pre-wrap; word-break: break-all; }
+    .tool-link { display: inline-block; margin-top: 6px; color: var(--tide-gold); text-decoration: none; font-size: 11px; letter-spacing: 0.05em; border-bottom: 1px solid var(--tide-gold-soft); }
+    .tool-link:hover { color: var(--tide-gold); border-bottom-color: var(--tide-gold); }
 
     #chat .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
@@ -9363,7 +9365,8 @@ async function jumpToSearchResult(idx) {
     comment_nory_diary: '在你的日記上留了一句話',
     read_ombre: '翻了翻記憶',
     web_search: '搜了一下',
-    lutopia_cli: '逛了論壇'
+    lutopia_cli: '逛了論壇',
+    write_html: '寫了個頁面'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9411,12 +9414,14 @@ async function jumpToSearchResult(idx) {
     }
 
     return {
-      setSuccess: (displayContent) => {
+      // linkUrl可選：有傳的話節點展開區塊底下會多一行可點擊的「點擊查看 →」連結（比如write_html這類會產出網址的工具）
+      setSuccess: (displayContent, linkUrl) => {
         const r = ensureAttached();
         const iconEl = r.querySelector('.tool-status-icon');
         const expandEl = r.querySelector('.tool-expand');
         iconEl.textContent = '✓'; iconEl.className = 'tool-status-icon ok';
-        expandEl.innerHTML = `<p>${escapeToolContent(displayContent).replace(/\n/g, '<br>')}</p>`;
+        const linkHtml = linkUrl ? `<a class="tool-link" href="${escapeToolContent(linkUrl)}" target="_blank" rel="noopener noreferrer">點擊查看 →</a>` : '';
+        expandEl.innerHTML = `<p>${escapeToolContent(displayContent).replace(/\n/g, '<br>')}</p>${linkHtml}`;
       },
       setError: (displayContent) => {
         const r = ensureAttached();
@@ -9437,6 +9442,7 @@ async function jumpToSearchResult(idx) {
     try {
       let resultText = 'ok';
       let displayContent = '';
+      let linkUrl = null; // 只有write_html這類會產出網址的工具會設置，設了的話setSuccess()會多渲染一行可點擊連結
       if (name === 'write_home_letter') {
         const res = await fetch('https://ryven.homes/relay/ryven/messages', {
           method: 'POST',
@@ -9682,11 +9688,22 @@ async function jumpToSearchResult(idx) {
         const data = await res.json();
         resultText = data.result || '';
         displayContent = resultText;
+      } else if (name === 'write_html') {
+        const res = await fetch('https://ryven.homes/relay/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ html: input.html, filename: input.filename || 'preview' })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        linkUrl = data.url || '';
+        resultText = linkUrl ? `頁面做好了：${linkUrl}` : '頁面做好了，但沒拿到網址';
+        displayContent = linkUrl || '（沒有網址）';
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
       }
-      node.setSuccess(displayContent);
+      node.setSuccess(displayContent, linkUrl);
       return { resultText, displayContent };
     } catch(e) {
       console.error('工具執行失敗：' + name, e);
