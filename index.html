@@ -5817,26 +5817,48 @@ function renderChatMessagesRange() {
       if (textBlock && textBlock.text) addMessage(msg.role, textBlock.text, msgTime, undefined, undefined, true);
       renderImageBubble(msg.role, extractImageSrc(imageBlock), msgTime, true);
     } else if (msg.role === 'assistant' || msg.role === 'ryven') {
-      // 历史里存的工具调用记录（toolCalls字段）：重新加载时补渲染出对应的折叠节点，
-      // 直接标记完成✓状态（不是重新执行工具，只是还原当时的调用记录）
-      if (Array.isArray(msg.toolCalls)) {
-        msg.toolCalls.forEach(tc => {
-          if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
+      // segments字段：按實際發生順序記錄了thinking/text/tool，是新版存的（見requestRyvenReply()）——
+      // 有的話直接照順序重建畫面，思考框/工具節點/文字氣泡的先後關係才會跟當初live時看到的一致。
+      // 舊資料沒有segments（存的時候還沒有這個欄位），退回原本邏輯：工具節點全部堆前面，思考框+文字接在後面
+      if (Array.isArray(msg.segments) && msg.segments.length > 0) {
+        let thinkAdded = false;
+        msg.segments.forEach(seg => {
+          if (!seg) return;
+          if (seg.type === 'thinking') {
+            appendThinkRow(seg.content || '');
+            thinkAdded = true;
+          } else if (seg.type === 'tool') {
+            const tc = seg.content || {};
+            if (tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
+          } else if (seg.type === 'text') {
+            const sentences = splitIntoSentences(seg.content || '');
+            const parts = sentences.length ? sentences : [seg.content || ''];
+            parts.forEach(part => addMessage(msg.role, part, msgTime, true, undefined, true));
+          }
         });
-      }
-      // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
-      // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
-      // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
-      let thinkAdded = false;
-      const segments = splitIntoSentences(msg.content);
-      if (segments.length === 0) {
-        addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking, true);
-        thinkAdded = true;
+        if (!thinkAdded) appendThinkRow(msg.thinking || '');
       } else {
-        segments.forEach((seg, i) => {
-          addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, true);
+        // 历史里存的工具调用记录（toolCalls字段）：重新加载时补渲染出对应的折叠节点，
+        // 直接标记完成✓状态（不是重新执行工具，只是还原当时的调用记录）
+        if (Array.isArray(msg.toolCalls)) {
+          msg.toolCalls.forEach(tc => {
+            if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
+          });
+        }
+        // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
+        // 统一走原本的分句渲染（历史里的语音消息会显示成普通英文气泡，没有中文翻译）
+        // 一条消息只该有一个思考框：加过了就不再加，不看分句下标，防止重复来源重叠出两个think-inline
+        let thinkAdded = false;
+        const sentences = splitIntoSentences(msg.content);
+        if (sentences.length === 0) {
+          addMessage(msg.role, msg.content, msgTime, thinkAdded, msg.thinking, true);
           thinkAdded = true;
-        });
+        } else {
+          sentences.forEach((seg, i) => {
+            addMessage(msg.role, seg, msgTime, thinkAdded, thinkAdded ? undefined : msg.thinking, true);
+            thinkAdded = true;
+          });
+        }
       }
     } else {
       addMessage(msg.role, msg.content, msgTime, undefined, undefined, true);
@@ -9652,6 +9674,11 @@ async function jumpToSearchResult(idx) {
         let roundCount = 0;
         const allToolCalls = []; // 累積這次交換裡所有輪次的工具調用（name+input），最終跟這條assistant消息一起存進歷史
         const MAX_TOOL_ROUNDS = 20; // 安全上限：連續調工具超過這個次數還沒給最終回覆就放棄（提高上限讓Ryven能完整玩完一局遊戲，比如二十一點多輪要牌）
+        // segments：按實際發生順序記錄這次交換的完整渲染順序（thinking/text/tool），存進歷史後
+        // renderChatMessagesRange()重新整理頁面時就能照這個順序重建畫面，不會再變成「工具節點全部堆前面」——
+        // 這正是修這個bug的核心：舊的historyContent只有fullText+toolCalls，順序關係在存的時候就已經丟失了
+        const segments = [];
+        let thinkingSegment = null; // 整個交換共用一個thinking segment（跟畫面上只有一個思考框對應），最後統一填入最終thinkingText
 
         while (true) {
             roundCount++;
@@ -9682,7 +9709,13 @@ async function jumpToSearchResult(idx) {
             if (roundCount === 1) {
                 // 思考行：整個交換共用一個，之後每輪的thinking_delta都往同一個框裡累加
                 ensureThinkRow();
+                thinkingSegment = { type: 'thinking', content: '' };
+                segments.push(thinkingSegment);
             }
+
+            // 這一輪裡已經被自然斷句cut定型、留在畫面上的文字（區別於currentText——那是還沒cut的尾巴，
+            // 如果這輪最後有工具調用會被丟棄；只有真的定型保留下來的部分才該記進segments）
+            let roundCommittedText = '';
 
             // ===== 這一輪的流式讀取 =====
             // 逐句流式：每收到一个字符就追加，一碰到句末标点（。！？\n）就把当前气泡定型，换一个新气泡接着收
@@ -9776,6 +9809,7 @@ async function jumpToSearchResult(idx) {
                                     // 候选切点确认要切：先看这段够不够长（不够就并入下一段），再决定要不要新开一个气泡
                                     if (pendingCut && !isClosingMark) {
                                         if (!isTooShortSegment(currentText)) {
+                                            roundCommittedText += currentText; // 這段真的cut定型了，留在畫面上——記進這輪的已定型文字
                                             currentText = '';
                                             currentBubble = prepareRyvenBubble();
                                         }
@@ -9820,8 +9854,8 @@ async function jumpToSearchResult(idx) {
                     if (currentBubble.appended) currentBubble.wrap.remove();
                     thinkRow.remove();
                     const sentences = splitIntoSentences(fullText);
-                    const segments = sentences.length ? sentences : [fullText.trim()];
-                    segments.forEach((seg, i) => {
+                    const voiceSegs = sentences.length ? sentences : [fullText.trim()];
+                    voiceSegs.forEach((seg, i) => {
                         const wrap = addVoiceBubble(seg, Date.now(), i > 0, i === 0 ? thinkingText : undefined);
                         loadVoiceBubbleAudio(wrap, seg);
                     });
@@ -9831,10 +9865,15 @@ async function jumpToSearchResult(idx) {
                     appendPendingBubble(messagesEl, currentBubble);
                     decrementPendingReplyCount();
                 }
+                // 這輪是最終回覆：把完整文字記成這次交換的最後一個segment（不用roundCommittedText，
+                // fullText本身就是這輪的完整內容，包含了這輪裡途中已經cut定型的那些片段）
+                if (fullText.trim()) segments.push({ type: 'text', content: fullText });
                 break;
             } else {
                 // 有工具調用：這輪產生的文字氣泡不算數（不顯示），依序執行工具（各自顯示折疊節點），組下一輪請求繼續對話
                 if (currentBubble.appended) currentBubble.wrap.remove();
+                // 這輪途中已經cut定型、留在畫面上的文字（如果有）先記成一個text segment，順序上排在接下來的工具segment之前
+                if (roundCommittedText.trim()) segments.push({ type: 'text', content: roundCommittedText });
 
                 const assistantContentBlocks = toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }));
                 const toolResultBlocks = [];
@@ -9842,6 +9881,7 @@ async function jumpToSearchResult(idx) {
                     const { resultText, displayContent } = await executeToolUse(tu, exchangeId);
                     toolResultBlocks.push({ type: 'tool_result', tool_use_id: tu.id, content: resultText });
                     allToolCalls.push({ name: tu.name, input: tu.input, display: displayContent });
+                    segments.push({ type: 'tool', content: { name: tu.name, input: tu.input, display: displayContent } });
                 }
 
                 messagesForApi = [
@@ -9853,12 +9893,14 @@ async function jumpToSearchResult(idx) {
             }
         }
 
+        if (thinkingSegment) thinkingSegment.content = thinkingText;
+
         chatHistory.push({role:'assistant', content: fullText});
         msgCount++;
               // 保存到服务器
         const toSave = [
           { role: 'user', content: userContentForSave },
-          { role: 'assistant', content: fullText, thinking: thinkingText, ...(allToolCalls.length ? { toolCalls: allToolCalls } : {}) }
+          { role: 'assistant', content: fullText, thinking: thinkingText, ...(allToolCalls.length ? { toolCalls: allToolCalls } : {}), segments }
         ];
         fetch(`https://ryven.homes/relay/chat/save`, {
           method: 'POST',
