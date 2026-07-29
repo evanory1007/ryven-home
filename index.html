@@ -3657,6 +3657,8 @@
       </div>
       <div class="lib-drawer-section-label">分類 · category</div>
       <div class="tags-wrap" id="lib-tags-wrap"></div>
+      <div class="lib-drawer-section-label">月份 · month</div>
+      <div class="tags-wrap" id="lib-month-wrap"></div>
       <div class="lib-drawer-footer">
         <button class="lib-drawer-cleanup-btn" onclick="libCleanDuplicates()">🧹 清理重複</button>
       </div>
@@ -6634,6 +6636,7 @@ async function jumpToSearchResult(idx) {
 
   const LIB_IMPORTANCE_RANGES = { low: [1,3], mid: [4,6], high: [7,10] };
   let libActiveImportance = null; // null | 'low' | 'mid' | 'high'，單選（點同一個再點一次取消）
+  let libActiveMonth = null; // null | "YYYY-MM"，單選（點同一個再點一次取消）
   const libDomainEmojiMap = { '自省':'🪸', '恋爱':'💚', '编程':'🐚', '心理':'🌊' };
 
   function libDomainEmoji(domain) { return libDomainEmojiMap[domain] || '✦'; }
@@ -6679,10 +6682,14 @@ async function jumpToSearchResult(idx) {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       libraryBuckets = data.result || [];
+      // 默認按時間倒序（最新的在最前）：用last_active，沒有的話退回created，跟memlibDaysSince()判斷「安靜/活躍」時的欄位優先順序保持一致
+      libraryBuckets.sort((a, b) => new Date(b.last_active || b.created || 0) - new Date(a.last_active || a.created || 0));
       libActiveCategories = new Set();
       libActiveImportance = null;
+      libActiveMonth = null;
       renderLibraryTags();
       renderLibraryImportance();
+      renderLibraryMonths();
       renderLibrary(libraryBuckets);
     } catch(e) {
       console.error('記憶庫加載失敗', e);
@@ -6777,11 +6784,39 @@ async function jumpToSearchResult(idx) {
     libFilterAndRender();
   }
 
+  // 月份篩選：從所有bucket的created欄位算出實際有記憶的月份（去重、新到舊排序），單選，點同一個再點一次取消
+  function libBucketMonthKey(b) {
+    const d = new Date(b.created);
+    if (isNaN(d)) return null;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function renderLibraryMonths() {
+    const wrap = document.getElementById('lib-month-wrap');
+    if (!wrap) return;
+    const months = Array.from(new Set(libraryBuckets.map(libBucketMonthKey).filter(Boolean))).sort().reverse();
+    wrap.innerHTML = months.map(m =>
+      `<div class="tag-chip${libActiveMonth === m ? ' active' : ''}" data-month="${m}">${m}</div>`
+    ).join('');
+    wrap.querySelectorAll('.tag-chip').forEach(chip => {
+      chip.addEventListener('click', () => libToggleMonth(chip.getAttribute('data-month')));
+    });
+  }
+
+  function libToggleMonth(month) {
+    libActiveMonth = libActiveMonth === month ? null : month;
+    renderLibraryMonths();
+    updateLibFilterBtnUI();
+    libFilterAndRender();
+  }
+
   function libClearAllFilters() {
     libActiveCategories.clear();
     libActiveImportance = null;
+    libActiveMonth = null;
     renderLibraryTags();
     renderLibraryImportance();
+    renderLibraryMonths();
     libFilterAndRender();
   }
 
@@ -6794,7 +6829,7 @@ async function jumpToSearchResult(idx) {
     const btn = document.getElementById('lib-filter-btn');
     const countEl = document.getElementById('lib-filter-btn-count');
     const clearBtn = document.getElementById('lib-drawer-clear');
-    const n = libActiveCategories.size + (libActiveImportance ? 1 : 0);
+    const n = libActiveCategories.size + (libActiveImportance ? 1 : 0) + (libActiveMonth ? 1 : 0);
     if (btn) btn.classList.toggle('active', n > 0);
     if (countEl) { countEl.style.display = n > 0 ? 'flex' : 'none'; countEl.textContent = n; }
     if (clearBtn) clearBtn.style.display = n > 0 ? 'inline-block' : 'none';
@@ -6810,6 +6845,7 @@ async function jumpToSearchResult(idx) {
       const [min, max] = LIB_IMPORTANCE_RANGES[libActiveImportance];
       filtered = filtered.filter(b => (b.importance||0) >= min && (b.importance||0) <= max);
     }
+    if (libActiveMonth) filtered = filtered.filter(b => libBucketMonthKey(b) === libActiveMonth);
     if (q) filtered = filtered.filter(b =>
       (b.name||'').toLowerCase().includes(q) ||
       (b.content_preview||'').toLowerCase().includes(q) ||
