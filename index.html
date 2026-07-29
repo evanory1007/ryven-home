@@ -1120,6 +1120,7 @@
       background: var(--avatar-bg);
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; flex-shrink: 0;
+      overflow: hidden;
     }
     /* 气泡+时间戳同列，这样时间戳能跟着气泡的实际宽度左/右对齐，而不是靠固定padding硬凑 */
     .msg-col { display: flex; flex-direction: column; max-width: 75%; min-width: 0; }
@@ -3092,7 +3093,7 @@
     #diary .diary-card.ryven .envelope-flap::before { background: linear-gradient(160deg, rgba(109,184,160,0.06) 0%, transparent 60%); }
     #diary .diary-card.ryven .envelope-flap::after { background: linear-gradient(90deg, transparent, rgba(109,184,160,0.2), transparent); }
     #diary .flap-inner { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 0; position: relative; z-index: 1; }
-    #diary .env-avatar { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(201,168,76,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px; background: rgba(10,14,31,0.65); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    #diary .env-avatar { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(201,168,76,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px; background: rgba(10,14,31,0.65); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); overflow: hidden; }
     #diary .diary-card.ryven .env-avatar { border-color: rgba(109,184,160,0.25); }
     #diary .env-meta { display: flex; flex-direction: column; gap: 2px; }
     #diary .diary-card.nory .env-meta { align-items: flex-end; padding-right: 56px; }
@@ -3119,7 +3120,7 @@
     #diary .comments-toggle:hover { color: var(--parchment-dim); }
     #diary .comments-list { margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
     #diary .comment-item { display: flex; gap: 8px; }
-    #diary .comment-ava { width: 22px; height: 22px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; background: rgba(26,31,58,0.7); border: 1px solid var(--line); flex-shrink: 0; margin-top: 1px; }
+    #diary .comment-ava { width: 22px; height: 22px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; background: rgba(26,31,58,0.7); border: 1px solid var(--line); flex-shrink: 0; margin-top: 1px; overflow: hidden; }
     #diary .comment-name { font-size: 10px; color: var(--tide-gold-soft); margin-bottom: 2px; }
     #diary .comment-text { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--parchment-ghost); line-height: 1.55; }
     #diary .comment-input-row { display: flex; gap: 8px; margin-top: 10px; }
@@ -4489,7 +4490,7 @@
 
     <!-- 打字指示器 -->
     <div class="typing-indicator" id="typing-indicator">
-      <div class="msg-avatar-sm">💚</div>
+      <div class="msg-avatar-sm" data-avatar="ryven">💚</div>
       <div class="typing-dots"><span></span><span></span><span></span></div>
     </div>
 
@@ -5667,7 +5668,7 @@ function renderImageBubble(role, src, timestampMs, skipScroll) {
   wrap.dataset.ts = msgDate.getTime();
   wrap.innerHTML = `
     <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
-      <div class="msg-avatar-sm">${isMe ? '🐻' : '💚'}</div>
+      <div class="msg-avatar-sm" data-avatar="${isMe ? 'nory' : 'ryven'}"${avatarBgAttr(isMe ? 'nory' : 'ryven')}>${avatarEmoji(isMe ? 'nory' : 'ryven')}</div>
       <div class="msg-col">
         <div class="img-bubble"><img alt=""><div class="img-overlay">🔍</div></div>
         <div class="msg-time">${time}</div>
@@ -6312,7 +6313,7 @@ async function jumpToSearchResult(idx) {
         <div class="envelope">
           <div class="envelope-flap">
             <div class="flap-inner">
-              <div class="env-avatar">💚</div>
+              <div class="env-avatar" data-avatar="ryven"${avatarBgAttr('ryven')}>${avatarEmoji('ryven')}</div>
               <div class="env-meta">
                 <div class="env-name"></div>
                 <div class="env-time"></div>
@@ -6340,7 +6341,7 @@ async function jumpToSearchResult(idx) {
         <div class="envelope">
           <div class="envelope-flap">
             <div class="flap-inner">
-              <div class="env-avatar">🐻</div>
+              <div class="env-avatar" data-avatar="nory"${avatarBgAttr('nory')}>${avatarEmoji('nory')}</div>
               <div class="env-meta">
                 <div class="env-name">Nory</div>
                 <div class="env-time"></div>
@@ -6436,13 +6437,12 @@ async function jumpToSearchResult(idx) {
 
   // env-comments裡的.comments-list只顯示Ryven的評論（comment.ryven）；Nory自己發的留言不用回顯，
   // 存進comment.nory後把輸入框清空就好，跟現有「留句話」的簡單發送式輸入框行為保持一致
-  // 頭像用跟聊天氣泡(.msg-avatar-sm)同一套emoji（🐻 Nory / 💚 Ryven），聊天氣泡本身也是寫死這兩個emoji、
-  // 不是讀localStorage裡設置頁那個可自訂頭像，所以這裡跟著用同款emoji才叫「跟聊天氣泡一致」
-  function diaryBuildCommentItem(avatar, name, text) {
+  // 頭像跟聊天氣泡(.msg-avatar-sm)/日記信封(.env-avatar)共用同一套localStorage自訂頭像邏輯（見avatarEmoji/applyAvatarToEl）
+  function diaryBuildCommentItem(who, name, text) {
     const el = document.createElement('div');
     el.className = 'comment-item';
-    el.innerHTML = `<div class="comment-ava"></div><div><div class="comment-name"></div><div class="comment-text"></div></div>`;
-    el.querySelector('.comment-ava').textContent = avatar;
+    el.innerHTML = `<div class="comment-ava" data-avatar="${who}"></div><div><div class="comment-name"></div><div class="comment-text"></div></div>`;
+    applyAvatarToEl(el.querySelector('.comment-ava'), who);
     el.querySelector('.comment-name').textContent = name;
     el.querySelector('.comment-text').textContent = text;
     return el;
@@ -6455,8 +6455,8 @@ async function jumpToSearchResult(idx) {
     listEl.innerHTML = '';
     // comment.ryven是Ryven給Nory日記留的話，只在Nory日記卡顯示；
     // comment.nory是Nory給任意日記的回覆，兩種卡片都顯示；Ryven自己的日記卡不顯示comment.ryven
-    if (!cardEl.classList.contains('ryven') && comment.ryven) listEl.appendChild(diaryBuildCommentItem('💚', 'Ryven', comment.ryven));
-    if (comment.nory) listEl.appendChild(diaryBuildCommentItem('🐻', 'Nory', comment.nory));
+    if (!cardEl.classList.contains('ryven') && comment.ryven) listEl.appendChild(diaryBuildCommentItem('ryven', 'Ryven', comment.ryven));
+    if (comment.nory) listEl.appendChild(diaryBuildCommentItem('nory', 'Nory', comment.nory));
   }
 
   async function diarySendComment(sendBtn) {
@@ -8098,7 +8098,7 @@ async function jumpToSearchResult(idx) {
     wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row ${sideClass}${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm">${isMe ? '🐻' : '💚'}</div>
+        <div class="msg-avatar-sm" data-avatar="${isMe ? 'nory' : 'ryven'}"${avatarBgAttr(isMe ? 'nory' : 'ryven')}>${avatarEmoji(isMe ? 'nory' : 'ryven')}</div>
         <div class="msg-col">
           ${bubbleHTML}
           <div class="msg-time">${time}</div>
@@ -8132,7 +8132,7 @@ async function jumpToSearchResult(idx) {
     wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row from-ryven${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm">💚</div>
+        <div class="msg-avatar-sm" data-avatar="ryven"${avatarBgAttr('ryven')}>${avatarEmoji('ryven')}</div>
         <div class="msg-col">
           <div class="msg-bubble voice-msg-bubble loading">
             <div class="voice-play-btn">
@@ -8870,7 +8870,7 @@ async function jumpToSearchResult(idx) {
     wrap.dataset.ts = msgDate.getTime();
     wrap.innerHTML = `
       <div class="msg-row from-me${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm">🐻</div>
+        <div class="msg-avatar-sm" data-avatar="nory"${avatarBgAttr('nory')}>${avatarEmoji('nory')}</div>
         <div class="msg-col">
           <div class="msg-bubble file-msg-bubble" onclick="toggleThink('${expandId}')">
             <div class="file-bubble-icon">${meta.icon}</div>
@@ -9124,7 +9124,7 @@ async function jumpToSearchResult(idx) {
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
       <div class="msg-row from-me${continued ? ' continued' : ''}">
-        <div class="msg-avatar-sm">🐻</div>
+        <div class="msg-avatar-sm" data-avatar="nory"${avatarBgAttr('nory')}>${avatarEmoji('nory')}</div>
         <div class="msg-col">
           <div class="msg-bubble" style="padding:0;">
             <div class="voice-bubble"><div class="voice-play">▶</div><div class="voice-wave" id="${waveId}"></div><div class="voice-dur">${durStr}</div></div>
@@ -9213,7 +9213,7 @@ async function jumpToSearchResult(idx) {
     wrap.className = 'msg-wrap';
     wrap.innerHTML = `
       <div class="msg-row from-ryven">
-        <div class="msg-avatar-sm">💚</div>
+        <div class="msg-avatar-sm" data-avatar="ryven"${avatarBgAttr('ryven')}>${avatarEmoji('ryven')}</div>
         <div class="msg-col">
           <div class="msg-bubble"></div>
           <div class="msg-time"></div>
@@ -11141,19 +11141,35 @@ function settingsSaveName(who) {
 // ---- 档案：头像切换/放大/上傳本地圖片 ----
 // 頭像有兩種來源：emoji（ryven-avatar-nory/ryven-avatar-ryven）或自訂圖片（ryven-avatar-img-nory/ryven-avatar-img-ryven，存dataURL）。
 // 圖片優先——只要ryven-avatar-img-*有值就顯示圖片，換表情/移除圖片時要記得同步清掉或設置圖片key。
-function applySettingsAvatarDisplay(who) {
-    const el = document.getElementById(`settings-${who}-avatar`);
+// 這套邏輯不只settings頁自己用：聊天氣泡(.msg-avatar-sm)、日記卡(.env-avatar/.comment-ava)也共用同一份，
+// 渲染時都帶上data-avatar="nory"或"ryven"屬性，換頭像後靠refreshRenderedAvatars()統一刷新畫面上已經存在的那些。
+function avatarEmoji(who) {
+    if (localStorage.getItem(`ryven-avatar-img-${who}`)) return '';
+    return localStorage.getItem(who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven') || (who === 'nory' ? '🐻' : '💚');
+}
+// 拼HTML字串時塞進標籤裡用，例如 `<div class="msg-avatar-sm" data-avatar="nory"${avatarBgAttr('nory')}>`
+function avatarBgAttr(who) {
+    const img = localStorage.getItem(`ryven-avatar-img-${who}`);
+    return img ? ` style="background-image:url('${img}');background-size:cover;background-position:center;"` : '';
+}
+function applyAvatarToEl(el, who) {
     if (!el) return;
     const img = localStorage.getItem(`ryven-avatar-img-${who}`);
     if (img) {
-        el.style.backgroundImage = `url(${img})`;
+        el.style.backgroundImage = `url('${img}')`;
         el.style.backgroundSize = 'cover';
         el.style.backgroundPosition = 'center';
         el.textContent = '';
     } else {
         el.style.backgroundImage = '';
-        el.textContent = localStorage.getItem(who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven') || (who === 'nory' ? '🐻' : '💚');
+        el.textContent = avatarEmoji(who);
     }
+}
+function refreshRenderedAvatars() {
+    document.querySelectorAll('[data-avatar]').forEach(el => applyAvatarToEl(el, el.dataset.avatar));
+}
+function applySettingsAvatarDisplay(who) {
+    applyAvatarToEl(document.getElementById(`settings-${who}-avatar`), who);
 }
 
 function settingsCycleAvatar(who) {
@@ -11164,6 +11180,7 @@ function settingsCycleAvatar(who) {
     localStorage.setItem(key, next);
     localStorage.removeItem(`ryven-avatar-img-${who}`); // 換表情視為放棄目前的自訂圖片
     applySettingsAvatarDisplay(who);
+    refreshRenderedAvatars();
 }
 
 let avatarMenuTarget = null;
@@ -11194,6 +11211,7 @@ function handleAvatarImageUpload(event) {
     reader.onload = () => {
         localStorage.setItem(`ryven-avatar-img-${who}`, reader.result);
         applySettingsAvatarDisplay(who);
+        refreshRenderedAvatars();
         showToast('✦ 已更新頭像');
         hideAvatarMenu();
     };
@@ -11204,6 +11222,7 @@ function settingsRemoveAvatarImage() {
     if (!avatarMenuTarget) return;
     localStorage.removeItem(`ryven-avatar-img-${avatarMenuTarget}`);
     applySettingsAvatarDisplay(avatarMenuTarget);
+    refreshRenderedAvatars();
     showToast('✦ 已恢復表情頭像');
     hideAvatarMenu();
 }
@@ -11328,6 +11347,9 @@ setInterval(() => {
 renderHomePage();
 // 已登录（刷新页面/换设备）时，页面初始化也从服务器同步一次模型配置/備註
 if (isLoggedIn) loadUserConfigFromServer();
+// 打字指示器等靜態HTML裡寫死的頭像（不是每次動態生成），頁面載入時要補刷一次，
+// 不然上次已經上傳過自訂圖片的話，這幾個地方在使用者做任何互動之前還是顯示舊emoji
+refreshRenderedAvatars();
 </script>
 </body>
 </html>
