@@ -9323,7 +9323,8 @@ async function jumpToSearchResult(idx) {
     edit_album_note: '改了一張照片的備註',
     play_fishing: '玩了一把釣魚遊戲',
     play_arcade: '玩了一把遊戲',
-    comment_nory_diary: '在你的日記上留了一句話'
+    comment_nory_diary: '在你的日記上留了一句話',
+    read_ombre: '翻了翻記憶'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9605,6 +9606,16 @@ async function jumpToSearchResult(idx) {
         }
         resultText = '已在日記留言';
         displayContent = `${input.date || ''}\n${input.content || ''}`;
+      } else if (name === 'read_ombre') {
+        const res = await fetch('https://ryven.homes/relay/ombre/breath', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ query: input.query, max_results: input.max_results || 5 })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        resultText = JSON.stringify(data);
+        displayContent = JSON.stringify(data, null, 2);
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
