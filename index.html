@@ -10882,10 +10882,35 @@ function sendSoloGameCommandFromInput() {
 }
 
 // ===== #leisure 新版首頁：遊戲卡片上的戰績數字 + 成就條（放在頁面最下方，不是塞進卡片裡）+ 表情包收藏數 =====
-// 成就現在三個來源都合併顯示：fishing-save的achievements（欄位名沒跟relay.py核對過，是猜的，
-// 沒有這欄位或不是陣列就自動當空陣列處理，不會報錯）+ arcade-save的slots.achievements/blackjack.achievements
-// （這兩個是伺服器已經算好icon/text/unlocked的確認格式）。兩邊fetch互相獨立，其中一邊失敗或欄位對不上，
-// 另一邊的成就還是能正常顯示，不會因為釣魚那邊猜錯欄位名就整條成就列表都掛掉
+// 成就三個來源合併顯示：
+//   1. fishing-save沒有現成的achievements欄位，前端自己用真實數據（total_caught/encyclopedia）算門檻成就
+//   2. arcade-save的slots.achs/blackjack.achs——注意欄位是achs不是achievements，而且是「短代碼字串陣列」
+//      不是{icon,text,unlocked}物件，陣列裡出現的代碼視為已經達成（沒有「未解鎖」的資料可顯示）
+// ARCADE_ACH_MAP只能先照常見拉霸/21點成就命名猜幾個高把握的（首勝/破產/百倍），沒收錄的代碼會退回顯示
+// 格式化過的代碼本身（底線/連字號換成空格、字首大寫），不會顯示空白或報錯——完整代碼清單還沒拿到，
+// 之後補上真正的清單再擴充這個對照表
+const ARCADE_ACH_MAP = {
+  firstwin: { icon: '🎉', text: '首次獲勝' },
+  broke:    { icon: '💸', text: '輸光了' },
+  win100:   { icon: '💰', text: '百倍大獎' }
+};
+function formatAchievementCode(code) {
+  return String(code).replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function arcadeAchCodeToEntry(code) {
+  const mapped = ARCADE_ACH_MAP[code];
+  return { icon: mapped ? mapped.icon : '🏅', text: mapped ? mapped.text : formatAchievementCode(code), unlocked: true };
+}
+function computeFishingAchievements(data) {
+  const totalCaught = data.total_caught ?? 0;
+  const enc = data.encyclopedia ?? 0;
+  return [
+    { icon: '🎣', text: '釣魚初體驗', unlocked: totalCaught > 0 },
+    { icon: '🌊', text: '海洋探索者', unlocked: enc >= 5 },
+    { icon: '🔬', text: '深海調查員', unlocked: enc >= 8 }
+  ];
+}
+
 function renderLeisureAchievements(...lists) {
   const listEl = document.getElementById('leisure-achievement-list');
   if (!listEl) return;
@@ -10913,7 +10938,7 @@ async function loadLeisureGameStats() {
     const data = await res.json();
     const el = document.getElementById('leisure-fishing-stat');
     if (el) el.textContent = `圖鑑 ${data.encyclopedia ?? 0}/${data.encyclopedia_total ?? 0} · ${data.total_casts ?? 0}竿`;
-    fishingAchievements = data.achievements || [];
+    fishingAchievements = computeFishingAchievements(data);
   } catch(e) {
     console.error('釣魚統計加載失敗', e);
   }
@@ -10931,7 +10956,7 @@ async function loadLeisureGameStats() {
     const bj = data.blackjack || {};
     const bjEl = document.getElementById('leisure-bj-stat');
     if (bjEl) bjEl.textContent = `${bj.wins ?? 0}勝 ${bj.losses ?? 0}敗`;
-    arcadeAchievements = [...(slots.achievements || []), ...(bj.achievements || [])];
+    arcadeAchievements = [...(slots.achs || []), ...(bj.achs || [])].map(arcadeAchCodeToEntry);
   } catch(e) {
     console.error('遊戲戰績加載失敗', e);
   }
