@@ -9324,7 +9324,8 @@ async function jumpToSearchResult(idx) {
     play_fishing: '玩了一把釣魚遊戲',
     play_arcade: '玩了一把遊戲',
     comment_nory_diary: '在你的日記上留了一句話',
-    read_ombre: '翻了翻記憶'
+    read_ombre: '翻了翻記憶',
+    web_search: '搜了一下'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9616,6 +9617,23 @@ async function jumpToSearchResult(idx) {
         const data = await res.json();
         resultText = JSON.stringify(data);
         displayContent = JSON.stringify(data, null, 2);
+      } else if (name === 'web_search') {
+        const res = await fetch('https://ryven.homes/relay/web/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ query: input.query, max_results: input.max_results || 5 })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        const results = data.results || data.data || [];
+        // 字段名沒有跟relay.py確認過，标题/摘要各自兜底幾種常見命名，避免對不上時整段變空白
+        const lines = results.map((r, i) => {
+          const title = r.title || r.name || '（無標題）';
+          const summary = r.snippet || r.summary || r.description || r.abstract || '';
+          return `${i + 1}. ${title}${summary ? '\n' + summary : ''}`;
+        });
+        resultText = lines.length ? lines.join('\n\n') : '沒有找到相關結果';
+        displayContent = resultText;
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
