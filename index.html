@@ -9875,7 +9875,11 @@ async function jumpToSearchResult(idx) {
                 // 這輪途中已經cut定型、留在畫面上的文字（如果有）先記成一個text segment，順序上排在接下來的工具segment之前
                 if (roundCommittedText.trim()) segments.push({ type: 'text', content: roundCommittedText });
 
-                const assistantContentBlocks = toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }));
+                // 這輪組給下一輪API context的assistant訊息，要把這輪真的說過的文字也帶上，不能只塞tool_use——
+                // 不然模型在下一輪「不記得」自己這輪已經說過那段話，容易在最終回覆裡把類似的內容再講一次，
+                // 畫面上就變成同一句意思的話出現兩次（先前這裡漏掉了text block，是實時對話出現重複回覆的根因）
+                const roundTextBlocks = roundText.trim() ? [{ type: 'text', text: roundText }] : [];
+                const assistantContentBlocks = [...roundTextBlocks, ...toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }))];
                 const toolResultBlocks = [];
                 for (const tu of toolUses) {
                     const { resultText, displayContent } = await executeToolUse(tu, exchangeId);
