@@ -1612,6 +1612,10 @@
     .sticker-thumb.sticker-add:hover { color: var(--tide-gold); border-color: var(--tide-gold-soft); }
     .sticker-del { position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(10,14,31,0.75); color: rgba(248,242,232,0.6); font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, background 0.2s; }
     .sticker-del:hover { color: var(--danger); background: rgba(10,14,31,0.9); }
+    .sticker-tag { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(10,14,31,0.75); color: rgba(248,242,232,0.6); font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s, background 0.2s; }
+    .sticker-tag:hover { color: var(--tide-gold); background: rgba(10,14,31,0.9); }
+    .sticker-tag.has-caption { color: var(--tide-gold); }
+    .sticker-caption-label { position: absolute; bottom: 0; left: 0; right: 0; padding: 2px 4px; font-size: 9px; text-align: center; background: rgba(10,14,31,0.6); color: var(--parchment-ghost); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sticker-status { grid-column: span 4; text-align: center; padding: 30px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
 
     /* ─── 语音气泡 ─── */
@@ -5646,6 +5650,8 @@ function renderChatMessagesRange() {
           } else if (seg.type === 'tool') {
             const tc = seg.content || {};
             if (tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
+            // use_sticker：折叠节点只显示"发了个表情包"这句话，实际的表情包图片要额外补画出来
+            if (tc.stickerUrl) renderImageBubble(msg.role, tc.stickerUrl, msgTime, true);
           } else if (seg.type === 'text') {
             const sentences = splitIntoSentences(seg.content || '');
             const parts = sentences.length ? sentences : [seg.content || ''];
@@ -5659,6 +5665,7 @@ function renderChatMessagesRange() {
         if (Array.isArray(msg.toolCalls)) {
           msg.toolCalls.forEach(tc => {
             if (tc && tc.name) addToolCallNode(tc.name, tc.input || {}).setSuccess(tc.display || '');
+            if (tc && tc.stickerUrl) renderImageBubble(msg.role, tc.stickerUrl, msgTime, true);
           });
         }
         // 语音模式的翻译是即时调API拿的、不落库，历史消息重新加载时无从分辨是不是语音消息，
@@ -8815,6 +8822,11 @@ async function jumpToSearchResult(idx) {
 
   // ===== 貼紙 =====
   let stickerList = [];
+  let stickerCaptions = {}; // filename -> caption，Ryven用use_sticker工具靠這個知道每張表情包代表什麼
+
+  function stickerFilenameFromUrl(url) {
+    return (url.split('/').pop() || '').split('?')[0];
+  }
 
   function stickerOpenTray() {
     document.getElementById('sticker-sheet').classList.add('show');
@@ -8822,6 +8834,19 @@ async function jumpToSearchResult(idx) {
   }
   function stickerCloseTray() {
     document.getElementById('sticker-sheet').classList.remove('show');
+  }
+
+  async function stickerLoadCaptions() {
+    try {
+      const res = await fetch('https://ryven.homes/relay/sticker-captions', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      stickerCaptions = data.captions || {};
+    } catch(e) {
+      console.error('貼紙標籤加載失敗', e);
+    }
   }
 
   async function stickerLoadList() {
@@ -8834,6 +8859,7 @@ async function jumpToSearchResult(idx) {
       if (!res.ok) throw new Error('bad status ' + res.status);
       const data = await res.json();
       stickerList = data.stickers || [];
+      await stickerLoadCaptions();
       stickerRenderGrid();
     } catch(e) {
       console.error('貼紙列表加載失敗', e);
@@ -8841,15 +8867,49 @@ async function jumpToSearchResult(idx) {
     }
   }
 
+  async function stickerEditCaption(url) {
+    const filename = stickerFilenameFromUrl(url);
+    const current = stickerCaptions[filename] || '';
+    const next = prompt('這張表情包想讓 Ryven 怎麼理解？（比如：哭、開心、沒力氣）', current);
+    if (next === null) return; // 取消
+    const trimmed = next.trim();
+    try {
+      const res = await fetch('https://ryven.homes/relay/sticker-caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+        body: JSON.stringify({ url, caption: trimmed })
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      if (trimmed) stickerCaptions[filename] = trimmed;
+      else delete stickerCaptions[filename];
+      stickerRenderGrid();
+      showToast('✦ 標籤已存');
+    } catch(e) {
+      console.error('貼紙標籤保存失敗', e);
+      showToast('🌙 保存失敗，稍後再試');
+    }
+  }
+
   function stickerRenderGrid() {
     const grid = document.getElementById('sticker-grid');
     grid.innerHTML = '';
     stickerList.forEach(url => {
+      const filename = stickerFilenameFromUrl(url);
+      const caption = stickerCaptions[filename] || '';
       const thumb = document.createElement('div');
       thumb.className = 'sticker-thumb';
-      thumb.innerHTML = '<img alt=""><div class="sticker-del">×</div>';
+      thumb.innerHTML = `
+        <img alt="">
+        <div class="sticker-tag${caption ? ' has-caption' : ''}" title="給Ryven的標籤">🏷</div>
+        <div class="sticker-del">×</div>
+        ${caption ? `<div class="sticker-caption-label">${escapeToolContent(caption)}</div>` : ''}
+      `;
       thumb.querySelector('img').src = url;
       thumb.querySelector('img').addEventListener('click', () => stickerSend(url));
+      thumb.querySelector('.sticker-tag').addEventListener('click', (e) => {
+        e.stopPropagation();
+        stickerEditCaption(url);
+      });
       thumb.querySelector('.sticker-del').addEventListener('click', (e) => {
         e.stopPropagation();
         stickerDelete(url);
@@ -9340,7 +9400,8 @@ async function jumpToSearchResult(idx) {
     read_ombre: '翻了翻記憶',
     web_search: '搜了一下',
     lutopia_cli: '逛了論壇',
-    write_html: '寫了個頁面'
+    write_html: '寫了個頁面',
+    use_sticker: '發了個表情包'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9417,6 +9478,7 @@ async function jumpToSearchResult(idx) {
       let resultText = 'ok';
       let displayContent = '';
       let linkUrl = null; // 只有write_html這類會產出網址的工具會設置，設了的話setSuccess()會多渲染一行可點擊連結
+      let stickerUrl = null; // 只有use_sticker會設置，設了的話要存進toolCalls/segments，歷史重建時才能把表情包氣泡重新畫出來
       if (name === 'write_home_letter') {
         const res = await fetch('https://ryven.homes/relay/ryven/messages', {
           method: 'POST',
@@ -9673,12 +9735,41 @@ async function jumpToSearchResult(idx) {
         linkUrl = data.url || '';
         resultText = linkUrl ? `頁面做好了：${linkUrl}` : '頁面做好了，但沒拿到網址';
         displayContent = linkUrl || '（沒有網址）';
+      } else if (name === 'use_sticker') {
+        await stickerLoadCaptions();
+        if (!stickerList.length) {
+          resultText = '還沒有收藏任何表情包';
+          displayContent = resultText;
+        } else {
+          const keyword = (input.keyword || '').trim();
+          let bestUrl = '', bestScore = 0, bestCaption = '';
+          stickerList.forEach(u => {
+            const filename = stickerFilenameFromUrl(u);
+            const caption = stickerCaptions[filename] || '';
+            if (!caption) return;
+            // 粗略打分：完全一樣>互相包含>有共同字，短標籤(哭/開心這類)這樣配已經夠用，不用上真正的NLP
+            let score = 0;
+            if (caption === keyword) score = 3;
+            else if (keyword && (caption.includes(keyword) || keyword.includes(caption))) score = 2;
+            else if (keyword && [...caption].some(ch => keyword.includes(ch))) score = 1;
+            if (score > bestScore) { bestScore = score; bestUrl = u; bestCaption = caption; }
+          });
+          if (!bestUrl) {
+            resultText = '收藏裡沒有匹配的表情包（可能還沒打標籤，或者沒有符合這個情緒的）';
+            displayContent = resultText;
+          } else {
+            renderImageBubble('assistant', bestUrl);
+            stickerUrl = bestUrl;
+            resultText = `已送出表情包（${bestCaption}）`;
+            displayContent = resultText;
+          }
+        }
       } else {
         resultText = 'unknown tool: ' + name;
         displayContent = resultText;
       }
       node.setSuccess(displayContent, linkUrl);
-      return { resultText, displayContent };
+      return { resultText, displayContent, stickerUrl };
     } catch(e) {
       console.error('工具執行失敗：' + name, e);
       const errDisplay = '執行失敗：' + e.message;
@@ -9952,10 +10043,11 @@ async function jumpToSearchResult(idx) {
                 const assistantContentBlocks = [...roundTextBlocks, ...toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }))];
                 const toolResultBlocks = [];
                 for (const tu of toolUses) {
-                    const { resultText, displayContent } = await executeToolUse(tu, exchangeId);
+                    const { resultText, displayContent, stickerUrl } = await executeToolUse(tu, exchangeId);
                     toolResultBlocks.push({ type: 'tool_result', tool_use_id: tu.id, content: resultText });
-                    allToolCalls.push({ name: tu.name, input: tu.input, display: displayContent });
-                    segments.push({ type: 'tool', content: { name: tu.name, input: tu.input, display: displayContent } });
+                    // stickerUrl只有use_sticker会带，存下来是为了历史重建时renderChatMessagesRange()能靠它把表情包气泡重新画出来
+                    allToolCalls.push({ name: tu.name, input: tu.input, display: displayContent, ...(stickerUrl ? { stickerUrl } : {}) });
+                    segments.push({ type: 'tool', content: { name: tu.name, input: tu.input, display: displayContent, ...(stickerUrl ? { stickerUrl } : {}) } });
                 }
 
                 messagesForApi = [
