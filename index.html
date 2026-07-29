@@ -1804,172 +1804,78 @@
     }
     #leisure .gear:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
 
-    #leisure .hero { margin-bottom: 20px; }
-    #leisure .hero-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 60px; line-height: 0.95; letter-spacing: -0.01em; color: var(--parchment); margin-bottom: 8px; }
-    #leisure .hero-cn { font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0.5em; color: var(--tide-gold); opacity: 0.65; margin-bottom: 12px; padding-left: 3px; }
-    #leisure .hero-rule { display: flex; align-items: center; gap: 12px; }
-    #leisure .hero-rule-line { height: 1px; width: 40px; background: var(--tide-gold-soft); }
-    #leisure .hero-rule-en { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-dim); opacity: 0.7; }
+    /* ══════════════════════ #leisure（海底遊樂場）══════════════════════ */
+    #leisure .page-title { text-align: center; margin-bottom: 8px; letter-spacing: 6px; font-size: 13px; color: var(--parchment-dim); text-transform: uppercase; }
+    #leisure .page-subtitle { text-align: center; font-size: 12px; color: var(--parchment-ghost); font-style: italic; margin-bottom: 32px; }
 
-    #leisure .scene {
-      position: relative; width: 100%; height: 520px; border-radius: 8px; overflow: hidden;
-      background:
-        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(109,184,160,0.08), transparent 70%),
-        linear-gradient(180deg, rgba(46,74,158,0.35) 0%, rgba(26,31,58,0.6) 30%, rgba(15,20,40,0.85) 70%, rgba(5,9,22,0.95) 100%);
+    /* 裝飾用氣泡/魚——position:fixed但巢狀在.screen底下，#leisure不是active screen時整棵子樹display:none，不會漏到別的畫面 */
+    #leisure .leisure-bubble {
+      position: fixed; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.05);
+      animation: leisureBubbleRise linear infinite;
+      pointer-events: none; z-index: 0;
+    }
+    @keyframes leisureBubbleRise {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+    }
+    #leisure .leisure-fish { position: fixed; animation: leisureFishSwimLeft linear infinite; pointer-events: none; z-index: 0; opacity: 0.4; }
+    #leisure .leisure-fish svg { width: 30px; height: 16px; }
+    @keyframes leisureFishSwimLeft {
+      0% { transform: translateX(calc(100vw + 50px)); }
+      100% { transform: translateX(-150px); }
+    }
+
+    #leisure .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; position: relative; z-index: 1; }
+    #leisure .game-card {
+      background: var(--card-bg);
       border: 1px solid var(--line);
-      margin-bottom: 30px;
+      border-radius: 16px; padding: 24px 16px; text-align: center; cursor: pointer;
+      transition: all 0.3s ease; position: relative; overflow: hidden;
     }
-    #leisure .rays { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0.5; }
-    #leisure .motes {
-      position: absolute; inset: 0; pointer-events: none; z-index: 2;
-      background-image:
-        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.4), transparent 60%),
-        radial-gradient(1px 1px at 45% 30%, rgba(201,168,76,0.3), transparent 60%),
-        radial-gradient(1px 1px at 78% 15%, rgba(255,255,255,0.3), transparent 60%),
-        radial-gradient(1px 1px at 25% 50%, rgba(255,255,255,0.25), transparent 60%),
-        radial-gradient(2px 2px at 85% 60%, rgba(201,168,76,0.2), transparent 60%),
-        radial-gradient(1px 1px at 55% 70%, rgba(255,255,255,0.2), transparent 60%);
+    #leisure .game-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0;
+      background: linear-gradient(to top, var(--tide-gold-ghost), transparent);
+      transition: height 0.3s ease;
     }
-    #leisure .scene-bubs { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
-    #leisure .sbub {
-      position: absolute; bottom: 0; border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.55), rgba(109,184,160,0.15) 65%, transparent);
-      box-shadow: 0 0 3px rgba(201,168,76,0.25);
-      animation: leisureSceneRise linear infinite;
-      opacity: 0;
-    }
-    @keyframes leisureSceneRise {
-      0%   { transform: translateY(0) translateX(0) scale(0.4); opacity: 0; }
-      10%  { opacity: 0.6; }
-      50%  { transform: translateY(-250px) translateX(6px) scale(0.9); opacity: 0.5; }
-      100% { transform: translateY(-520px) translateX(-4px) scale(1.2); opacity: 0; }
-    }
-    #leisure .sbub:nth-child(1) { left: 10%; width: 6px; height: 6px; animation-duration: 12s; animation-delay: 0s;  }
-    #leisure .sbub:nth-child(2) { left: 24%; width: 4px; height: 4px; animation-duration: 14s; animation-delay: 3s;  }
-    #leisure .sbub:nth-child(3) { left: 38%; width: 8px; height: 8px; animation-duration: 11s; animation-delay: 1s;  }
-    #leisure .sbub:nth-child(4) { left: 52%; width: 5px; height: 5px; animation-duration: 13s; animation-delay: 5s;  }
-    #leisure .sbub:nth-child(5) { left: 66%; width: 6px; height: 6px; animation-duration: 12s; animation-delay: 2s;  }
-    #leisure .sbub:nth-child(6) { left: 78%; width: 4px; height: 4px; animation-duration: 15s; animation-delay: 4s;  }
-    #leisure .sbub:nth-child(7) { left: 88%; width: 5px; height: 5px; animation-duration: 13s; animation-delay: 6s;  }
-    #leisure .sbub:nth-child(8) { left: 16%; width: 3px; height: 3px; animation-duration: 14s; animation-delay: 7s;  }
+    #leisure .game-card:hover::after { height: 100%; }
+    #leisure .game-card:hover { border-color: var(--tide-gold-soft); transform: translateY(-2px); }
+    #leisure .game-icon { font-size: 32px; margin-bottom: 10px; display: block; position: relative; z-index: 1; }
+    #leisure .game-name { font-size: 14px; color: var(--parchment); margin-bottom: 4px; position: relative; z-index: 1; }
+    #leisure .game-desc { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; position: relative; z-index: 1; }
 
-    #leisure .seafloor { position: absolute; bottom: 0; left: 0; right: 0; height: 140px; z-index: 4; pointer-events: none; }
-    #leisure .seafloor svg { width: 100%; height: 100%; display: block; }
+    #leisure .sticker-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;
+      cursor: pointer; transition: all 0.3s ease; margin-bottom: 30px; position: relative; overflow: hidden; z-index: 1;
+    }
+    #leisure .sticker-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0;
+      background: linear-gradient(to top, var(--tide-gold-ghost), transparent);
+      transition: height 0.3s ease;
+    }
+    #leisure .sticker-card:hover::after { height: 100%; }
+    #leisure .sticker-card:hover { border-color: var(--tide-gold-soft); transform: translateY(-2px); }
+    #leisure .sticker-icon { font-size: 36px; flex-shrink: 0; position: relative; z-index: 1; }
+    #leisure .sticker-info { flex: 1; position: relative; z-index: 1; }
+    #leisure .sticker-name { font-size: 14px; color: var(--parchment); margin-bottom: 4px; }
+    #leisure .sticker-desc { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; }
+    #leisure .sticker-count { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
 
-    #leisure .fish-group { position: absolute; right: -60px; top: 45%; z-index: 5; display: flex; gap: 8px; animation: leisureSwim 24s linear infinite; pointer-events: none; }
-    @keyframes leisureSwim {
-      0%   { transform: translateX(0)      translateY(0); }
-      50%  { transform: translateX(-280px) translateY(-15px); }
-      100% { transform: translateX(-560px) translateY(0); }
+    #leisure .achievements { margin-top: 10px; position: relative; z-index: 1; }
+    #leisure .achievements-title { font-size: 11px; color: var(--parchment-dim); opacity: 0.6; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+    #leisure .achievement-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    #leisure .achievement {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px;
+      font-size: 11px; background: var(--tide-gold-ghost); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold);
     }
-    #leisure .fish { font-size: 14px; filter: drop-shadow(0 0 3px rgba(201,168,76,0.3)); animation: leisureFishBob 2s ease-in-out infinite; }
-    #leisure .fish:nth-child(1) { animation-delay: 0s;    font-size: 16px; }
-    #leisure .fish:nth-child(2) { animation-delay: 0.3s;  font-size: 12px; opacity: 0.8; }
-    #leisure .fish:nth-child(3) { animation-delay: 0.6s;  font-size: 14px; }
-    #leisure .fish:nth-child(4) { animation-delay: 0.2s;  font-size: 13px; opacity: 0.85; }
-    #leisure .fish:nth-child(5) { animation-delay: 0.5s;  font-size: 11px; opacity: 0.7; }
-    @keyframes leisureFishBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-
-    #leisure .shark {
-      position: absolute; top: 44px; right: 20px; z-index: 3; font-size: 32px;
-      filter: blur(0.6px) brightness(0.5);
-      animation: leisureSharkPass 30s linear infinite;
-      pointer-events: none; opacity: 0.4;
-    }
-    @keyframes leisureSharkPass {
-      0%   { transform: translateX(0)     translateY(0);  opacity: 0; }
-      5%   { opacity: 0.4; }
-      50%  { transform: translateX(-220px) translateY(-8px); opacity: 0.4; }
-      95%  { transform: translateX(-440px) translateY(0);   opacity: 0.4; }
-      100% { transform: translateX(-460px) translateY(0);   opacity: 0; }
-    }
-
-    #leisure .creature { position: absolute; z-index: 6; cursor: pointer; transition: transform 0.3s; }
-    #leisure .creature:hover { transform: translateY(-3px) scale(1.08); }
-    #leisure .creature-em { display: block; filter: drop-shadow(0 0 8px rgba(201,168,76,0.35)); }
-    #leisure .creature-label {
-      display: block; margin-top: 4px;
-      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px;
-      color: var(--tide-gold); text-align: center; letter-spacing: 0.05em; opacity: 0.85;
-      text-shadow: 0 0 6px rgba(15,20,40,0.9); white-space: nowrap;
-    }
-    #leisure .creature-label small {
-      display: block; font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 8px;
-      letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; margin-top: 2px;
-    }
-
-
-    #leisure .starfish { left: 30px; bottom: 84px; }
-    #leisure .starfish .creature-em { font-size: 42px; animation: leisureStarGlow 4s ease-in-out infinite; }
-    @keyframes leisureStarGlow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(201,168,76,0.35)); } 50% { filter: drop-shadow(0 0 16px rgba(201,168,76,0.7)); } }
-
-    #leisure .octopus { left: 50%; transform: translateX(-50%); bottom: 96px; }
-    #leisure .octopus:hover { transform: translateX(-50%) translateY(-3px) scale(1.08); }
-    #leisure .octopus .creature-em { font-size: 46px; animation: leisureOctoBob 5s ease-in-out infinite; }
-    @keyframes leisureOctoBob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-4px) rotate(2deg); } }
-
-    #leisure .dolphin { right: 44px; top: 180px; }
-    #leisure .dolphin .creature-em { font-size: 40px; animation: leisureDolphinSwim 6s ease-in-out infinite; }
-    @keyframes leisureDolphinSwim { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-14px) rotate(8deg); } }
-    #leisure .dolphin::after {
-      content: '♪'; position: absolute; top: -8px; left: -14px; font-size: 14px;
-      color: var(--tide-green); opacity: 0; animation: leisureNoteFloat 3s ease-in-out infinite;
-    }
-    @keyframes leisureNoteFloat {
-      0%   { transform: translateY(0)    rotate(0);   opacity: 0; }
-      30%  { opacity: 0.8; }
-      100% { transform: translateY(-30px) rotate(-20deg); opacity: 0; }
-    }
-
-    #leisure .scene-hint {
-      position: absolute; top: 16px; left: 20px; right: 20px; z-index: 7; text-align: center;
-      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px;
-      color: var(--parchment-ghost); opacity: 0.65; text-shadow: 0 0 6px rgba(15,20,40,0.9);
-      pointer-events: none;
-    }
-
-    #leisure .today {
-      padding: 18px 20px 16px;
-      background: linear-gradient(180deg, rgba(46,74,158,0.10), rgba(26,31,58,0.4));
-      border: 1px solid var(--line); border-radius: 4px; position: relative; margin-bottom: 20px;
-    }
-    #leisure .today::before { content: ''; position: absolute; top: 0; left: 20px; width: 32px; height: 1px; background: var(--tide-gold); opacity: 0.6; }
-    #leisure .today-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
-    #leisure .today-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
-    #leisure .today-meta { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
-    #leisure .today-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    #leisure .today-question { padding: 12px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
-    #leisure .today-question-lbl { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); margin-bottom: 6px; opacity: 0.75; }
-    #leisure .today-question-row { display: flex; gap: 8px; align-items: stretch; }
-    #leisure .today-question-input {
-      flex: 1; background: rgba(15,20,40,0.4); border: 1px solid var(--line); border-radius: 4px;
-      padding: 8px 12px; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-style: italic;
-      font-size: 14px; outline: none; transition: border-color 0.2s;
-    }
-    #leisure .today-question-input:focus { border-color: var(--tide-gold-soft); }
-    #leisure .today-question-input::placeholder { color: rgba(168,152,128,0.4); }
-    #leisure .today-question-btn {
-      padding: 0 16px; background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.12));
-      border: 1px solid var(--tide-gold-soft); border-radius: 4px; color: var(--tide-gold);
-      font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; cursor: pointer; transition: background 0.2s;
-    }
-    #leisure .today-question-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(201,168,76,0.2)); }
-
-    #leisure .card-slot {
-      aspect-ratio: 2/3;
-      background: linear-gradient(160deg, rgba(46,74,158,0.35), rgba(15,20,40,0.7));
-      border: 1px solid rgba(201,168,76,0.35); border-radius: 4px;
-      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-      padding: 12px 4px; text-align: center; position: relative; cursor: pointer;
-      transition: transform 0.3s, border-color 0.3s;
-    }
-    #leisure .card-slot:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.7); }
-    #leisure .card-slot-tag { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
-    #leisure .card-slot-em { font-size: 26px; filter: drop-shadow(0 0 4px rgba(201,168,76,0.3)); }
-    #leisure .card-slot-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11.5px; color: var(--parchment); line-height: 1.25; }
-    #leisure .card-slot-when { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); }
-
-    #leisure .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
+    #leisure .achievement.locked { background: rgba(74,111,165,0.08); border: 1px solid rgba(74,111,165,0.15); color: var(--teal); opacity: 0.5; }
+    #leisure .achievement-icon { font-size: 13px; }
+    #leisure .achievement-empty { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); opacity: 0.7; }
 
     #leisure .nav {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -1980,18 +1886,8 @@
     }
     body.light #leisure .nav { background: rgba(240,243,248,0.85); }
 
-    /* ── 浅海模式覆盖：海底場景整段漸層是寫死的深海配色(深藍→近黑)，模擬「往深處看」；
-       淺海模式主題本來就叫「淺海」，這裡改成陽光灑落的淺水配色，跟深海形成真正的對比，
-       不只是換個變量名 ── */
+    /* ── 浅海模式覆盖：整體背景改成陽光灑落的淺水配色，跟深海形成真正的對比 ── */
     body.light #leisure { background: color-mix(in srgb, var(--sea-0) 92%, white); }
-    body.light #leisure .scene {
-      background:
-        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(109,184,160,0.18), transparent 70%),
-        linear-gradient(180deg, rgba(205,227,246,0.8) 0%, rgba(175,208,234,0.72) 30%, rgba(145,183,214,0.65) 70%, rgba(120,162,196,0.7) 100%);
-    }
-    body.light #leisure .today,
-    body.light #leisure .card-slot { background: linear-gradient(160deg, rgba(255,255,255,0.72), rgba(216,224,240,0.55)); }
-    body.light #leisure .today-question-input { background: var(--glass-input); }
     #leisure .nav-inner { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); padding: 14px 12px 22px; }
     #leisure .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--parchment-ghost); cursor: pointer; transition: opacity 0.2s; position: relative; opacity: 0.5; }
     #leisure .nav-item:hover { opacity: 0.8; }
@@ -2006,11 +1902,68 @@
     #leisure .nav-item.active .nav-item-en { color: var(--tide-gold); }
 
     /* ══════════════════════ 遊戲室 (#game-room) ══════════════════════ */
-    #game-room .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
-    #game-room .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
-    #game-room .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
-    #game-room .head-back:hover { border-color: var(--tide-gold-soft); }
-    #game-room .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+    #game-room .page, #tarot .page, #stickers .page { max-width: 480px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; width: 100%; min-height: 100vh; }
+    #game-room .head, #tarot .head, #stickers .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; }
+    #game-room .head-back, #tarot .head-back, #stickers .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s; }
+    #game-room .head-back:hover, #tarot .head-back:hover, #stickers .head-back:hover { border-color: var(--tide-gold-soft); }
+    #game-room .head-title, #tarot .head-title, #stickers .head-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: var(--parchment-dim); letter-spacing: 0.05em; }
+
+    /* ══════════════════════ #tarot（塔羅，從#leisure抽出來的獨立畫面）══════════════════════ */
+    #tarot .today {
+      padding: 18px 20px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--line); border-radius: 4px; position: relative; margin-bottom: 20px;
+    }
+    #tarot .today::before { content: ''; position: absolute; top: 0; left: 20px; width: 32px; height: 1px; background: var(--tide-gold); opacity: 0.6; }
+    #tarot .today-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+    #tarot .today-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; color: var(--parchment); }
+    #tarot .today-meta { font-family: 'DM Sans', sans-serif; font-size: 9px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
+    #tarot .today-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    #tarot .today-question { padding: 12px 0 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+    #tarot .today-question-lbl { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--parchment-ghost); margin-bottom: 6px; opacity: 0.75; }
+    #tarot .today-question-row { display: flex; gap: 8px; align-items: stretch; }
+    #tarot .today-question-input {
+      flex: 1; background: var(--glass-input, rgba(15,20,40,0.4)); border: 1px solid var(--line); border-radius: 4px;
+      padding: 8px 12px; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    #tarot .today-question-input:focus { border-color: var(--tide-gold-soft); }
+    #tarot .today-question-input::placeholder { color: rgba(168,152,128,0.4); }
+    #tarot .today-question-btn {
+      padding: 0 16px; background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(201,168,76,0.12));
+      border: 1px solid var(--tide-gold-soft); border-radius: 4px; color: var(--tide-gold);
+      font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; cursor: pointer; transition: background 0.2s;
+    }
+    #tarot .today-question-btn:hover { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(201,168,76,0.2)); }
+    #tarot .card-slot {
+      aspect-ratio: 2/3;
+      background: var(--card-bg);
+      border: 1px solid rgba(201,168,76,0.35); border-radius: 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      padding: 12px 4px; text-align: center; position: relative; cursor: default;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    #tarot .card-slot:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.7); }
+    #tarot .card-slot-tag { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--tide-gold); text-transform: uppercase; opacity: 0.75; }
+    #tarot .card-slot-em { font-size: 26px; filter: drop-shadow(0 0 4px rgba(201,168,76,0.3)); }
+    #tarot .card-slot-name { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11.5px; color: var(--parchment); line-height: 1.25; }
+    #tarot .card-slot-when { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 11px; color: var(--parchment-ghost); }
+
+    /* ══════════════════════ #stickers（表情包珊瑚礁，貼紙收藏畫廊）══════════════════════ */
+    #stickers .reef-title { text-align: center; margin-bottom: 4px; }
+    #stickers .reef-title-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; color: var(--parchment); letter-spacing: 0.02em; }
+    #stickers .reef-title-cn { font-size: 11px; letter-spacing: 0.5em; color: var(--tide-gold-soft); margin-top: 2px; }
+    #stickers .reef-count { text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12px; color: var(--tide-gold); opacity: 0.8; margin: 10px 0 22px; }
+    #stickers .reef-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    #stickers .reef-thumb { aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--card-bg); }
+    #stickers .reef-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #stickers .reef-empty { grid-column: 1 / -1; text-align: center; padding: 40px 10px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px; color: var(--parchment-ghost); }
+    #stickers .reef-upload-btn {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px dashed var(--tide-gold-soft);
+      background: var(--tide-gold-ghost); color: var(--tide-gold); font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 14px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+    }
+    #stickers .reef-upload-btn:hover { background: rgba(201,168,76,0.2); border-color: var(--tide-gold); }
 
     #game-room .arcade-title { text-align: center; margin-bottom: 4px; }
     #game-room .arcade-title-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; color: var(--parchment); letter-spacing: 0.02em; }
@@ -4788,187 +4741,113 @@
       <div class="gear" onclick="goTo('settings')">⚙</div>
     </div>
 
-    <div class="hero">
-      <div class="hero-title">Leisure</div>
-      <div class="hero-cn">休 閒</div>
-      <div class="hero-rule">
-        <div class="hero-rule-line"></div>
-        <div class="hero-rule-en">the sea floor where we play</div>
+    <!-- 裝飾用氣泡+魚，純CSS動畫，不影響互動 -->
+    <div class="leisure-bubble" style="width:6px;height:6px;left:15%;animation-duration:18s;animation-delay:0s;"></div>
+    <div class="leisure-bubble" style="width:4px;height:4px;left:35%;animation-duration:22s;animation-delay:3s;"></div>
+    <div class="leisure-bubble" style="width:8px;height:8px;left:55%;animation-duration:16s;animation-delay:1s;"></div>
+    <div class="leisure-bubble" style="width:3px;height:3px;left:72%;animation-duration:25s;animation-delay:5s;"></div>
+    <div class="leisure-bubble" style="width:5px;height:5px;left:88%;animation-duration:20s;animation-delay:2s;"></div>
+    <div class="leisure-bubble" style="width:7px;height:7px;left:8%;animation-duration:19s;animation-delay:7s;"></div>
+    <div class="leisure-bubble" style="width:4px;height:4px;left:45%;animation-duration:23s;animation-delay:4s;"></div>
+    <div class="leisure-bubble" style="width:6px;height:6px;left:65%;animation-duration:17s;animation-delay:6s;"></div>
+
+    <div class="leisure-fish" style="top: 20%; animation-duration: 25s; animation-delay: 0s;">
+      <svg viewBox="0 0 40 20" fill="rgba(201,168,76,0.5)">
+        <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
+        <path d="M36 10 L40 6 L40 14 Z"/>
+        <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
+      </svg>
+    </div>
+    <div class="leisure-fish" style="top: 55%; animation-duration: 30s; animation-delay: 8s;">
+      <svg viewBox="0 0 40 20" fill="rgba(74,111,165,0.4)">
+        <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
+        <path d="M36 10 L40 6 L40 14 Z"/>
+        <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
+      </svg>
+    </div>
+    <div class="leisure-fish" style="top: 75%; animation-duration: 28s; animation-delay: 15s;">
+      <svg viewBox="0 0 40 20" fill="rgba(212,197,169,0.3)">
+        <path d="M35 10 Q28 4, 15 5 Q8 5, 4 10 Q8 15, 15 15 Q28 16, 35 10 Z"/>
+        <path d="M36 10 L40 6 L40 14 Z"/>
+        <circle cx="10" cy="9" r="1.5" fill="rgba(10,14,31,0.8)"/>
+      </svg>
+    </div>
+
+    <div class="page-title">L E I S U R E</div>
+    <div class="page-subtitle">海底游乐场 · 沉下来玩</div>
+
+    <div class="game-grid">
+      <div class="game-card" onclick="openSoloGame('fishing')">
+        <span class="game-icon">🐡</span>
+        <div class="game-name">釣魚</div>
+        <div class="game-desc">拋竿等待，看看撈到什麼</div>
+      </div>
+      <div class="game-card" onclick="goTo('tarot')">
+        <span class="game-icon">🌟</span>
+        <div class="game-name">塔羅</div>
+        <div class="game-desc">三牌陣，問一個問題</div>
+      </div>
+      <div class="game-card" onclick="openSoloGame('slots')">
+        <span class="game-icon">🐚</span>
+        <div class="game-name">老虎機</div>
+        <div class="game-desc">轉一把試試手氣</div>
+      </div>
+      <div class="game-card" onclick="openSoloGame('blackjack')">
+        <span class="game-icon">🦑</span>
+        <div class="game-name">二十一點</div>
+        <div class="game-desc">和 Ryven 對賭</div>
       </div>
     </div>
 
-    <!-- 海底场景 -->
-    <div class="scene">
-      <svg class="rays" viewBox="0 0 460 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="leisureRay" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" style="stop-color:var(--tide-gold)" stop-opacity="0.15"/>
-            <stop offset="1" style="stop-color:var(--tide-gold)" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <polygon points="80,0 130,300 60,300"     style="fill:url(#leisureRay)"/>
-        <polygon points="200,0 260,320 160,320"    style="fill:url(#leisureRay)"/>
-        <polygon points="360,0 390,280 320,280"    style="fill:url(#leisureRay)"/>
-      </svg>
-
-      <div class="motes"></div>
-
-      <div class="scene-bubs">
-        <div class="sbub"></div><div class="sbub"></div><div class="sbub"></div>
-        <div class="sbub"></div><div class="sbub"></div><div class="sbub"></div>
-        <div class="sbub"></div><div class="sbub"></div>
-      </div>
-
-      <div class="scene-hint">點一個生物 · tap a creature</div>
-
-      <div class="shark">🦈</div>
-
-      <div class="fish-group">
-        <span class="fish">🐠</span>
-        <span class="fish">🐠</span>
-        <span class="fish">🐠</span>
-        <span class="fish">🐠</span>
-        <span class="fish">🐠</span>
-      </div>
-
-      <svg class="seafloor" viewBox="0 0 460 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 0 60 Q 60 40 130 55 Q 200 70 260 45 Q 340 35 400 60 Q 440 68 460 55 L 460 140 L 0 140 Z"
-              fill="rgba(212,197,169,0.10)"/>
-        <path d="M 0 90 Q 30 55 70 60 Q 100 65 130 80 Q 150 88 140 105 L 140 140 L 0 140 Z"
-              fill="rgba(26,31,58,0.85)" stroke="rgba(201,168,76,0.12)" stroke-width="0.6"/>
-        <path d="M 155 100 Q 175 50 220 40 Q 260 35 290 55 Q 320 75 315 105 L 315 140 L 155 140 Z"
-              fill="rgba(15,20,40,0.9)" stroke="rgba(201,168,76,0.15)" stroke-width="0.6"/>
-        <ellipse cx="235" cy="80" rx="30" ry="24" fill="rgba(5,9,22,0.95)"/>
-        <path d="M 340 110 Q 370 70 410 75 Q 445 82 460 100 L 460 140 L 340 140 Z"
-              fill="rgba(20,26,50,0.85)" stroke="rgba(201,168,76,0.1)" stroke-width="0.6"/>
-
-        <g stroke="#d18b8b" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.75">
-          <path d="M 90 82 Q 88 68 92 54 Q 96 42 92 30"/>
-          <path d="M 90 82 Q 94 68 100 58 Q 106 46 108 34"/>
-          <path d="M 92 54 Q 82 48 76 42"/>
-          <path d="M 100 58 Q 110 52 116 44"/>
-          <circle cx="78" cy="106" r="0" fill="none"/>
-          <circle cx="92" cy="30" r="2.2" fill="#d18b8b"/>
-          <circle cx="108" cy="34" r="1.8" fill="#d18b8b"/>
-        </g>
-
-        <g stroke="#d4b874" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.7">
-          <path d="M 175 90 Q 172 78 176 66 Q 180 54 178 42"/>
-          <path d="M 175 90 Q 168 78 168 66"/>
-          <path d="M 175 90 Q 182 78 188 68"/>
-          <circle cx="178" cy="42" r="1.8" fill="#d4b874"/>
-          <circle cx="168" cy="66" r="1.5" fill="#d4b874"/>
-          <circle cx="188" cy="68" r="1.5" fill="#d4b874"/>
-        </g>
-
-        <g stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6">
-          <path d="M 380 78 Q 378 70 380 62 M 380 78 Q 384 70 388 66" style="stroke:var(--tide-gold)"/>
-          <path d="M 410 82 Q 412 74 410 68 M 410 82 Q 406 74 402 68" style="stroke:var(--tide-gold)"/>
-          <path d="M 425 88 Q 427 82 430 76 M 425 88 Q 421 82 418 78" style="stroke:var(--tide-gold)"/>
-          <circle cx="380" cy="62" r="1.5" style="fill:var(--tide-gold)"/>
-          <circle cx="410" cy="68" r="1.3" style="fill:var(--tide-gold)"/>
-          <circle cx="430" cy="76" r="1.3" style="fill:var(--tide-gold)"/>
-        </g>
-
-        <g stroke="#a78ec9" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5">
-          <path d="M 350 108 Q 348 100 352 92"/>
-          <path d="M 350 108 Q 355 100 358 94"/>
-          <path d="M 350 108 Q 344 100 342 92"/>
-          <circle cx="352" cy="92" r="1.5" fill="#a78ec9"/>
-        </g>
-
-        <g transform="translate(160 105)">
-          <path d="M 0 0 Q 8 -14 16 0 L 8 4 Z" fill="rgba(232,196,158,0.55)" stroke="rgba(201,168,76,0.5)" stroke-width="0.5"/>
-          <path d="M 4 -4 L 4 0 M 8 -6 L 8 0 M 12 -4 L 12 0" stroke="rgba(201,168,76,0.4)" stroke-width="0.3" fill="none"/>
-        </g>
-        <g transform="translate(330 118)">
-          <path d="M 0 0 Q -4 -6 0 -10 Q 8 -10 6 -4 Q 4 -2 2 -4" fill="rgba(224,181,153,0.5)" stroke="rgba(201,168,76,0.5)" stroke-width="0.5"/>
-        </g>
-        <g fill="rgba(232,215,190,0.5)" stroke="rgba(201,168,76,0.4)" stroke-width="0.3">
-          <ellipse cx="55" cy="122" rx="4" ry="2"/>
-          <ellipse cx="82" cy="128" rx="3" ry="1.5"/>
-          <ellipse cx="288" cy="116" rx="3.5" ry="1.8"/>
-          <ellipse cx="395" cy="126" rx="3" ry="1.5"/>
-          <ellipse cx="115" cy="124" rx="2.5" ry="1.2"/>
-        </g>
-
-        <g transform="translate(200 120)">
-          <circle r="5" fill="rgba(70,45,80,0.65)"/>
-          <g stroke="rgba(70,45,80,0.75)" stroke-width="0.8" stroke-linecap="round">
-            <line x1="0" y1="-5" x2="0" y2="-10"/>
-            <line x1="4" y1="-3" x2="8" y2="-6"/>
-            <line x1="5" y1="0" x2="10" y2="0"/>
-            <line x1="4" y1="3" x2="8" y2="6"/>
-            <line x1="0" y1="5" x2="0" y2="10"/>
-            <line x1="-4" y1="3" x2="-8" y2="6"/>
-            <line x1="-5" y1="0" x2="-10" y2="0"/>
-            <line x1="-4" y1="-3" x2="-8" y2="-6"/>
-          </g>
-        </g>
-        <g transform="translate(370 128)">
-          <circle r="3.5" fill="rgba(40,60,90,0.7)"/>
-          <g stroke="rgba(40,60,90,0.75)" stroke-width="0.6" stroke-linecap="round">
-            <line x1="0" y1="-3.5" x2="0" y2="-7"/>
-            <line x1="3" y1="-2" x2="6" y2="-4"/>
-            <line x1="3.5" y1="0" x2="7" y2="0"/>
-            <line x1="3" y1="2" x2="6" y2="4"/>
-            <line x1="-3" y1="-2" x2="-6" y2="-4"/>
-            <line x1="-3.5" y1="0" x2="-7" y2="0"/>
-          </g>
-        </g>
-
-        <g transform="translate(310 120)">
-          <ellipse cx="0" cy="4" rx="6" ry="3" fill="rgba(180,120,140,0.5)"/>
-          <g stroke="rgba(220,140,160,0.7)" stroke-width="1" stroke-linecap="round" fill="none">
-            <path d="M -4 4 Q -5 -2 -4 -6"/>
-            <path d="M -2 4 Q -2 -3 -1 -8"/>
-            <path d="M 0 4 Q 0 -4 1 -9"/>
-            <path d="M 2 4 Q 3 -3 4 -7"/>
-            <path d="M 4 4 Q 5 -2 5 -5"/>
-          </g>
-        </g>
-
-        <g stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.4">
-          <path d="M 20 90 Q 24 60 18 30 Q 14 10 20 -8" style="stroke:var(--tide-green)"/>
-          <path d="M 40 92 Q 44 70 40 48 Q 36 26 42 8" style="stroke:var(--tide-green)"/>
-          <path d="M 145 100 Q 148 72 142 46 Q 138 22 144 -2" style="stroke:var(--tide-green)"/>
-          <path d="M 320 106 Q 316 80 322 54 Q 328 28 322 6" style="stroke:var(--tide-green)"/>
-          <path d="M 340 108 Q 344 84 340 60 Q 336 36 342 14" style="stroke:var(--tide-green)"/>
-        </g>
-
-        <g transform="translate(120 130)" opacity="0.55">
-          <path d="M 0 -3 L 1 -1 L 3 -1 L 1.5 0 L 2 2 L 0 1 L -2 2 L -1.5 0 L -3 -1 L -1 -1 Z" style="fill:var(--tide-gold)" opacity="0.7"/>
-        </g>
-        <g transform="translate(285 132)" opacity="0.5">
-          <path d="M 0 -2 L 0.7 -0.7 L 2 -0.7 L 1 0 L 1.4 1.4 L 0 0.7 L -1.4 1.4 L -1 0 L -2 -0.7 L -0.7 -0.7 Z" style="fill:var(--tide-gold)" opacity="0.7"/>
-        </g>
-      </svg>
-
-      <div class="creature starfish" onclick="toggleTarotPanel()">
-        <span class="creature-em">🌟</span>
-        <span class="creature-label">塔羅<small>tarot</small></span>
-      </div>
-      <div class="creature octopus" onclick="goTo('game-room')">
-        <span class="creature-em">🦑</span>
-        <span class="creature-label">遊戲<small>games</small></span>
-      </div>
-      <div class="creature dolphin" onclick="showToast('还在盖这个房间呢 🐚')">
-        <span class="creature-em">🐬</span>
-        <span class="creature-label">音樂<small>music</small></span>
+    <div class="sticker-card" onclick="goTo('stickers')">
+      <span class="sticker-icon">🪸</span>
+      <div class="sticker-info">
+        <div class="sticker-name">表情包珊瑚礁</div>
+        <div class="sticker-desc">Ryven 的收藏柜 · 聊天時隨手拿</div>
+        <div class="sticker-count">✦ <span id="leisure-sticker-count">0</span> 張收藏</div>
       </div>
     </div>
 
-    <!-- 今日三牌陣：點🌟展開，抽卡从22张大阿卡纳里随机选3张 -->
-    <div class="today" id="leisure-tarot-panel" style="display:none">
+    <div class="achievements">
+      <div class="achievements-title">成 就</div>
+      <div class="achievement-list" id="leisure-achievement-list">
+        <div class="achievement-empty">加載中…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="nav-item" onclick="goHome()"><span class="nav-emoji">🏠</span><span class="nav-item-en">home</span></div>
+      <div class="nav-item" onclick="goTo('memory')"><span class="nav-emoji">🫧</span><span class="nav-item-en">memory</span></div>
+      <div class="nav-item" onclick="goTo('chat')"><span class="nav-emoji">💬</span><span class="nav-item-en">talk</span></div>
+      <div class="nav-item" onclick="goTo('life')"><span class="nav-emoji">⚓</span><span class="nav-item-en">life</span></div>
+      <div class="nav-item active"><span class="nav-emoji">🔮</span><span class="nav-item-en">leisure</span></div>
+      <div class="nav-item" onclick="goTo('helm')"><span class="nav-emoji">🧭</span><span class="nav-item-en">helm</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 塔羅：從#leisure抽出來的獨立畫面，今日三牌陣 -->
+<div class="screen" id="tarot">
+  <div class="page">
+    <div class="head">
+      <div class="head-back" onclick="goTo('leisure')">‹</div>
+      <div class="head-title">塔羅</div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="today">
       <div class="today-head">
         <div class="today-name">今日 · 三牌陣</div>
-        <div class="today-meta">tap 🌟 to close</div>
+        <div class="today-meta">major arcana</div>
       </div>
 
       <div class="today-question">
         <div class="today-question-lbl">想問什麼？· leave blank for random</div>
         <div class="today-question-row">
-          <input class="today-question-input" id="leisure-tarot-question" type="text" placeholder="輸入你的問題..." />
+          <input class="today-question-input" id="tarot-question" type="text" placeholder="輸入你的問題..." />
           <button class="today-question-btn" onclick="drawTarot()">抽</button>
         </div>
       </div>
@@ -4994,18 +4873,29 @@
         </div>
       </div>
     </div>
-
   </div>
+</div>
 
-  <div class="nav">
-    <div class="nav-inner">
-      <div class="nav-item" onclick="goHome()"><span class="nav-emoji">🏠</span><span class="nav-item-en">home</span></div>
-      <div class="nav-item" onclick="goTo('memory')"><span class="nav-emoji">🫧</span><span class="nav-item-en">memory</span></div>
-      <div class="nav-item" onclick="goTo('chat')"><span class="nav-emoji">💬</span><span class="nav-item-en">talk</span></div>
-      <div class="nav-item" onclick="goTo('life')"><span class="nav-emoji">⚓</span><span class="nav-item-en">life</span></div>
-      <div class="nav-item active"><span class="nav-emoji">🔮</span><span class="nav-item-en">leisure</span></div>
-      <div class="nav-item" onclick="goTo('helm')"><span class="nav-emoji">🧭</span><span class="nav-item-en">helm</span></div>
+<!-- 表情包珊瑚礁：貼紙收藏畫廊，跨端同步(GET /relay/stickers) -->
+<div class="screen" id="stickers">
+  <div class="page">
+    <div class="head">
+      <div class="head-back" onclick="goTo('leisure')">‹</div>
+      <div class="head-title">珊瑚礁</div>
+      <div style="width:36px"></div>
     </div>
+
+    <div class="reef-title">
+      <div class="reef-title-en">Sticker Reef</div>
+      <div class="reef-title-cn">表 情 包 珊 瑚 礁</div>
+    </div>
+    <div class="reef-count"><span id="reef-count">0</span> 張收藏</div>
+
+    <div class="reef-grid" id="reef-grid">
+      <div class="reef-empty">加載中…</div>
+    </div>
+
+    <button class="reef-upload-btn" onclick="stickerTriggerUpload()">✦ 上傳新表情包</button>
   </div>
 </div>
 
@@ -5983,6 +5873,8 @@ async function jumpToSearchResult(idx) {
     if (id==='life') renderLifePage();
     if (id==='album') loadAlbumPage();
     if (id==='game-room') loadGameRoom();
+    if (id==='leisure') loadLeisurePage();
+    if (id==='stickers') stickerLoadList();
 
     if (restoringLibraryScroll) {
       window.scrollTo(0, libraryScrollY);
@@ -9044,6 +8936,26 @@ async function jumpToSearchResult(idx) {
     addCell.textContent = '＋';
     addCell.onclick = stickerTriggerUpload;
     grid.appendChild(addCell);
+    renderStickerReefGrid();
+  }
+
+  // #stickers珊瑚礁畫廊 + #leisure卡片上的收藏數，跟聊天室貼紙托盤共用同一份stickerList，
+  // 不管是從哪個入口上傳/刪除，三個地方畫面都會一起更新
+  function renderStickerReefGrid() {
+    const countText = String(stickerList.length);
+    const leisureCountEl = document.getElementById('leisure-sticker-count');
+    if (leisureCountEl) leisureCountEl.textContent = countText;
+    const reefCountEl = document.getElementById('reef-count');
+    if (reefCountEl) reefCountEl.textContent = countText;
+
+    const grid = document.getElementById('reef-grid');
+    if (!grid) return;
+    if (!stickerList.length) {
+      grid.innerHTML = '<div class="reef-empty">還沒有收藏，點下面上傳第一張</div>';
+      return;
+    }
+    grid.innerHTML = stickerList.map(() => `<div class="reef-thumb"><img alt=""></div>`).join('');
+    grid.querySelectorAll('.reef-thumb img').forEach((img, i) => { img.src = stickerList[i]; });
   }
 
   function stickerTriggerUpload() {
@@ -10982,15 +10894,9 @@ const TAROT_MAJOR_ARCANA = ['愚者','魔術師','女祭司','皇后','皇帝','
 function drawTarot() {
   const shuffled = [...TAROT_MAJOR_ARCANA].sort(() => Math.random() - 0.5);
   const picks = shuffled.slice(0, 3);
-  const slots = document.querySelectorAll('#leisure .card-slot-name');
+  const slots = document.querySelectorAll('#tarot .card-slot-name');
   slots.forEach((el, i) => { el.textContent = picks[i]; });
   showToast('✧ 抽到了 ' + picks.join(' · '));
-}
-
-// 點🌟展開/收起問牌面板
-function toggleTarotPanel() {
-  const panel = document.getElementById('leisure-tarot-panel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 
 // ===== 遊戲室 =====
@@ -11151,6 +11057,39 @@ function renderAchievements(containerId, achievements) {
     badge.textContent = a.unlocked ? '已解鎖' : '未解鎖';
     badge.style.opacity = a.unlocked ? '1' : '0.4';
   });
+}
+
+// ===== #leisure 新版首頁：成就條 + 表情包收藏數 =====
+// 成就只從/relay/game/arcade-save來（slots.achievements/bj.achievements，伺服器已經算好icon/text/unlocked）——
+// /relay/game/fishing-save沒有回傳achievements陣列，沒有真實數據就不硬湊假成就
+async function loadLeisureAchievements() {
+  const listEl = document.getElementById('leisure-achievement-list');
+  if (!listEl) return;
+  try {
+    const res = await fetch('https://ryven.homes/relay/game/arcade-save', {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!res.ok) throw new Error('bad status ' + res.status);
+    const data = await res.json();
+    const all = [...((data.slots && data.slots.achievements) || []), ...((data.blackjack && data.blackjack.achievements) || [])];
+    if (!all.length) { listEl.innerHTML = '<div class="achievement-empty">還沒有成就，去玩一把試試</div>'; return; }
+    // 已解鎖的排前面，跟mockup視覺順序一致
+    const sorted = all.slice().sort((a, b) => (b.unlocked ? 1 : 0) - (a.unlocked ? 1 : 0));
+    listEl.innerHTML = sorted.map(a => `
+      <div class="achievement${a.unlocked ? '' : ' locked'}">
+        <span class="achievement-icon">${a.unlocked ? (a.icon || '🏅') : '🔒'}</span>
+        ${a.unlocked ? (a.text || '') : (a.text || '???')}
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error('成就加載失敗', e);
+    listEl.innerHTML = '<div class="achievement-empty">加載失敗</div>';
+  }
+}
+
+function loadLeisurePage() {
+  loadLeisureAchievements();
+  stickerLoadList(); // 拉貼紙列表順便更新leisure卡片上的收藏數（stickerRenderGrid()已經會同步更新sticker-count）
 }
 
   // 主题切换
