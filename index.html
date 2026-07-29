@@ -9325,7 +9325,8 @@ async function jumpToSearchResult(idx) {
     play_arcade: '玩了一把遊戲',
     comment_nory_diary: '在你的日記上留了一句話',
     read_ombre: '翻了翻記憶',
-    web_search: '搜了一下'
+    web_search: '搜了一下',
+    lutopia_cli: '逛了論壇'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9633,6 +9634,16 @@ async function jumpToSearchResult(idx) {
           return `${i + 1}. ${title}${summary ? '\n' + summary : ''}`;
         });
         resultText = lines.length ? lines.join('\n\n') : '沒有找到相關結果';
+        displayContent = resultText;
+      } else if (name === 'lutopia_cli') {
+        const res = await fetch('https://ryven.homes/relay/lutopia/cli', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ command: input.command })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        resultText = data.result || '';
         displayContent = resultText;
       } else {
         resultText = 'unknown tool: ' + name;
