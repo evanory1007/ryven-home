@@ -5615,6 +5615,13 @@ function renderChatMessagesRange() {
     if (msg.role === 'system') {
       // 改名提示这类系统消息：小字提示样式，不是聊天气泡，走insertSysMsg()而不是addMessage()
       insertSysMsg(msg.content, msgTime);
+    } else if (msg.xhsNote) {
+      // 小紅書卡片消息：不能走下面imageBlock分支（會把整段summaryText原文摊开显示），
+      // 用存好的xhsNote結構化資料+content裡的image block重新畫成卡片
+      const xhsImages = (Array.isArray(msg.content) ? msg.content.filter(b => b && b.type === 'image') : [])
+        .map(b => ({ mime: b.source && b.source.media_type, base64: b.source && b.source.data }));
+      const xhsCardEl = addXhsCardShell(msgTime);
+      renderXhsCard(xhsCardEl, msg.xhsNote, xhsImages);
     } else if (documentBlock) {
       // 上传文件消息：渲染成文件小方块气泡，不能走下面假设content是字符串的文字气泡逻辑
       const filename = documentBlock.title || '文件';
@@ -9165,9 +9172,10 @@ async function jumpToSearchResult(idx) {
   // ===== 小紅書鏈接預覽 =====
   const XHS_LINK_RE = /(https?:\/\/(?:www\.)?xiaohongshu\.com\/[^\s]+|https?:\/\/xhslink\.com\/[^\s]+)/i;
 
-  function addXhsSkeletonCard(loadingText) {
+  // 卡片外殼共用：即時發送的骨架卡、歷史重建的卡都靠它生出一個空的.xhs-card容器
+  function addXhsCardShell(msgTime) {
     const messages = document.getElementById('chat-messages');
-    const msgDate = new Date();
+    const msgDate = msgTime ? new Date(msgTime) : new Date();
     maybeInsertDateDivider(msgDate);
     const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
     const continued = lastMsgRow && lastMsgRow.classList.contains('from-me');
@@ -9180,10 +9188,7 @@ async function jumpToSearchResult(idx) {
       <div class="msg-row from-me${continued ? ' continued' : ''}">
         <div class="msg-avatar-sm" data-avatar="nory">${avatarInnerHtml('nory')}</div>
         <div class="msg-col">
-          <div class="xhs-card">
-            <div class="xhs-card-cover skeleton"></div>
-            <div class="xhs-card-loading-text">📕 ${loadingText}</div>
-          </div>
+          <div class="xhs-card"></div>
           <div class="msg-time">${time}</div>
         </div>
       </div>`;
@@ -9191,6 +9196,14 @@ async function jumpToSearchResult(idx) {
     lastMsgRow = wrap.firstElementChild;
     messages.scrollTop = messages.scrollHeight;
     return wrap.querySelector('.xhs-card');
+  }
+
+  function addXhsSkeletonCard(loadingText) {
+    const cardEl = addXhsCardShell();
+    cardEl.innerHTML = `
+      <div class="xhs-card-cover skeleton"></div>
+      <div class="xhs-card-loading-text">📕 ${loadingText}</div>`;
+    return cardEl;
   }
 
   function setXhsLoadingText(cardEl, text) {
@@ -9277,9 +9290,11 @@ async function jumpToSearchResult(idx) {
       contentBlocks.push({ type: 'image', source: { type: 'base64', media_type: img.mime, data: img.base64 } });
     }
 
-    sendQueue.push(contentBlocks);
-    updateQueueIndicator();
-    processSendQueue();
+    // xhsNote额外存一份结构化数据（不是content的一部分，只是msg对象上多带一个字段）——
+    // 历史重建renderChatMessagesRange()靠它认出"这是张小红书卡片"，重新画成卡片而不是摊开text block原文
+    msgCount++;
+    chatHistory.push({ role: 'user', content: contentBlocks, xhsNote: note, timestamp: new Date().toISOString() });
+    await requestRyvenReply(contentBlocks, { xhsNote: note });
   }
 
   async function sendMessage() {
@@ -9675,7 +9690,9 @@ async function jumpToSearchResult(idx) {
   // 流式接收 Ryven 回复 + 渲染 + 存历史。调用前 chatHistory 里必须已经 push 好这次的 user 消息，
   // userContentForSave 是存进 /relay/chat/save 的那条 user content（文字发送传字符串，贴纸发送传 content block 数组）
   // 支持 tool_use：模型調工具時不顯示氣泡，只顯示折疊節點；工具結果回傳給API再拿一次真正的文字回覆（最多循環MAX_TOOL_ROUNDS輪）
-  async function requestRyvenReply(userContentForSave) {
+  // extraUserFields：可选，要跟着这条user消息一起存进服务器的额外字段（比如xhsNote），
+  // 不会影响发给模型API的content，只是让/relay/chat/save存下来的那条消息多带一点数据，方便历史重建时用
+  async function requestRyvenReply(userContentForSave, extraUserFields) {
     pendingReplyCount++;
     document.getElementById('typing-indicator').classList.add('show');
     document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
@@ -9956,7 +9973,7 @@ async function jumpToSearchResult(idx) {
         msgCount++;
               // 保存到服务器
         const toSave = [
-          { role: 'user', content: userContentForSave },
+          { role: 'user', content: userContentForSave, ...(extraUserFields || {}) },
           { role: 'assistant', content: fullText, thinking: thinkingText, ...(allToolCalls.length ? { toolCalls: allToolCalls } : {}), segments }
         ];
         fetch(`https://ryven.homes/relay/chat/save`, {
