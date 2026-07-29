@@ -6265,7 +6265,9 @@ async function jumpToSearchResult(idx) {
     const comment = (entry && typeof entry === 'object' && entry.comment && typeof entry.comment === 'object') ? entry.comment : {};
     const listEl = cardEl.querySelector('.comments-list');
     listEl.innerHTML = '';
-    if (comment.ryven) listEl.appendChild(diaryBuildCommentItem('💚', 'Ryven', comment.ryven));
+    // comment.ryven是Ryven給Nory日記留的話，只在Nory日記卡顯示；
+    // comment.nory是Nory給任意日記的回覆，兩種卡片都顯示；Ryven自己的日記卡不顯示comment.ryven
+    if (!cardEl.classList.contains('ryven') && comment.ryven) listEl.appendChild(diaryBuildCommentItem('💚', 'Ryven', comment.ryven));
     if (comment.nory) listEl.appendChild(diaryBuildCommentItem('🐻', 'Nory', comment.nory));
   }
 
