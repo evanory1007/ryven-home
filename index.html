@@ -6248,16 +6248,25 @@ async function jumpToSearchResult(idx) {
 
   // env-comments裡的.comments-list只顯示Ryven的評論（comment.ryven）；Nory自己發的留言不用回顯，
   // 存進comment.nory後把輸入框清空就好，跟現有「留句話」的簡單發送式輸入框行為保持一致
+  // 頭像用跟聊天氣泡(.msg-avatar-sm)同一套emoji（🐻 Nory / 💚 Ryven），聊天氣泡本身也是寫死這兩個emoji、
+  // 不是讀localStorage裡設置頁那個可自訂頭像，所以這裡跟著用同款emoji才叫「跟聊天氣泡一致」
+  function diaryBuildCommentItem(avatar, name, text) {
+    const el = document.createElement('div');
+    el.className = 'comment-item';
+    el.innerHTML = `<div class="comment-ava"></div><div><div class="comment-name"></div><div class="comment-text"></div></div>`;
+    el.querySelector('.comment-ava').textContent = avatar;
+    el.querySelector('.comment-name').textContent = name;
+    el.querySelector('.comment-text').textContent = text;
+    return el;
+  }
+
   function diaryFillComments(cardEl, key) {
     const entry = diaryData[key];
     const comment = (entry && typeof entry === 'object' && entry.comment && typeof entry.comment === 'object') ? entry.comment : {};
     const listEl = cardEl.querySelector('.comments-list');
-    if (comment.ryven) {
-      listEl.innerHTML = `<div class="comment-item"><div class="comment-ava">💚</div><div><div class="comment-name">Ryven · </div><div class="comment-text"></div></div></div>`;
-      listEl.querySelector('.comment-text').textContent = comment.ryven;
-    } else {
-      listEl.innerHTML = '';
-    }
+    listEl.innerHTML = '';
+    if (comment.ryven) listEl.appendChild(diaryBuildCommentItem('💚', 'Ryven', comment.ryven));
+    if (comment.nory) listEl.appendChild(diaryBuildCommentItem('🐻', 'Nory', comment.nory));
   }
 
   async function diarySendComment(sendBtn) {
@@ -6279,6 +6288,8 @@ async function jumpToSearchResult(idx) {
       if (!diaryData[key].comment || typeof diaryData[key].comment !== 'object') diaryData[key].comment = {};
       diaryData[key].comment.nory = value;
       input.value = '';
+      diaryFillComments(card, key);
+      card.querySelector('.comments-list').style.display = 'flex'; // 剛留完言直接展開，不用使用者自己再點「查看留言」才看得到
       showToast('✦ 已留言');
     } catch(e) {
       console.error('留言保存失敗', e);
