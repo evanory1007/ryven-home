@@ -2115,7 +2115,8 @@
     }
     #helm .lh-icon { font-size: 16px; filter: drop-shadow(0 0 6px rgba(201,168,76,0.4)); }
     #helm .lh-input { flex: 1; background: transparent; border: none; color: var(--parchment); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; outline: none; }
-    #helm .lh-input::placeholder { color: rgba(168,152,128,0.4); }
+    #helm .lh-input::placeholder { color: rgba(210,198,168,0.65); }
+    body.light #helm .lh-input::placeholder { color: rgba(120,100,70,0.6); }
     #helm .lh-hint { font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: 0.3em; color: var(--parchment-ghost); text-transform: uppercase; opacity: 0.55; }
 
     #helm .sec { margin-bottom: 32px; }
@@ -2212,8 +2213,9 @@
     #helm .heart-pool-count b { color: var(--parchment-dim); font-weight: 500; }
     #helm .heart-pool-wrap { display: flex; flex-wrap: wrap; gap: 9px; }
     #helm .heart-thought-pill { padding: 6px 14px; border-radius: 20px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 12.5px; letter-spacing: 0.02em; }
-    #helm .heart-thought-pill.flash { background: rgba(74,111,165,0.1); border: 1px solid rgba(74,111,165,0.18); color: rgba(160,190,230,0.55); }
+    #helm .heart-thought-pill.flash { background: rgba(74,111,165,0.14); border: 1px solid rgba(74,111,165,0.22); color: rgba(196,216,245,0.92); }
     #helm .heart-thought-pill.fixed { background: var(--tide-gold-ghost); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold); box-shadow: 0 0 12px rgba(201,168,76,0.28); }
+    body.light #helm .heart-thought-pill.flash { background: rgba(74,111,165,0.1); border: 1px solid rgba(74,111,165,0.22); color: rgba(40,70,120,0.85); }
 
     #helm .nav {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -4138,7 +4140,7 @@
       <div class="avatar-row">
         <div class="profile-avatar-wrap">
           <div class="profile-avatar" id="settings-nory-avatar" onclick="settingsOpenAvatarLightbox('nory')">🐻</div>
-          <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('nory')">✦</div>
+          <div class="avatar-change-btn" onclick="event.stopPropagation();openAvatarMenu('nory')">✦</div>
         </div>
         <div class="profile-info">
           <div class="profile-name" id="settings-nory-name">Nory</div>
@@ -4155,7 +4157,7 @@
       <div class="avatar-row">
         <div class="profile-avatar-wrap">
           <div class="profile-avatar" id="settings-ryven-avatar" onclick="settingsOpenAvatarLightbox('ryven')">💚</div>
-          <div class="avatar-change-btn" onclick="event.stopPropagation();settingsCycleAvatar('ryven')">✦</div>
+          <div class="avatar-change-btn" onclick="event.stopPropagation();openAvatarMenu('ryven')">✦</div>
         </div>
         <div class="profile-info">
           <div class="profile-name js-ryven-name" id="settings-ryven-name">Ryven</div>
@@ -4169,7 +4171,7 @@
     <!-- ===== 對話提示 ===== -->
     <div class="sec">
       <div class="sec-label">對話提示 · System Prompt</div>
-      <textarea class="prompt-textarea" id="settings-system-prompt" spellcheck="false"></textarea>
+      <textarea class="prompt-textarea" id="settings-system-prompt" spellcheck="false" oninput="systemPromptDirty=true"></textarea>
       <div class="prompt-actions">
         <button class="sheet-btn" style="flex:1" onclick="resetSystemPromptSetting()">恢復默認</button>
         <button class="sheet-btn" style="flex:1;background:linear-gradient(135deg, rgba(201,168,76,0.4), rgba(201,168,76,0.18));" onclick="saveSystemPromptSetting()">保存</button>
@@ -4401,10 +4403,10 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-label"><span>本月潮汐</span><small>this month</small></div>
-        <div style="display:none">
-          <span id="stat-today-cost">¥0.00</span><span id="stat-today-detail">0 turns · 0 in · 0 out</span>
-          <span id="stat-total-cost">¥0.00</span>
+        <div class="sidebar-label"><span>此刻的他</span><small>status</small></div>
+        <div class="mem-status">
+          <span class="dot"></span>
+          <span id="sidebar-ryven-status">黑色長外套，靠在窗邊，安靜地等妳回來</span>
         </div>
       </div>
 
@@ -4463,11 +4465,6 @@
           <button class="model-confirm-btn" onclick="cancelSwitchModel()">取消</button>
           <button class="model-confirm-btn primary" onclick="confirmSwitchModel()">確認切換</button>
         </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-label"><span>對話操作</span><small>chat</small></div>
-        <button class="sidebar-btn danger" onclick="clearChat()">清空這個對話</button>
       </div>
 
       <div class="sidebar-foot">ryven.homes · 6.28.2026</div>
@@ -4561,6 +4558,30 @@
     </div>
     <input type="file" id="upload-image-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
     <input type="file" id="upload-file-input" accept=".txt,.md,.pdf,.docx,.xlsx,.xls,text/plain,text/markdown,application/pdf" style="display:none" onchange="handleFileUpload(event)" />
+
+    <!-- ═══ 頭像切換選單（换表情 / 上傳本地圖片）═══ -->
+    <div class="sheet-overlay" id="avatar-menu-sheet" onclick="if(event.target===this)hideAvatarMenu()">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">換頭像</div>
+        <div class="upload-option-list">
+          <div class="upload-option" onclick="settingsCycleAvatarFromMenu()">
+            <span class="upload-option-em">🔄</span>
+            <span class="upload-option-label">換一個表情</span>
+          </div>
+          <div class="upload-option" onclick="triggerAvatarImageUpload()">
+            <span class="upload-option-em">🖼</span>
+            <span class="upload-option-label">上傳本地圖片</span>
+          </div>
+          <div class="upload-option" id="avatar-menu-remove-option" style="display:none" onclick="settingsRemoveAvatarImage()">
+            <span class="upload-option-em">↺</span>
+            <span class="upload-option-label">恢復表情頭像</span>
+          </div>
+        </div>
+        <button class="sheet-cancel" onclick="hideAvatarMenu()">取消</button>
+      </div>
+    </div>
+    <input type="file" id="avatar-image-input" accept="image/*" style="display:none" onchange="handleAvatarImageUpload(event)" />
 
     <!-- ═══ 貼紙托盘 ═══ -->
     <div class="sheet-overlay" id="sticker-sheet" onclick="if(event.target===this)stickerCloseTray()">
@@ -7862,6 +7883,8 @@ async function jumpToSearchResult(idx) {
 
   // 設置頁「對話提示」可以自訂system prompt整段覆蓋掉SYSTEM_PROMPT_BASE；沒自訂過(null)就用默認的
   let customSystemPrompt = null;
+  // textarea有沒有被使用者手動改過——loadUserConfigFromServer()異步回來時，如果使用者已經在編輯就不能強制覆蓋掉
+  let systemPromptDirty = false;
 
   // 語音模式開了才會在系統提示後面加SYSTEM_PROMPT_VOICE_SUFFIX；關了就是純基礎提示、繼續說中文
   function getSystemPrompt() {
@@ -7906,18 +7929,6 @@ async function jumpToSearchResult(idx) {
     const notice = document.getElementById('api-notice');
     if (notice && CHAT_API_KEY) notice.style.display = 'none';
     showToast('✦ 設定已儲存');
-    toggleSidebar();
-  }
-
-  function clearChat() {
-    chatHistory = []; msgCount = 0; totalTokens = 0;
-    lastMsgDateKey = null;
-    lastMsgRow = null;
-    chatRenderStartIndex = 0;
-    // 清空只是本地清屏，服务器历史没删；重置缓存标记，不然下次进聊天室因为消息数「没变」被误判成不用重渲染
-    lastLoadedMsgCount = -1;
-    document.getElementById('chat-messages').innerHTML = `<div class="api-notice" id="api-notice" ${CHAT_API_KEY?'style="display:none"':''}>💙 在右上角選單填入 API Key 後 Ryven 就能回話了</div>`;
-    showToast('🌊 對話已清空');
     toggleSidebar();
   }
 
@@ -8198,6 +8209,11 @@ async function jumpToSearchResult(idx) {
         applyNicknameToUI();
       }
       customSystemPrompt = data.customPrompt || null;
+      // 如果使用者已經打開settings頁、而且還沒動過textarea，這時候服務器配置才慢半拍回來——
+      // 用剛拿到的customSystemPrompt刷新一次顯示，不然使用者看到的會是異步請求還沒回來前顯示的默認prompt
+      if (!systemPromptDirty && document.getElementById('settings') && document.getElementById('settings').classList.contains('active')) {
+        loadSystemPromptSetting();
+      }
     } catch(e) {
       console.error('用戶配置加載失敗', e);
     }
@@ -8209,18 +8225,23 @@ async function jumpToSearchResult(idx) {
   function loadSystemPromptSetting() {
     const el = document.getElementById('settings-system-prompt');
     if (el) el.value = customSystemPrompt || SYSTEM_PROMPT_BASE;
+    systemPromptDirty = false;
   }
 
   async function saveSystemPromptSetting() {
     const val = document.getElementById('settings-system-prompt').value;
-    customSystemPrompt = val.trim() ? val : null;
+    const newPrompt = val.trim() ? val : null;
     showToast('✦ 保存中…');
     try {
-      await fetch('https://ryven.homes/relay/user/config', {
+      const res = await fetch('https://ryven.homes/relay/user/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname, customPrompt: customSystemPrompt })
+        body: JSON.stringify({ modelConfigs, defaultConfigId, nickname, customPrompt: newPrompt })
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.ok) throw new Error('server rejected save');
+      customSystemPrompt = newPrompt;
+      systemPromptDirty = false;
       showToast('✦ 已保存');
     } catch(e) {
       console.error('對話提示保存失敗', e);
@@ -8229,16 +8250,20 @@ async function jumpToSearchResult(idx) {
   }
 
   async function resetSystemPromptSetting() {
-    customSystemPrompt = null; // 明確設回null，而不是把SYSTEM_PROMPT_BASE的文字當成自訂內容存進去——
-    // 不然以後SYSTEM_PROMPT_BASE本身改了，這裡會卡在恢復默認當下那份舊文字、不會自動跟著新的默認值走
-    document.getElementById('settings-system-prompt').value = SYSTEM_PROMPT_BASE;
     showToast('✦ 保存中…');
     try {
-      await fetch('https://ryven.homes/relay/user/config', {
+      const res = await fetch('https://ryven.homes/relay/user/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
         body: JSON.stringify({ modelConfigs, defaultConfigId, nickname, customPrompt: null })
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.ok) throw new Error('server rejected reset');
+      // 明確設回null，而不是把SYSTEM_PROMPT_BASE的文字當成自訂內容存進去——
+      // 不然以後SYSTEM_PROMPT_BASE本身改了，這裡會卡在恢復默認當下那份舊文字、不會自動跟著新的默認值走
+      customSystemPrompt = null;
+      document.getElementById('settings-system-prompt').value = SYSTEM_PROMPT_BASE;
+      systemPromptDirty = false;
       showToast('✦ 已恢復默認');
     } catch(e) {
       console.error('對話提示恢復默認失敗', e);
@@ -10958,10 +10983,8 @@ function renderSettingsPage() {
     // 档案：Nory 的名字/头像存本地，Ryven 的名字走既有 nickname 系统（js-ryven-name 会自动同步）
     const noryNameEl = document.getElementById('settings-nory-name');
     if (noryNameEl) noryNameEl.textContent = localStorage.getItem('ryven-nory-name') || 'Nory';
-    const noryAvatarEl = document.getElementById('settings-nory-avatar');
-    if (noryAvatarEl) noryAvatarEl.textContent = localStorage.getItem('ryven-avatar-nory') || '🐻';
-    const ryvenAvatarEl = document.getElementById('settings-ryven-avatar');
-    if (ryvenAvatarEl) ryvenAvatarEl.textContent = localStorage.getItem('ryven-avatar-ryven') || '💚';
+    applySettingsAvatarDisplay('nory');
+    applySettingsAvatarDisplay('ryven');
 
     // About：复用页面加载时算好的 dayCount/suffix（跟首页"第 X 個夜晚"同一份数据）
     const aboutDayEl = document.getElementById('settings-about-daycount');
@@ -11042,19 +11065,94 @@ function settingsSaveName(who) {
     }
 }
 
-// ---- 档案：头像切换/放大 ----
+// ---- 档案：头像切换/放大/上傳本地圖片 ----
+// 頭像有兩種來源：emoji（ryven-avatar-nory/ryven-avatar-ryven）或自訂圖片（ryven-avatar-img-nory/ryven-avatar-img-ryven，存dataURL）。
+// 圖片優先——只要ryven-avatar-img-*有值就顯示圖片，換表情/移除圖片時要記得同步清掉或設置圖片key。
+function applySettingsAvatarDisplay(who) {
+    const el = document.getElementById(`settings-${who}-avatar`);
+    if (!el) return;
+    const img = localStorage.getItem(`ryven-avatar-img-${who}`);
+    if (img) {
+        el.style.backgroundImage = `url(${img})`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'center';
+        el.textContent = '';
+    } else {
+        el.style.backgroundImage = '';
+        el.textContent = localStorage.getItem(who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven') || (who === 'nory' ? '🐻' : '💚');
+    }
+}
+
 function settingsCycleAvatar(who) {
     const key = who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven';
     const current = localStorage.getItem(key) || (who === 'nory' ? '🐻' : '💚');
     const idx = SETTINGS_AVATAR_OPTIONS.indexOf(current);
     const next = SETTINGS_AVATAR_OPTIONS[(idx + 1 + SETTINGS_AVATAR_OPTIONS.length) % SETTINGS_AVATAR_OPTIONS.length];
     localStorage.setItem(key, next);
-    document.getElementById(`settings-${who}-avatar`).textContent = next;
+    localStorage.removeItem(`ryven-avatar-img-${who}`); // 換表情視為放棄目前的自訂圖片
+    applySettingsAvatarDisplay(who);
+}
+
+let avatarMenuTarget = null;
+function openAvatarMenu(who) {
+    avatarMenuTarget = who;
+    const removeOpt = document.getElementById('avatar-menu-remove-option');
+    if (removeOpt) removeOpt.style.display = localStorage.getItem(`ryven-avatar-img-${who}`) ? '' : 'none';
+    document.getElementById('avatar-menu-sheet').classList.add('show');
+}
+function hideAvatarMenu() {
+    document.getElementById('avatar-menu-sheet').classList.remove('show');
+    avatarMenuTarget = null;
+}
+function settingsCycleAvatarFromMenu() {
+    if (avatarMenuTarget) settingsCycleAvatar(avatarMenuTarget);
+    hideAvatarMenu();
+}
+function triggerAvatarImageUpload() {
+    document.getElementById('avatar-image-input').click();
+}
+function handleAvatarImageUpload(event) {
+    const file = event.target.files[0];
+    const who = avatarMenuTarget;
+    event.target.value = '';
+    if (!file || !who) return;
+    if (!file.type.startsWith('image/')) { showToast('🌙 只能上傳圖片'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+        localStorage.setItem(`ryven-avatar-img-${who}`, reader.result);
+        applySettingsAvatarDisplay(who);
+        showToast('✦ 已更新頭像');
+        hideAvatarMenu();
+    };
+    reader.onerror = () => showToast('🌙 讀取圖片失敗');
+    reader.readAsDataURL(file);
+}
+function settingsRemoveAvatarImage() {
+    if (!avatarMenuTarget) return;
+    localStorage.removeItem(`ryven-avatar-img-${avatarMenuTarget}`);
+    applySettingsAvatarDisplay(avatarMenuTarget);
+    showToast('✦ 已恢復表情頭像');
+    hideAvatarMenu();
 }
 
 function settingsOpenAvatarLightbox(who) {
-    const emoji = document.getElementById(`settings-${who}-avatar`).textContent;
-    document.getElementById('settings-avatar-lightbox-emoji').textContent = emoji;
+    const img = localStorage.getItem(`ryven-avatar-img-${who}`);
+    const el = document.getElementById('settings-avatar-lightbox-emoji');
+    if (img) {
+        el.textContent = '';
+        el.style.backgroundImage = `url(${img})`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'center';
+        el.style.width = '220px';
+        el.style.height = '220px';
+        el.style.borderRadius = '50%';
+    } else {
+        el.style.backgroundImage = '';
+        el.style.width = '';
+        el.style.height = '';
+        el.style.borderRadius = '';
+        el.textContent = document.getElementById(`settings-${who}-avatar`).textContent;
+    }
     document.getElementById('settings-avatar-lightbox').classList.add('show');
 }
 function settingsCloseAvatarLightbox() {
