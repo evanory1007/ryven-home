@@ -1242,6 +1242,41 @@
 
     @keyframes ttsPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.9; } }
 
+    /* 小紅書鏈接預覽卡：骨架屏跟真實卡片共用同一個容器，數據到了直接替換innerHTML */
+    .xhs-card {
+      display: block; width: 260px; max-width: 100%;
+      border: 1px solid rgba(224,122,110,0.35); border-radius: 14px;
+      overflow: hidden; cursor: pointer; background: var(--sea-1);
+    }
+    .xhs-card-badge { position: relative; }
+    .xhs-card-cover {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: var(--sea-2);
+    }
+    .xhs-card-cover.skeleton { animation: ttsPulse 1.4s ease-in-out infinite; }
+    .xhs-card-imgcount {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(10,14,31,0.6); color: #fff;
+      font-family: 'DM Sans', sans-serif; font-size: 11px;
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .xhs-card-body { padding: 10px 12px; }
+    .xhs-card-title {
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      color: var(--parchment);
+    }
+    .xhs-card-desc {
+      font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--parchment-ghost);
+      margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .xhs-card-meta {
+      margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
+      font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--parchment-ghost); opacity: 0.85;
+    }
+    .xhs-card-loading-text {
+      padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--parchment-ghost);
+    }
+
     .typing-indicator { display:none; align-items:center; gap:8px; padding:4px 0; }
     .typing-indicator.show { display:flex; }
     .typing-dots { display:flex; gap:4px; padding:9px 13px; background:linear-gradient(135deg,rgba(46,74,158,0.4),rgba(26,31,58,0.6)); border:1px solid rgba(201,168,76,0.12); border-radius:18px; border-bottom-left-radius:4px; }
@@ -9121,12 +9156,139 @@ async function jumpToSearchResult(idx) {
     isProcessingQueue = false;
   }
 
+  // ===== 小紅書鏈接預覽 =====
+  const XHS_LINK_RE = /(https?:\/\/(?:www\.)?xiaohongshu\.com\/[^\s]+|https?:\/\/xhslink\.com\/[^\s]+)/i;
+
+  function addXhsSkeletonCard(loadingText) {
+    const messages = document.getElementById('chat-messages');
+    const msgDate = new Date();
+    maybeInsertDateDivider(msgDate);
+    const time = msgDate.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', timeZone:'Asia/Shanghai'});
+    const continued = lastMsgRow && lastMsgRow.classList.contains('from-me');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap';
+    wrap.dataset.role = 'user';
+    wrap.dataset.ts = msgDate.getTime();
+    wrap.innerHTML = `
+      <div class="msg-row from-me${continued ? ' continued' : ''}">
+        <div class="msg-avatar-sm" data-avatar="nory">${avatarInnerHtml('nory')}</div>
+        <div class="msg-col">
+          <div class="xhs-card">
+            <div class="xhs-card-cover skeleton"></div>
+            <div class="xhs-card-loading-text">📕 ${loadingText}</div>
+          </div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+    messages.appendChild(wrap);
+    lastMsgRow = wrap.firstElementChild;
+    messages.scrollTop = messages.scrollHeight;
+    return wrap.querySelector('.xhs-card');
+  }
+
+  function setXhsLoadingText(cardEl, text) {
+    const el = cardEl.querySelector('.xhs-card-loading-text');
+    if (el) el.textContent = `📕 ${text}`;
+  }
+
+  function setXhsCardError(cardEl, msg) {
+    cardEl.innerHTML = `<div class="xhs-card-loading-text">🌙 ${escapeToolContent(msg)}</div>`;
+  }
+
+  function renderXhsCard(cardEl, note) {
+    const cover = note.images && note.images[0] ? note.images[0] : '';
+    const badge = note.imageCount > 1 ? `<div class="xhs-card-imgcount">🖼 ${note.imageCount}</div>` : '';
+    cardEl.innerHTML = `
+      <div class="xhs-card-badge">
+        ${cover ? `<img class="xhs-card-cover" src="${cover}" />` : `<div class="xhs-card-cover"></div>`}
+        ${badge}
+      </div>
+      <div class="xhs-card-body">
+        <div class="xhs-card-title">${escapeToolContent(note.title || '(无标题)')}</div>
+        <div class="xhs-card-desc">${escapeToolContent(note.desc || '')}</div>
+        <div class="xhs-card-meta">
+          <span>${escapeToolContent(note.author || '')}</span>
+          <span>❤ ${note.likedCount || 0} · 💬 ${note.commentCount || 0}</span>
+        </div>
+      </div>`;
+    cardEl.onclick = () => window.open(note.url, '_blank', 'noopener');
+  }
+
+  // 抓卡片數據 → 抓圖片base64 → 替換骨架為真卡片 → 拼text+image blocks丟進發送隊列
+  // 走sendQueue而不是直接呼叫requestRyvenReply()，是為了跟其他訊息共用同一個「不並發」的序列化保護
+  async function handleXhsLink(fullText, xhsUrl) {
+    const cardEl = addXhsSkeletonCard('正在读取笔记…');
+    let note;
+    try {
+      const cardRes = await fetch('https://ryven.homes/relay/xhs-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ryven-nory-6.28' },
+        body: JSON.stringify({ url: xhsUrl })
+      });
+      const cardData = await cardRes.json();
+      if (!cardData.ok) { setXhsCardError(cardEl, cardData.error || '读取失败'); return; }
+      note = cardData.note;
+    } catch (err) {
+      console.error('xhs-card失败', err);
+      setXhsCardError(cardEl, '读取失败，稍后再试');
+      return;
+    }
+
+    let images = [];
+    if (note.images && note.images.length) {
+      setXhsLoadingText(cardEl, `正在加载图片…`);
+      try {
+        const imgRes = await fetch('https://ryven.homes/relay/xhs-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ryven-nory-6.28' },
+          body: JSON.stringify({ urls: note.images })
+        });
+        const imgData = await imgRes.json();
+        if (imgData.ok) images = imgData.images || [];
+      } catch (err) {
+        console.error('xhs-images失败', err);
+      }
+    }
+
+    renderXhsCard(cardEl, note);
+
+    const commentsText = (note.comments || []).map(c => `@${c.user}: ${c.content}`).join('\n');
+    const summaryText = [
+      fullText.replace(xhsUrl, '').trim(),
+      `[小红书笔记]`,
+      `标题: ${note.title}`,
+      `作者: ${note.author}`,
+      note.desc ? `正文: ${note.desc}` : '',
+      `互动: ❤${note.likedCount} 💬${note.commentCount} ⭐${note.collectedCount}`,
+      commentsText ? `热门评论:\n${commentsText}` : ''
+    ].filter(Boolean).join('\n');
+
+    const contentBlocks = [{ type: 'text', text: summaryText }];
+    for (const img of images) {
+      contentBlocks.push({ type: 'image', source: { type: 'base64', media_type: img.mime, data: img.base64 } });
+    }
+
+    sendQueue.push(contentBlocks);
+    updateQueueIndicator();
+    processSendQueue();
+  }
+
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if (!text) return;
     if (!CHAT_API_KEY) { showToast('💙 請先在選單填入 API Key'); toggleSidebar(); return; }
     input.value = ''; input.style.height = 'auto';
+
+    const xhsMatch = text.match(XHS_LINK_RE);
+    if (xhsMatch) {
+      const remaining = text.replace(xhsMatch[0], '').trim();
+      if (remaining) addMessage('user', remaining);
+      handleXhsLink(text, xhsMatch[0]);
+      return;
+    }
+
     addMessage('user', text);
     sendQueue.push(text);
     updateQueueIndicator();
