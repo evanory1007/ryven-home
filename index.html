@@ -4571,30 +4571,6 @@
     <input type="file" id="upload-image-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
     <input type="file" id="upload-file-input" accept=".txt,.md,.pdf,.docx,.xlsx,.xls,text/plain,text/markdown,application/pdf" style="display:none" onchange="handleFileUpload(event)" />
 
-    <!-- ═══ 頭像切換選單（换表情 / 上傳本地圖片）═══ -->
-    <div class="sheet-overlay" id="avatar-menu-sheet" onclick="if(event.target===this)hideAvatarMenu()">
-      <div class="sheet-panel">
-        <div class="sheet-handle"></div>
-        <div class="sheet-title">換頭像</div>
-        <div class="upload-option-list">
-          <div class="upload-option" onclick="settingsCycleAvatarFromMenu()">
-            <span class="upload-option-em">🔄</span>
-            <span class="upload-option-label">換一個表情</span>
-          </div>
-          <div class="upload-option" onclick="triggerAvatarImageUpload()">
-            <span class="upload-option-em">🖼</span>
-            <span class="upload-option-label">上傳本地圖片</span>
-          </div>
-          <div class="upload-option" id="avatar-menu-remove-option" style="display:none" onclick="settingsRemoveAvatarImage()">
-            <span class="upload-option-em">↺</span>
-            <span class="upload-option-label">恢復表情頭像</span>
-          </div>
-        </div>
-        <button class="sheet-cancel" onclick="hideAvatarMenu()">取消</button>
-      </div>
-    </div>
-    <input type="file" id="avatar-image-input" accept="image/*" style="display:none" onchange="handleAvatarImageUpload(event)" />
-
     <!-- ═══ 貼紙托盘 ═══ -->
     <div class="sheet-overlay" id="sticker-sheet" onclick="if(event.target===this)stickerCloseTray()">
       <div class="sheet-panel">
@@ -5465,6 +5441,32 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ═══ 頭像切換選單（换表情 / 上傳本地圖片）═══
+     放在body最底層、不屬於任何.screen——原本嵌在#chat畫面裡，#settings開著時#chat是display:none，
+     整棵子樹（含position:fixed的sheet-overlay）跟著不渲染，導致getBoundingClientRect量出來寬高都是0 -->
+<div class="sheet-overlay" id="avatar-menu-sheet" onclick="if(event.target===this)hideAvatarMenu()">
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">換頭像</div>
+    <div class="upload-option-list">
+      <div class="upload-option" onclick="settingsCycleAvatarFromMenu()">
+        <span class="upload-option-em">🔄</span>
+        <span class="upload-option-label">換一個表情</span>
+      </div>
+      <div class="upload-option" onclick="triggerAvatarImageUpload()">
+        <span class="upload-option-em">🖼</span>
+        <span class="upload-option-label">上傳本地圖片</span>
+      </div>
+      <div class="upload-option" id="avatar-menu-remove-option" style="display:none" onclick="settingsRemoveAvatarImage()">
+        <span class="upload-option-em">↺</span>
+        <span class="upload-option-label">恢復表情頭像</span>
+      </div>
+    </div>
+    <button class="sheet-cancel" onclick="hideAvatarMenu()">取消</button>
+  </div>
+</div>
+<input type="file" id="avatar-image-input" accept="image/*" style="display:none" onchange="handleAvatarImageUpload(event)" />
 
 <!-- 上傳.xlsx/.xls文件時提取內容用，只有extractSheetText()這一處用到；放最前面先加載，不用排在pdf.js/mammoth後面等它們下載完 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
