@@ -1872,8 +1872,8 @@
     #leisure .sticker-count { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
 
     #leisure .achievements { margin-top: 10px; position: relative; z-index: 1; }
-    #leisure .achievements-title { font-size: 11px; color: var(--parchment-dim); opacity: 0.6; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
-    #leisure .achievement-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    #leisure .achievements-title { font-size: 11px; color: var(--parchment-dim); opacity: 0.6; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; text-align: center; }
+    #leisure .achievement-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     #leisure .achievement {
       display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px;
       font-size: 11px; background: var(--tide-gold-ghost); border: 1px solid var(--tide-gold-soft); color: var(--tide-gold);
@@ -1985,6 +1985,13 @@
     #game-solo .game-line.cmd { color: var(--tide-gold-soft); font-style: italic; }
     #game-solo .game-line.output { color: var(--parchment); }
     #game-solo .game-line.error { color: rgba(210,160,160,0.8); }
+    #game-solo .game-cmd-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    #game-solo .game-cmd-btn {
+      padding: 7px 14px; border-radius: 20px; border: 1px solid var(--tide-gold-soft);
+      background: var(--tide-gold-ghost); color: var(--tide-gold); font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 13px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+    }
+    #game-solo .game-cmd-btn:hover { background: rgba(201,168,76,0.22); border-color: var(--tide-gold); }
     #game-solo .game-input-row { display: flex; gap: 8px; }
     #game-solo .game-input {
       flex: 1; background: rgba(15,20,40,0.4); border: 1px solid var(--line); border-radius: 12px;
@@ -4863,6 +4870,8 @@
     </div>
 
     <div class="game-output" id="game-solo-output"></div>
+
+    <div class="game-cmd-row" id="game-cmd-row"></div>
 
     <div class="game-input-row">
       <input class="game-input" id="game-solo-input" type="text" placeholder="輸入指令…" onkeydown="if(event.key==='Enter')sendSoloGameCommandFromInput()" />
@@ -10779,6 +10788,38 @@ let currentSoloGame = null;
 // 但還是當場記錄下來而不是寫死，避免以後又多一個入口時要再改一次
 let soloGameReturnScreen = 'leisure';
 
+// 每種遊戲的常用指令做成快捷按鈕，點了直接送出（不用自己打字）。
+// fishing的「開始」「收竿」、slots的「slots spin N」、blackjack的「bj deal N」都是play_fishing/play_arcade
+// 這兩個RYVEN_TOOLS工具描述裡給過的確認格式；blackjack的「bj hit」「bj stand」是標準二十一點玩牌動作的
+// 慣用寫法，沒有實際跟relay.py核對過，如果跟後端對不上再依遊戲當下輸出的提示調整
+const GAME_CMD_PRESETS = {
+  fishing: [
+    { label: '開始', cmd: '開始' },
+    { label: '收竿', cmd: '收竿' }
+  ],
+  slots: [
+    { label: '下注 10', cmd: 'slots spin 10' },
+    { label: '下注 50', cmd: 'slots spin 50' },
+    { label: '下注 100', cmd: 'slots spin 100' }
+  ],
+  blackjack: [
+    { label: '下注 10', cmd: 'bj deal 10' },
+    { label: '下注 50', cmd: 'bj deal 50' },
+    { label: '要牌 Hit', cmd: 'bj hit' },
+    { label: '停牌 Stand', cmd: 'bj stand' }
+  ]
+};
+
+function renderGameCmdButtons(game) {
+  const row = document.getElementById('game-cmd-row');
+  if (!row) return;
+  const presets = GAME_CMD_PRESETS[game] || [];
+  row.innerHTML = presets.map(p => `<button class="game-cmd-btn" data-cmd="${escapeToolContent(p.cmd)}">${p.label}</button>`).join('');
+  row.querySelectorAll('.game-cmd-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => sendSoloGameCommand(presets[i].cmd));
+  });
+}
+
 async function openSoloGame(game) {
   currentSoloGame = game;
   const activeEl = document.querySelector('.screen.active');
@@ -10786,6 +10827,7 @@ async function openSoloGame(game) {
   const meta = GAME_SOLO_META[game];
   document.getElementById('game-solo-output').innerHTML = '';
   document.getElementById('game-solo-title').textContent = meta ? meta.title : '遊戲';
+  renderGameCmdButtons(game);
   await goTo('game-solo');
 }
 
