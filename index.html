@@ -10882,12 +10882,15 @@ function sendSoloGameCommandFromInput() {
 }
 
 // ===== #leisure 新版首頁：遊戲卡片上的戰績數字 + 成就條（放在頁面最下方，不是塞進卡片裡）+ 表情包收藏數 =====
-// 成就只從/relay/game/arcade-save來（slots.achievements/bj.achievements，伺服器已經算好icon/text/unlocked）——
-// /relay/game/fishing-save沒有回傳achievements陣列，沒有真實數據就不硬湊假成就
-function renderLeisureAchievements(data) {
+// 成就現在三個來源都合併顯示：fishing-save的achievements（欄位名沒跟relay.py核對過，是猜的，
+// 沒有這欄位或不是陣列就自動當空陣列處理，不會報錯）+ arcade-save的slots.achievements/blackjack.achievements
+// （這兩個是伺服器已經算好icon/text/unlocked的確認格式）。兩邊fetch互相獨立，其中一邊失敗或欄位對不上，
+// 另一邊的成就還是能正常顯示，不會因為釣魚那邊猜錯欄位名就整條成就列表都掛掉
+function renderLeisureAchievements(...lists) {
   const listEl = document.getElementById('leisure-achievement-list');
   if (!listEl) return;
-  const all = [...((data.slots && data.slots.achievements) || []), ...((data.blackjack && data.blackjack.achievements) || [])];
+  const all = [];
+  lists.forEach(l => { if (Array.isArray(l)) all.push(...l); });
   if (!all.length) { listEl.innerHTML = '<div class="achievement-empty">還沒有成就，去玩一把試試</div>'; return; }
   // 已解鎖的排前面，跟mockup視覺順序一致
   const sorted = all.slice().sort((a, b) => (b.unlocked ? 1 : 0) - (a.unlocked ? 1 : 0));
@@ -10901,6 +10904,7 @@ function renderLeisureAchievements(data) {
 
 // 原本#game-room卡片上的「圖鑑/總竿數/籌碼/勝率/勝敗場」這些數字，改塞回leisure自己的遊戲卡片裡（每張卡自己的小字統計行）
 async function loadLeisureGameStats() {
+  let fishingAchievements = [];
   try {
     const res = await fetch('https://ryven.homes/relay/game/fishing-save', {
       headers: { 'Authorization': `Bearer ${authToken}` }
@@ -10909,11 +10913,12 @@ async function loadLeisureGameStats() {
     const data = await res.json();
     const el = document.getElementById('leisure-fishing-stat');
     if (el) el.textContent = `圖鑑 ${data.encyclopedia ?? 0}/${data.encyclopedia_total ?? 0} · ${data.total_casts ?? 0}竿`;
+    fishingAchievements = data.achievements || [];
   } catch(e) {
     console.error('釣魚統計加載失敗', e);
   }
 
-  const listEl = document.getElementById('leisure-achievement-list');
+  let arcadeAchievements = [];
   try {
     const res = await fetch('https://ryven.homes/relay/game/arcade-save', {
       headers: { 'Authorization': `Bearer ${authToken}` }
@@ -10926,12 +10931,12 @@ async function loadLeisureGameStats() {
     const bj = data.blackjack || {};
     const bjEl = document.getElementById('leisure-bj-stat');
     if (bjEl) bjEl.textContent = `${bj.wins ?? 0}勝 ${bj.losses ?? 0}敗`;
-    // 同一次請求拿到的slots/blackjack資料順便拿去渲染成就條，不用再多打一次arcade-save
-    renderLeisureAchievements(data);
+    arcadeAchievements = [...(slots.achievements || []), ...(bj.achievements || [])];
   } catch(e) {
-    console.error('遊戲戰績/成就加載失敗', e);
-    if (listEl) listEl.innerHTML = '<div class="achievement-empty">加載失敗</div>';
+    console.error('遊戲戰績加載失敗', e);
   }
+
+  renderLeisureAchievements(fishingAchievements, arcadeAchievements);
 }
 
 function loadLeisurePage() {
