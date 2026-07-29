@@ -1811,7 +1811,9 @@
     #depths .TODO { border-bottom: 1px dashed var(--tide-gold-soft); color: var(--tide-gold) !important; }
 
     /* ══════════════════════ 休閒 (#leisure) ══════════════════════ */
-    #leisure { background: color-mix(in srgb, var(--sea-0) 85%, black); }
+    /* #leisure本身不再設自己的background——之前這裡有一條純色的color-mix(...)覆蓋，
+       是實心不透明的，剛好蓋在z-index:0的body::before光線層/氣泡/游魚上面，
+       導致這幾個全站背景效果進到leisure頁面就直接被擋住看不見。拿掉之後改吃body自己的深海漸層背景 */
     #leisure .page { max-width: 460px; margin: 0 auto; padding: 28px 26px 110px; position: relative; z-index: 1; width: 100%; }
 
     #leisure .head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
@@ -1889,8 +1891,6 @@
     }
     body.light #leisure .nav { background: rgba(240,243,248,0.85); }
 
-    /* ── 浅海模式覆盖：整體背景改成陽光灑落的淺水配色，跟深海形成真正的對比 ── */
-    body.light #leisure { background: color-mix(in srgb, var(--sea-0) 92%, white); }
     #leisure .nav-inner { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); padding: 14px 12px 22px; }
     #leisure .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--parchment-ghost); cursor: pointer; transition: opacity 0.2s; position: relative; opacity: 0.5; }
     #leisure .nav-item:hover { opacity: 0.8; }
