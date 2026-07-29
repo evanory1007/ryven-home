@@ -8750,16 +8750,15 @@ async function jumpToSearchResult(idx) {
         text = text.slice(0, MAX_FILE_TEXT_LEN) + '\n（内容过长，仅显示前5000字）';
       }
 
-      // 文件內容當document content block發給AI，不是純文字消息
-      const documentBlock = {
-        type: 'document',
-        source: { type: 'text', media_type: 'text/plain', data: text },
-        title: file.name
+      // 文件內容當純文字text block發給AI——document類型第三方中轉不一定認，text保證都認
+      const textBlock = {
+        type: 'text',
+        text: `[文件: ${file.name}]\n\n${text}`
       };
       addFileBubble(file.name, ext, text);
       msgCount++;
-      chatHistory.push({ role: 'user', content: [documentBlock] });
-      await requestRyvenReply([documentBlock]);
+      chatHistory.push({ role: 'user', content: [textBlock] });
+      await requestRyvenReply([textBlock]);
     } catch(err) {
       console.error('文件讀取失敗', err);
       showToast('🌙 文件讀取失敗，稍後再試');
