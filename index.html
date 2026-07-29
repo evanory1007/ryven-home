@@ -5549,6 +5549,7 @@ function doLogin() {
       loadChatHistory();
       renderHomePage();
       loadUserConfigFromServer();
+      loadAvatarsFromServer();
       requestPushPermissionOnLogin();
     } else {
       document.getElementById('login-error').style.display = 'block';
@@ -11257,6 +11258,28 @@ function applySettingsAvatarDisplay(who) {
     applyAvatarToEl(document.getElementById(`settings-${who}-avatar`), who);
 }
 
+// 頭像雲端同步：localStorage本身已經是快取（換設備時是空的），沒快取才打GET /relay/avatar把上次上傳的url拉回來——
+// 兩邊都有快取就不用打服務器，省一次不必要的請求
+async function loadAvatarsFromServer() {
+    if (!authToken) return;
+    const needNory = !localStorage.getItem('ryven-avatar-img-nory');
+    const needRyven = !localStorage.getItem('ryven-avatar-img-ryven');
+    if (!needNory && !needRyven) return;
+    try {
+        const res = await fetch('https://ryven.homes/relay/avatar', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        let changed = false;
+        if (needNory && data.nory) { localStorage.setItem('ryven-avatar-img-nory', data.nory); changed = true; }
+        if (needRyven && data.ryven) { localStorage.setItem('ryven-avatar-img-ryven', data.ryven); changed = true; }
+        if (changed) refreshRenderedAvatars();
+    } catch(e) {
+        console.error('頭像雲端同步失敗', e);
+    }
+}
+
 function settingsCycleAvatar(who) {
     const key = who === 'nory' ? 'ryven-avatar-nory' : 'ryven-avatar-ryven';
     const current = localStorage.getItem(key) || (who === 'nory' ? '🐻' : '💚');
@@ -11286,22 +11309,36 @@ function settingsCycleAvatarFromMenu() {
 function triggerAvatarImageUpload() {
     document.getElementById('avatar-image-input').click();
 }
-function handleAvatarImageUpload(event) {
+// 頭像圖片上傳到服務器（/relay/upload/avatar，帶who字段，服務器順便把這個url跟nory/ryven的對應關係存下來），
+// 本地只快取伺服器回傳的url字串，不再存整段base64——這樣換設備時GET /relay/avatar也能拉回同一張圖
+async function handleAvatarImageUpload(event) {
     const file = event.target.files[0];
     const who = avatarMenuTarget;
     event.target.value = '';
     if (!file || !who) return;
     if (!file.type.startsWith('image/')) { showToast('🌙 只能上傳圖片'); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-        localStorage.setItem(`ryven-avatar-img-${who}`, reader.result);
+    showToast('✦ 上傳中…');
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('who', who);
+        const res = await fetch('https://ryven.homes/relay/upload/avatar', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            body: formData
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        if (!data.url) throw new Error('response missing url');
+        localStorage.setItem(`ryven-avatar-img-${who}`, data.url);
         applySettingsAvatarDisplay(who);
         refreshRenderedAvatars();
         showToast('✦ 已更新頭像');
         hideAvatarMenu();
-    };
-    reader.onerror = () => showToast('🌙 讀取圖片失敗');
-    reader.readAsDataURL(file);
+    } catch(e) {
+        console.error('頭像上傳失敗', e);
+        showToast('🌙 上傳失敗，稍後再試');
+    }
 }
 function settingsRemoveAvatarImage() {
     if (!avatarMenuTarget) return;
@@ -11433,6 +11470,8 @@ if (isLoggedIn) loadUserConfigFromServer();
 // 打字指示器等靜態HTML裡寫死的頭像（不是每次動態生成），頁面載入時要補刷一次，
 // 不然上次已經上傳過自訂圖片的話，這幾個地方在使用者做任何互動之前還是顯示舊emoji
 refreshRenderedAvatars();
+// 本地localStorage先當快取用一次（上面那行），沒快取的話（比如剛換了台設備）再異步從服務器補回來
+if (isLoggedIn) loadAvatarsFromServer();
 </script>
 </body>
 </html>
