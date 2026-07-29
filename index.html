@@ -9196,8 +9196,10 @@ async function jumpToSearchResult(idx) {
     cardEl.innerHTML = `<div class="xhs-card-loading-text">🌙 ${escapeToolContent(msg)}</div>`;
   }
 
-  function renderXhsCard(cardEl, note) {
-    const cover = note.images && note.images[0] ? note.images[0] : '';
+  function renderXhsCard(cardEl, note, images) {
+    // 封面圖用已經下載好的base64（走過服務端偽裝Referer那關），不能直接用小紅書原始連結——
+    // 瀏覽器load<img>時Referer是ryven.homes，會被CDN防盜鏈擋掉變裂圖
+    const cover = images && images[0] ? `data:${images[0].mime};base64,${images[0].base64}` : '';
     const badge = note.imageCount > 1 ? `<div class="xhs-card-imgcount">🖼 ${note.imageCount}</div>` : '';
     cardEl.innerHTML = `
       <div class="xhs-card-badge">
@@ -9251,7 +9253,7 @@ async function jumpToSearchResult(idx) {
       }
     }
 
-    renderXhsCard(cardEl, note);
+    renderXhsCard(cardEl, note, images);
 
     const commentsText = (note.comments || []).map(c => `@${c.user}: ${c.content}`).join('\n');
     const summaryText = [
