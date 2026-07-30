@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import aiohttp
 from aiohttp import web
 
 
@@ -191,10 +192,76 @@ def make_app(root: Path, *, allow_origin: str = "*") -> web.Application:
     async def http_options(request: web.Request) -> web.Response:
         return web.Response(status=204, headers=_cors_headers(allow_origin))
 
+    async def http_bilibili_subtitles(request: web.Request) -> web.Response:
+        """Fetch B站 video subtitles via public API (server-side, no CORS issues)."""
+        bvid = request.query.get("bvid", "").strip()
+        if not bvid:
+            return _err("missing 'bvid' parameter")
+        try:
+            timeout = aiohttp.ClientTimeout(total=15)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                # Step 1: get cid + duration from bvid
+                async with session.get(
+                    f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}",
+                    headers=headers,
+                ) as resp:
+                    data = await resp.json()
+                    if data.get("code") != 0:
+                        return _json({"subtitles": [], "title": "", "duration": 0,
+                                       "error": data.get("message", "API error")})
+                    d = data["data"]
+                    cid = d["cid"]
+                    title = d.get("title", "")
+                    duration = d.get("duration", 0)
+
+                # Step 2: get subtitle URL list
+                async with session.get(
+                    f"https://api.bilibili.com/x/player/v2?bvid={bvid}&cid={cid}",
+                    headers=headers,
+                ) as resp:
+                    data = await resp.json()
+                    if data.get("code") != 0:
+                        return _json({"subtitles": [], "title": title, "duration": duration,
+                                       "error": "player API error"})
+                    subs = (data.get("data", {}).get("subtitle", {}) or {}).get("subtitles", [])
+                    if not subs:
+                        return _json({"subtitles": [], "title": title, "duration": duration,
+                                       "error": "no subtitles available"})
+
+                # Prefer Chinese subtitle
+                sub_url = None
+                for s in subs:
+                    if "zh" in s.get("lan", ""):
+                        sub_url = s.get("subtitle_url", "")
+                        break
+                if not sub_url:
+                    sub_url = subs[0].get("subtitle_url", "")
+                if not sub_url:
+                    return _json({"subtitles": [], "title": title, "duration": duration,
+                                   "error": "no subtitle URL"})
+
+                if sub_url.startswith("//"):
+                    sub_url = "https:" + sub_url
+
+                # Step 3: fetch subtitle JSON
+                async with session.get(sub_url, headers=headers) as resp:
+                    sub_data = await resp.json()
+                    body = sub_data.get("body", [])
+                    subtitles = [
+                        {"start": item.get("from", 0), "end": item.get("to", 0),
+                         "text": item.get("content", "")}
+                        for item in body
+                    ]
+                    return _json({"subtitles": subtitles, "title": title, "duration": duration})
+        except Exception as e:
+            return _json({"subtitles": [], "title": "", "duration": 0, "error": str(e)})
+
     app.router.add_get("/", http_root)
     app.router.add_get("/annotations", http_get_annotations)
     app.router.add_post("/annotations", http_post_note)
     app.router.add_post("/annotations/{note_id}/replies", http_post_reply)
+    app.router.add_get("/bilibili/subtitles", http_bilibili_subtitles)
     app.router.add_options("/{tail:.*}", http_options)
     return app
 

@@ -8170,6 +8170,7 @@ async function jumpToSearchResult(idx) {
       id: 'link_' + Date.now(),
       title,
       type: parsed.type,
+      bv: parsed.bv || null,
       url: parsed.embed,
       source: 'link',
       addedAt: Date.now()
@@ -8226,17 +8227,53 @@ async function jumpToSearchResult(idx) {
 
     if (isLink) {
       if (film.type === 'bilibili' || film.type === 'iframe') {
-        // ── B站/网页 → iframe 嵌入，无法控制播放，单一 chunk ──
+        // ── B站/网页 → iframe 嵌入 ──
         placeholder.style.display = 'none';
         cinemaVideoEl.style.display = 'none';
         cinemaVideoEl.pause();
         cinemaIframeEl.src = film.url;
         cinemaIframeEl.style.display = 'block';
 
-        cinemaData = {
-          title: filmTitle,
-          chunks: [{ id: '000', startSec: 0, endSec: 0, start: '全片', end: '', subtitles: [], notes: [] }]
-        };
+        // 尝试从 B站 API 拉字幕
+        let bilibiliSubs = [];
+        const bvId = film.bv || (film.url.match(/bvid=(BV[\w]+)/i) || [])[1] || null;
+        if (bvId) {
+          try {
+            const subRes = await fetch(`${NOTES_API}/bilibili/subtitles?bvid=${bvId}`);
+            if (subRes.ok) {
+              const subData = await subRes.json();
+              bilibiliSubs = subData.subtitles || [];
+              if (subData.duration) cinemaCurrentFilm.duration = subData.duration;
+            }
+          } catch(e) { /* 静默失败 */ }
+        }
+
+        if (bilibiliSubs.length > 0) {
+          // 有字幕 → 按 90 秒切割 chunk，分配字幕
+          const duration = cinemaCurrentFilm.duration || Math.max(...bilibiliSubs.map(s => s.end), 3600);
+          const chunkCount = Math.max(1, Math.ceil(duration / CHUNK_SECONDS));
+          const chunks = [];
+          for (let i = 0; i < chunkCount; i++) {
+            const startSec = i * CHUNK_SECONDS;
+            const endSec = Math.min((i + 1) * CHUNK_SECONDS, duration);
+            const chunkSubs = bilibiliSubs.filter(s => s.start >= startSec && s.start < endSec);
+            chunks.push({
+              id: String(i).padStart(3, '0'),
+              startSec, endSec,
+              start: cinemaFmt(startSec),
+              end: cinemaFmt(endSec),
+              subtitles: chunkSubs.map(s => ({ start: s.start, text: s.text })),
+              notes: []
+            });
+          }
+          cinemaData = { title: filmTitle, chunks };
+        } else {
+          // 无字幕 → 单一全片 chunk
+          cinemaData = {
+            title: filmTitle,
+            chunks: [{ id: '000', startSec: 0, endSec: 0, start: '全片', end: '', subtitles: [], notes: [] }]
+          };
+        }
         cinemaCurrentChunkIdx = -1;
         renderCinemaChunks();
         cinemaSelectChunk(0);
@@ -8394,21 +8431,42 @@ async function jumpToSearchResult(idx) {
     if (isLink) {
       const isIframe = film.type === 'bilibili' || film.type === 'iframe';
       const noteCount = cinemaNotesCache.filter(n => n.chunk_index === idx).length;
-      document.getElementById('cinema-header-meta').innerHTML = `
-        <span class="current">${escapeHtml(film.title)}</span>
-        <span>·</span>
-        <span>${noteCount} notes</span>
-      `;
-      if (isIframe) {
-        // B站/iframe：无法控制播放
+
+      // B站链接片如果有字幕（从 API 拉到的），显示字幕
+      if (isIframe && c.subtitles && c.subtitles.length > 0) {
+        document.getElementById('cinema-header-meta').innerHTML = `
+          <span class="current">Chunk ${Number(c.id)+1}/${cinemaData.chunks.length}</span>
+          <span>${c.start} - ${c.end}</span>
+          <span>·</span>
+          <span>${noteCount} notes</span>
+        `;
+        document.getElementById('cinema-subtitle').innerHTML = c.subtitles.map(s =>
+          `<div class="subtitle-cue">
+             <span class="cue-time">${cinemaFmt(s.start)}</span>
+             <span class="cue-text">${escapeHtml(s.text)}</span>
+           </div>`
+        ).join('');
+      } else if (isIframe) {
+        // B站/iframe：无字幕
+        document.getElementById('cinema-header-meta').innerHTML = `
+          <span class="current">${escapeHtml(film.title)}</span>
+          <span>·</span>
+          <span>${noteCount} notes</span>
+        `;
         document.getElementById('cinema-subtitle').innerHTML = `
-          <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">嵌入视频无法分段跳转，请在上方的播放器中自由观看，在此处写下你的笔记和感想。</pre>
+          <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">嵌入视频无法获取字幕，请在上方的播放器中自由观看，在此处写下你的笔记和感想。</pre>
         `;
       } else {
         // 直链：跳到 chunk 起点
         if (cinemaVideoEl && cinemaVideoEl.dataset.filmId === cinemaCurrentFilm.id && c.startSec !== undefined) {
           cinemaVideoEl.currentTime = c.startSec;
         }
+        document.getElementById('cinema-header-meta').innerHTML = `
+          <span class="current">Chunk ${Number(c.id)+1}/${cinemaData.chunks.length}</span>
+          <span>${c.start} - ${c.end}</span>
+          <span>·</span>
+          <span>${noteCount} notes</span>
+        `;
         document.getElementById('cinema-subtitle').innerHTML = `
           <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">链接视频 · Chunk ${Number(c.id)+1}/${cinemaData.chunks.length} · ${c.start} — ${c.end}\n在上方的播放器中观看，在此处写下你的笔记和感想。</pre>
         `;
