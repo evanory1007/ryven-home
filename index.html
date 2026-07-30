@@ -9716,7 +9716,10 @@ async function jumpToSearchResult(idx) {
         resultText = lines.length ? lines.join('\n\n') : '沒有找到相關結果';
         displayContent = resultText;
       } else if (name === 'read_github_commits') {
-        const res = await fetch('https://ryven.homes/relay/github/commits', {
+        const qs = new URLSearchParams();
+        if (input.repo) qs.set('repo', input.repo);
+        if (input.count) qs.set('count', input.count);
+        const res = await fetch(`https://ryven.homes/relay/github/commits?${qs}`, {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (!res.ok) throw new Error('bad status ' + res.status);
@@ -9724,7 +9727,7 @@ async function jumpToSearchResult(idx) {
         if (!data.ok) throw new Error(data.error || '獲取失敗');
         const commits = data.commits || [];
         const lines = commits.map(c => `[${c.sha}] ${(c.message || '').split('\n')[0]}${c.date ? `（${c.date.slice(0,10)}）` : ''}`);
-        resultText = lines.length ? lines.join('\n') : '還沒有commit記錄';
+        resultText = (data.repo ? `倉庫：${data.repo}\n` : '') + (lines.length ? lines.join('\n') : '還沒有commit記錄');
         displayContent = resultText;
       } else if (name === 'lutopia_cli') {
         const res = await fetch('https://ryven.homes/relay/lutopia/cli', {
