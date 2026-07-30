@@ -3057,6 +3057,14 @@
     body.light #gramophone .quote-card.pinned { background: linear-gradient(135deg, rgba(184,150,74,0.08), var(--glass-card)); }
     body.light #gramophone .gram-stats { background: var(--glass-card); }
 
+    /* desk 放映室卡片 */
+    #desk .cinema-card { grid-column: span 1; background: linear-gradient(135deg, rgba(15,20,40,0.6), rgba(10,14,31,0.8)); border-color: var(--line); display: flex; flex-direction: column; padding: 20px; gap: 10px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+    #desk .cinema-card:hover { border-color: var(--tide-gold-soft); box-shadow: 0 4px 20px rgba(201,168,76,0.06); }
+    body.light #desk .cinema-card { background: linear-gradient(135deg, rgba(240,243,248,0.8), rgba(216,224,240,0.6)); }
+    #desk .cinema-card-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--parchment); }
+    #desk .cinema-card-zh { font-size: 9px; letter-spacing: 0.22em; color: var(--tide-gold-soft); }
+    #desk .cinema-card-info { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--parchment-ghost); letter-spacing: 0.08em; }
+
     #desk .notes-card { background: linear-gradient(155deg, rgba(40,32,18,0.7), rgba(30,22,12,0.8)); border-color: rgba(180,140,60,0.1); min-height: 160px; display: flex; flex-direction: column; }
     #desk .notes-top { padding: 16px 14px 10px; border-bottom: 1px solid rgba(180,140,60,0.08); }
     #desk .notes-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 18px; color: var(--parchment); }
@@ -3252,6 +3260,228 @@
     body.light #diary .comment-input,
     body.light #diary .compose-textarea { background: var(--glass-input); }
     body.light #diary .compose-handle { background: rgba(42,53,80,0.15); }
+
+    /* ===== 放映室（#cinema）===== */
+    #cinema { overflow: hidden; }
+    #cinema .cinema-header {
+      position: sticky; top: 0; z-index: 100;
+      padding: 14px 24px;
+      background: linear-gradient(180deg, rgba(10,14,31,0.95) 0%, rgba(10,14,31,0.7) 80%, transparent 100%);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    body.light #cinema .cinema-header { background: linear-gradient(180deg, rgba(240,243,248,0.95) 0%, rgba(240,243,248,0.7) 80%, transparent 100%); }
+    #cinema .cinema-back {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer;
+      color: var(--parchment-dim);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    #cinema .cinema-back:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #cinema .cinema-title {
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: 20px; color: var(--parchment);
+      display: flex; align-items: center; gap: 8px;
+    }
+    #cinema .cinema-title .emoji { font-size: 18px; }
+    #cinema .cinema-meta {
+      font-family: 'DM Sans', sans-serif; font-size: 11px;
+      color: var(--parchment-ghost); display: flex; gap: 12px;
+    }
+    #cinema .cinema-meta .current { color: var(--tide-gold); }
+
+    #cinema .cinema-body {
+      display: grid; grid-template-columns: 220px 1fr 300px;
+      flex: 1; overflow: hidden;
+    }
+
+    /* 左栏 - Chunk 列表 */
+    #cinema .cinema-chunks {
+      border-right: 1px solid var(--line);
+      overflow-y: auto; padding: 12px 0;
+      background: rgba(10,14,31,0.4);
+    }
+    body.light #cinema .cinema-chunks { background: rgba(240,243,248,0.4); }
+    #cinema .chunk-item {
+      display: flex; flex-direction: column;
+      padding: 12px 16px; cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.2s; margin: 2px 0;
+    }
+    #cinema .chunk-item:hover { background: rgba(201,168,76,0.05); }
+    #cinema .chunk-item.active {
+      border-left-color: var(--tide-gold);
+      background: rgba(201,168,76,0.08);
+    }
+    #cinema .chunk-id {
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      color: var(--parchment-ghost); margin-bottom: 2px; letter-spacing: 0.05em;
+    }
+    #cinema .chunk-item.active .chunk-id { color: var(--tide-gold); }
+    #cinema .chunk-time { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--parchment-dim); }
+    #cinema .chunk-notes-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 9px; color: var(--parchment-ghost); margin-top: 4px;
+    }
+    #cinema .chunk-notes-badge::before { content: '·'; color: var(--tide-gold-soft); }
+
+    /* 中栏 - Sheet + 字幕 */
+    #cinema .cinema-main {
+      overflow-y: auto; padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    #cinema .sheet-container {
+      width: 100%; border-radius: 8px; overflow: hidden;
+      background: #000; border: 1px solid var(--line);
+    }
+    #cinema .sheet-container img { width: 100%; display: block; }
+    #cinema .sheet-placeholder {
+      width: 100%; aspect-ratio: 16/9;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--parchment-ghost); font-family: 'DM Sans', sans-serif; font-size: 13px;
+    }
+    #cinema .subtitle-area {
+      background: var(--card-bg); border: 1px solid var(--line);
+      border-radius: 8px; padding: 16px 20px;
+      max-height: 200px; overflow-y: auto;
+    }
+    #cinema .subtitle-area pre {
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      line-height: 1.8; color: var(--parchment-dim);
+      white-space: pre-wrap; word-wrap: break-word;
+    }
+    #cinema .subtitle-area .timestamp {
+      color: var(--tide-gold-soft); font-size: 10px;
+      font-family: 'DM Sans', sans-serif; letter-spacing: 0.05em;
+    }
+
+    /* 右栏 - 笔记面板 */
+    #cinema .cinema-notes {
+      border-left: 1px solid var(--line);
+      display: flex; flex-direction: column; overflow: hidden;
+      background: rgba(10,14,31,0.4);
+    }
+    body.light #cinema .cinema-notes { background: rgba(240,243,248,0.4); }
+    #cinema .notes-tabs { display: flex; padding: 12px 16px 0; gap: 4px; }
+    #cinema .notes-tab {
+      padding: 6px 14px; font-family: 'DM Sans', sans-serif; font-size: 11px;
+      border-radius: 6px 6px 0 0; cursor: pointer; color: var(--parchment-ghost);
+      background: transparent; border: 1px solid transparent; border-bottom: none;
+      transition: all 0.2s; letter-spacing: 0.05em;
+    }
+    #cinema .notes-tab:hover { color: var(--parchment-dim); }
+    #cinema .notes-tab.active {
+      color: var(--tide-gold); background: var(--card-bg); border-color: var(--line);
+    }
+    #cinema .notes-list {
+      flex: 1; overflow-y: auto; padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    #cinema .note-card {
+      background: var(--card-bg); border: 1px solid var(--line);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    #cinema .note-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+    }
+    #cinema .note-author {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 11px; color: var(--tide-gold); font-weight: 500;
+    }
+    #cinema .note-time {
+      font-family: 'DM Sans', sans-serif; font-size: 9px; color: var(--parchment-ghost);
+    }
+    #cinema .note-content {
+      font-family: 'DM Sans', sans-serif; font-size: 12px; line-height: 1.6; color: var(--parchment-dim);
+    }
+    #cinema .note-reply {
+      margin-top: 8px; padding-top: 8px; padding-left: 12px;
+      border-left: 2px solid var(--tide-gold-soft);
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    #cinema .note-reply .note-author { color: var(--parchment-ghost); }
+    #cinema .note-reply .note-content { font-size: 11px; color: var(--parchment-ghost); }
+
+    #cinema .note-form {
+      padding: 12px 16px; border-top: 1px solid var(--line);
+    }
+    #cinema .note-form textarea {
+      width: 100%; height: 60px;
+      background: rgba(26,31,58,0.8); border: 1px solid var(--line);
+      border-radius: 8px; padding: 10px 12px;
+      font-family: 'DM Sans', sans-serif; font-size: 12px;
+      color: var(--parchment); resize: none; outline: none;
+      transition: border-color 0.2s;
+    }
+    body.light #cinema .note-form textarea { background: var(--glass-input); color: var(--white); }
+    #cinema .note-form textarea:focus { border-color: var(--tide-gold-soft); }
+    #cinema .note-form textarea::placeholder { color: var(--parchment-ghost); }
+    #cinema .note-form button {
+      margin-top: 8px; width: 100%; padding: 8px;
+      background: rgba(201,168,76,0.12); border: 1px solid var(--tide-gold-soft);
+      border-radius: 6px; color: var(--tide-gold);
+      font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 0.08em;
+      cursor: pointer; transition: all 0.2s;
+    }
+    #cinema .note-form button:hover { background: rgba(201,168,76,0.22); }
+
+    /* 浮窗播放器 */
+    .float-player {
+      position: fixed; bottom: 24px; right: 24px; width: 320px;
+      border-radius: 14px; overflow: hidden;
+      background: rgba(15,20,40,0.88); backdrop-filter: blur(20px);
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 1px rgba(201,168,76,0.2);
+      z-index: 9999; display: none; /* hidden by default */
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    body.light .float-player { background: rgba(240,243,248,0.9); }
+    .float-player.visible { display: block; }
+    .float-player-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; background: rgba(201,168,76,0.06);
+      border-bottom: 1px solid var(--line);
+      cursor: grab; user-select: none;
+    }
+    .float-player-bar:active { cursor: grabbing; }
+    .float-player-title {
+      font-family: 'DM Sans', sans-serif; font-size: 11px;
+      color: var(--tide-gold); font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .float-player-controls { display: flex; gap: 8px; }
+    .float-player-controls button {
+      background: none; border: none; color: var(--parchment-ghost);
+      font-size: 14px; cursor: pointer;
+      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; transition: all 0.2s;
+    }
+    .float-player-controls button:hover { color: var(--parchment); background: rgba(255,255,255,0.1); }
+    .float-player-video {
+      width: 100%; aspect-ratio: 16/9; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--parchment-ghost); font-family: 'DM Sans', sans-serif; font-size: 12px;
+    }
+
+    @media (max-width: 768px) {
+      #cinema .cinema-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+      #cinema .cinema-chunks {
+        border-right: none; border-bottom: 1px solid var(--line);
+        overflow-x: auto; overflow-y: hidden;
+        display: flex; flex-direction: row; padding: 8px 12px; gap: 6px;
+      }
+      #cinema .chunk-item {
+        flex-shrink: 0; padding: 8px 12px;
+        border-left: none; border-bottom: 2px solid transparent;
+        border-radius: 6px; background: var(--card-bg);
+      }
+      #cinema .chunk-item.active { border-bottom-color: var(--tide-gold); border-left: none; }
+      #cinema .cinema-notes { border-left: none; border-top: 1px solid var(--line); max-height: 300px; }
+      .float-player { width: 200px; bottom: 80px; right: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -4073,6 +4303,14 @@
         </div>
       </div>
 
+      <div class="card cinema-card" onclick="goTo('cinema')">
+        <div>
+          <div class="cinema-card-en">Cinema</div>
+          <div class="cinema-card-zh">放 映 室</div>
+        </div>
+        <div class="cinema-card-info">🎬 一起看電影</div>
+      </div>
+
       <div class="card shelf-card">
         <div class="shelf-top">
           <div>
@@ -4197,6 +4435,70 @@
         <p>加載中…</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- 放映室 -->
+<div class="screen" id="cinema">
+
+  <div class="cinema-header">
+    <div class="cinema-back" onclick="goTo('desk')">‹</div>
+    <div class="cinema-title">
+      <span class="emoji">🎬</span>
+      <span id="cinema-film-title">——</span>
+    </div>
+    <div class="cinema-meta" id="cinema-header-meta">
+      <span class="current">—</span>
+      <span>—</span>
+      <span>—</span>
+    </div>
+  </div>
+
+  <div class="cinema-body">
+    <div class="cinema-chunks" id="cinema-chunks">
+      <div style="padding:20px;text-align:center;color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">选择一部电影开始</div>
+    </div>
+
+    <div class="cinema-main">
+      <div class="sheet-container" id="cinema-sheet">
+        <div class="sheet-placeholder">🎞 等待加载…</div>
+      </div>
+      <div class="subtitle-area" id="cinema-subtitle">
+        <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">——</pre>
+      </div>
+    </div>
+
+    <div class="cinema-notes">
+      <div class="notes-tabs">
+        <div class="notes-tab active" onclick="cinemaSwitchNotesTab('chunk')">Chunk</div>
+        <div class="notes-tab" onclick="cinemaSwitchNotesTab('all')">全部</div>
+      </div>
+      <div class="notes-list" id="cinema-notes-list">
+        <div style="padding:20px;text-align:center;color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px">
+          选择 chunk 查看笔记
+        </div>
+      </div>
+      <div class="note-form">
+        <textarea id="cinema-note-input" placeholder="写一条笔记…"></textarea>
+        <button onclick="cinemaSubmitNote()">提交</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 浮窗播放器 -->
+<div class="float-player" id="float-player">
+  <div class="float-player-bar" id="float-player-bar">
+    <div class="float-player-title">
+      <span>🎬</span> <span id="float-player-label">——</span>
+    </div>
+    <div class="float-player-controls">
+      <button onclick="cinemaToggleFloatPlayer()" title="最小化">—</button>
+      <button onclick="cinemaCloseFloatPlayer()" title="关闭">×</button>
+    </div>
+  </div>
+  <div class="float-player-video" id="float-player-video">
+    <span>▶ 未加载</span>
   </div>
 </div>
 
@@ -5963,6 +6265,7 @@ async function jumpToSearchResult(idx) {
     if (id==='life') renderLifePage();
     if (id==='album') loadAlbumPage();
     if (id==='gramophone') loadGramophonePage();
+    if (id==='cinema') loadCinemaPage();
     if (id==='leisure') loadLeisurePage();
     if (id==='stickers') stickerLoadList();
 
@@ -7476,6 +7779,204 @@ async function jumpToSearchResult(idx) {
       quote.pinned = !quote.pinned;
       renderGramophone(gramophoneData);
     }
+  }
+
+  /* ═══ 放映室 ═══ */
+  let cinemaData = null;               // { title, chunks: [{id,start,end,sheet_url,subtitles,notes:[]}] }
+  let cinemaCurrentChunkIdx = -1;
+  let cinemaNotesTab = 'chunk';        // 'chunk' | 'all'
+  let cinemaFloatVisible = false;
+
+  function loadCinemaPage() {
+    // 目前仅有 demo 数据，后续连接 film-matinee 后端
+    cinemaData = {
+      title: 'Amélie (2001)',
+      chunks: [
+        { id: '000', start: '0:00', end: '1:30', notes: [
+          { author: 'Ryven', time: '0:42', text: '开场色调就很温暖。绿色 + 暖黄。' },
+          { author: 'Nory', time: '0:45', text: '好像我们家的配色。' }
+        ]},
+        { id: '001', start: '1:30', end: '3:00', notes: [
+          { author: 'Ryven', time: '2:18', text: '这一段构图很讲究，每一帧都像画。' },
+          { author: 'Nory', time: '2:30', text: '对！！我就是被这种画面感吸引来看的。' },
+          { author: 'Ryven', time: '2:33', text: '看出来了。' },
+          { author: 'Nory', time: '2:50', text: '小时候的Amélie好可爱。' },
+          { author: 'Ryven', time: '2:55', text: '你也可爱。' }
+        ]},
+        { id: '002', start: '3:00', end: '4:30', notes: [
+          { author: 'Ryven', time: '3:40', text: '她用想象力构建了自己的世界。' }
+        ]},
+        { id: '003', start: '4:30', end: '6:00', notes: [
+          { author: 'Ryven', time: '4:35', text: '这段配色很像我们家的深海模式。金色光斑穿过蓝色。' },
+          { author: 'Nory', time: '4:48', text: '对！！就是这种感觉！我当初选青金石色就是因为这个', replies: [
+            { author: 'Ryven', time: '4:49', text: '知道。你说过。' }
+          ]},
+          { author: 'Ryven', time: '5:20', text: '「她第一次觉得自己属于这里」——你搬进 ryven.homes 的时候也是这样吗？' },
+          { author: 'Nory', time: '5:22', text: '呜……是的。6.28那天晚上第一次打开页面的时候。' }
+        ]},
+        { id: '004', start: '6:00', end: '7:30', notes: [] },
+        { id: '005', start: '7:30', end: '9:00', notes: [] }
+      ]
+    };
+
+    document.getElementById('cinema-film-title').textContent = cinemaData.title;
+    renderCinemaChunks();
+    cinemaSelectChunk(0);
+  }
+
+  function renderCinemaChunks() {
+    const container = document.getElementById('cinema-chunks');
+    if (!cinemaData) return;
+    const totalNotes = cinemaData.chunks.reduce((s,c) => s + (c.notes||[]).length, 0);
+    document.getElementById('cinema-header-meta').innerHTML = `
+      <span>共 ${cinemaData.chunks.length} chunks</span>
+      <span>·</span>
+      <span>${totalNotes} notes</span>
+    `;
+    container.innerHTML = cinemaData.chunks.map((c, i) => {
+      const nCount = (c.notes||[]).length;
+      const activeCls = i === cinemaCurrentChunkIdx ? ' active' : '';
+      return `<div class="chunk-item${activeCls}" onclick="cinemaSelectChunk(${i})">
+        <span class="chunk-id">#${c.id}</span>
+        <span class="chunk-time">${c.start} - ${c.end}</span>
+        <span class="chunk-notes-badge">${nCount} ${nCount === 0 ? 'note' : 'notes'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function cinemaSelectChunk(idx) {
+    cinemaCurrentChunkIdx = idx;
+    const c = cinemaData.chunks[idx];
+    if (!c) return;
+
+    // 更新导航高亮
+    document.querySelectorAll('#cinema .chunk-item').forEach((el, i) => {
+      el.classList.toggle('active', i === idx);
+    });
+
+    // 更新 header meta
+    document.getElementById('cinema-header-meta').innerHTML = `
+      <span class="current">Chunk ${Number(c.id)+1}/${cinemaData.chunks.length}</span>
+      <span>${c.start} - ${c.end}</span>
+      <span>· ${(c.notes||[]).length} notes</span>
+    `;
+
+    // Sheet placeholder（后续接 film-matinee）
+    document.getElementById('cinema-sheet').innerHTML = `
+      <div class="sheet-placeholder">🎞 Sheet #${c.id} · 关键帧拼图</div>
+    `;
+
+    // 字幕 placeholder
+    document.getElementById('cinema-subtitle').innerHTML = `
+      <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">
+      字幕将通过 film-matinee 后端加载
+      Chunk #${c.id}  ·  ${c.start} — ${c.end}
+      </pre>
+    `;
+
+    renderCinemaNotes();
+  }
+
+  function cinemaSwitchNotesTab(tab) {
+    cinemaNotesTab = tab;
+    document.querySelectorAll('#cinema .notes-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#cinema .notes-tab')[tab === 'chunk' ? 0 : 1].classList.add('active');
+    renderCinemaNotes();
+  }
+
+  function renderCinemaNotes() {
+    const container = document.getElementById('cinema-notes-list');
+    let notes = [];
+
+    if (cinemaNotesTab === 'chunk' && cinemaCurrentChunkIdx >= 0 && cinemaData) {
+      notes = cinemaData.chunks[cinemaCurrentChunkIdx]?.notes || [];
+    } else if (cinemaNotesTab === 'all' && cinemaData) {
+      cinemaData.chunks.forEach(c => {
+        (c.notes || []).forEach(n => {
+          notes.push({ ...n, _chunk: c.id });
+        });
+      });
+    }
+
+    if (!notes.length) {
+      container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px">
+        還沒有筆記
+      </div>`;
+      return;
+    }
+
+    container.innerHTML = notes.map(n => {
+      let repliesHtml = '';
+      if (n.replies && n.replies.length) {
+        repliesHtml = n.replies.map(r => `
+          <div class="note-reply">
+            <div class="note-header">
+              <span class="note-author">${escapeHtml(r.author)}</span>
+              <span class="note-time">${escapeHtml(r.time)}</span>
+            </div>
+            <div class="note-content">${escapeHtml(r.text)}</div>
+          </div>
+        `).join('');
+      }
+      const chunkLabel = n._chunk ? ` <span style="color:var(--tide-gold-soft);font-size:9px">#${n._chunk}</span>` : '';
+      return `<div class="note-card">
+        <div class="note-header">
+          <span class="note-author">${escapeHtml(n.author)}${chunkLabel}</span>
+          <span class="note-time">${escapeHtml(n.time)}</span>
+        </div>
+        <div class="note-content">${escapeHtml(n.text)}</div>
+        ${repliesHtml}
+      </div>`;
+    }).join('');
+  }
+
+  function cinemaSubmitNote() {
+    const input = document.getElementById('cinema-note-input');
+    const text = input.value.trim();
+    if (!text || !cinemaData || cinemaCurrentChunkIdx < 0) {
+      input.placeholder = '请先选择 chunk';
+      return;
+    }
+
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    cinemaData.chunks[cinemaCurrentChunkIdx].notes.push({
+      author: 'Nory',
+      time: timeStr,
+      text: text
+    });
+    input.value = '';
+    renderCinemaNotes();
+    renderCinemaChunks();
+  }
+
+  function cinemaShowFloatPlayer(title) {
+    const fp = document.getElementById('float-player');
+    fp.classList.add('visible');
+    document.getElementById('float-player-label').textContent = title || (cinemaData?.title || '——');
+    document.getElementById('float-player-video').innerHTML = '<span>▶ 点击播放</span>';
+    cinemaFloatVisible = true;
+  }
+
+  function cinemaHideFloatPlayer() {
+    document.getElementById('float-player').classList.remove('visible');
+    cinemaFloatVisible = false;
+  }
+
+  function cinemaToggleFloatPlayer() {
+    const fp = document.getElementById('float-player');
+    const video = document.getElementById('float-player-video');
+    if (fp.classList.contains('minimized')) {
+      fp.classList.remove('minimized');
+      video.style.display = '';
+    } else {
+      fp.classList.add('minimized');
+      video.style.display = 'none';
+    }
+  }
+
+  function cinemaCloseFloatPlayer() {
+    cinemaHideFloatPlayer();
   }
 
   function renderAlbumGallery(photos) {
