@@ -1910,19 +1910,18 @@
     #leisure .sticker-desc { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; }
     #leisure .sticker-count { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
 
-    /* leisure 放映室卡片 — 跟 sticker-card 同款橫排 */
+    /* leisure 放映室卡片 — 跟 sticker-card / game-card 同款背景 */
     #leisure .cinema-card {
-      display: flex; align-items: center; gap: 14px;
-      background: linear-gradient(135deg, rgba(20,28,55,0.55), rgba(15,20,42,0.7));
-      border: 1px solid var(--line); border-radius: 14px;
-      padding: 18px 20px; cursor: pointer; position: relative; overflow: hidden;
-      transition: border-color 0.2s, transform 0.2s;
+      background: linear-gradient(135deg, rgba(26,31,58,0.8), rgba(36,48,96,0.6));
+      border: 1px solid rgba(74,111,165,0.2);
+      border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px;
+      cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; z-index: 1;
     }
     body.light #leisure .cinema-card { background: var(--glass-card); border-color: var(--line); }
     #leisure .cinema-card::after {
-      content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--tide-gold-soft), transparent);
-      transition: height 0.25s ease; z-index: 0;
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0;
+      background: linear-gradient(to top, var(--tide-gold-ghost), transparent);
+      transition: height 0.3s ease;
     }
     #leisure .cinema-card:hover::after { height: 100%; }
     #leisure .cinema-card:hover { border-color: var(--tide-gold-soft); transform: translateY(-2px); }
