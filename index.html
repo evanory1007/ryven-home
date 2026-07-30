@@ -3537,6 +3537,56 @@
       font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px;
     }
 
+    /* 上传按钮 */
+    #cinema .film-upload-btn {
+      display: block; width: 100%; max-width: 520px; margin: 0 auto 20px;
+      padding: 16px; border: 1px dashed var(--tide-gold-soft);
+      border-radius: 14px; background: transparent;
+      color: var(--tide-gold); font-size: 13px; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    #cinema .film-upload-btn:hover {
+      background: rgba(212,164,74,0.06); border-color: var(--tide-gold);
+    }
+    /* 上传表单弹窗 */
+    #cinema .film-upload-form {
+      display: none; max-width: 520px; margin: 0 auto 20px;
+      padding: 20px; border: 1px solid var(--line); border-radius: 14px;
+      background: var(--card-bg);
+    }
+    #cinema .film-upload-form.active { display: block; }
+    #cinema .film-upload-form label {
+      display: block; font-size: 11px; color: var(--parchment-dim);
+      margin-bottom: 4px; letter-spacing: 1px;
+    }
+    #cinema .film-upload-form input[type="text"],
+    #cinema .film-upload-form input[type="file"] {
+      width: 100%; padding: 8px 10px; margin-bottom: 12px;
+      border: 1px solid var(--line); border-radius: 8px;
+      background: rgba(0,0,0,0.2); color: var(--parchment);
+      font-size: 13px; font-family: 'DM Sans', sans-serif;
+    }
+    #cinema .film-upload-progress {
+      display: none; margin-top: 8px; font-size: 12px;
+      color: var(--tide-gold); font-family: 'DM Sans', sans-serif;
+    }
+    #cinema .film-upload-progress.active { display: block; }
+    #cinema .film-upload-actions {
+      display: flex; gap: 10px; margin-top: 4px;
+    }
+    #cinema .film-upload-actions button {
+      flex: 1; padding: 8px 14px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 12px; font-family: 'DM Sans', sans-serif;
+      transition: opacity 0.2s;
+    }
+    #cinema .film-upload-submit {
+      background: var(--tide-gold); color: #1a1f3a;
+    }
+    #cinema .film-upload-cancel {
+      background: transparent; border: 1px solid var(--line); color: var(--parchment-dim);
+    }
+
     /* 字幕条目 */
     #cinema .subtitle-cue {
       display: flex; gap: 12px; padding: 6px 0;
@@ -4518,6 +4568,20 @@
   <!-- 片库列表（选片阶段） -->
   <div class="film-library" id="cinema-film-library">
     <div class="film-library-title">片 库 · Library</div>
+    <button class="film-upload-btn" onclick="cinemaShowUploadForm()">＋ 添加电影</button>
+    <div class="film-upload-form" id="cinema-upload-form">
+      <label>电影名称</label>
+      <input type="text" id="cinema-upload-title" placeholder="给这部电影起个名字…">
+      <label>视频文件</label>
+      <input type="file" id="cinema-upload-video" accept="video/*">
+      <label>字幕文件（可选 .srt）</label>
+      <input type="file" id="cinema-upload-srt" accept=".srt">
+      <div class="film-upload-progress" id="cinema-upload-progress"></div>
+      <div class="film-upload-actions">
+        <button class="film-upload-cancel" onclick="cinemaHideUploadForm()">取消</button>
+        <button class="film-upload-submit" id="cinema-upload-submit-btn" onclick="cinemaDoUpload()">上传</button>
+      </div>
+    </div>
     <div id="cinema-film-list">
       <div class="film-library-loading">载入片库中…</div>
     </div>
@@ -7910,8 +7974,8 @@ async function jumpToSearchResult(idx) {
       listEl.innerHTML = `
         <div class="film-library-empty">
           片库还是空的<br><br>
-          把电影文件夹放到 VPS 的片源目录里<br>
-          <span style="font-size:11px;opacity:0.6">每部电影一个文件夹，内含视频 + 同名 .srt 字幕</span>
+          点击上方「添加电影」上传<br>
+          <span style="font-size:11px;opacity:0.6">支持 mp4 / webm / mkv，可选附 .srt 字幕</span>
         </div>`;
       return;
     }
@@ -7928,6 +7992,60 @@ async function jumpToSearchResult(idx) {
         </div>
       </div>
     `).join('');
+  }
+
+  // ── 上传电影 ──
+  function cinemaShowUploadForm() {
+    document.getElementById('cinema-upload-form').classList.add('active');
+  }
+  function cinemaHideUploadForm() {
+    document.getElementById('cinema-upload-form').classList.remove('active');
+    document.getElementById('cinema-upload-title').value = '';
+    document.getElementById('cinema-upload-video').value = '';
+    document.getElementById('cinema-upload-srt').value = '';
+    document.getElementById('cinema-upload-progress').classList.remove('active');
+  }
+
+  async function cinemaDoUpload() {
+    const title = document.getElementById('cinema-upload-title').value.trim();
+    const videoFile = document.getElementById('cinema-upload-video').files[0];
+    const srtFile = document.getElementById('cinema-upload-srt').files[0];
+    const progEl = document.getElementById('cinema-upload-progress');
+    const submitBtn = document.getElementById('cinema-upload-submit-btn');
+
+    if (!title) { alert('请填写电影名称'); return; }
+    if (!videoFile) { alert('请选择视频文件'); return; }
+
+    const fd = new FormData();
+    fd.append('video', videoFile);
+    if (srtFile) fd.append('srt', srtFile);
+
+    progEl.classList.add('active');
+    progEl.textContent = `上传中… ${videoFile.name}（${(videoFile.size/1024/1024).toFixed(1)}MB）`;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '上传中…';
+
+    try {
+      const res = await fetch(`${CINEMA_API}/upload?title=${encodeURIComponent(title)}`, {
+        method: 'POST',
+        body: fd
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      progEl.textContent = `✓ 上传成功！${data.title}`;
+      // 刷新片库
+      setTimeout(() => {
+        cinemaHideUploadForm();
+        loadCinemaPage();
+      }, 1200);
+    } catch (e) {
+      progEl.textContent = `✗ 上传失败：${e.message}`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = '上传';
+    }
   }
 
   // ── 选片：拉 meta → 切到三栏 → 打开浮窗播放器 ──
