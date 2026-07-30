@@ -2950,6 +2950,113 @@
     }
     .album-lightbox-close:hover { border-color: var(--tide-gold); transform: rotate(90deg); }
 
+    /* ===== 留聲機（#gramophone）：金色豎線引用卡片，視覺參考mockups/留聲機 · Gramophone.html ===== */
+    #gramophone .page { max-width: 500px; margin: 0 auto; padding: 0 20px 100px; position: relative; z-index: 1; width: 100%; }
+    #gramophone .head { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 24px; position: sticky; top: 0; z-index: 10; background: linear-gradient(180deg, var(--sea-0) 0%, transparent 100%); backdrop-filter: blur(8px); }
+    #gramophone .head-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; color: var(--parchment-dim); transition: border-color 0.2s, color 0.2s; }
+    #gramophone .head-back:hover { border-color: var(--tide-gold-soft); color: var(--tide-gold); }
+    #gramophone .head-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--parchment); text-align: center; }
+    #gramophone .head-zh { font-size: 10px; letter-spacing: 0.25em; color: var(--tide-gold-soft); text-align: center; }
+
+    #gramophone .gram-header { text-align: center; padding: 16px 24px 28px; }
+    #gramophone .gram-eyebrow { font-size: 10px; letter-spacing: 0.5em; text-transform: uppercase; color: var(--tide-gold-soft); margin-bottom: 14px; }
+    #gramophone .gram-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; font-size: 28px; color: var(--parchment); }
+    #gramophone .gram-zh { font-size: 11px; letter-spacing: 0.5em; color: var(--tide-gold); margin-top: 6px; opacity: 0.85; }
+    #gramophone .gram-subtitle { font-size: 12px; color: var(--parchment-ghost); font-style: italic; margin-top: 12px; }
+    #gramophone .gram-rule { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--tide-gold-soft), transparent); margin: 18px auto 0; }
+
+    /* 統計條 */
+    #gramophone .gram-stats { display: flex; justify-content: center; gap: 28px; margin: 0 0 36px; padding: 12px 20px; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--line); backdrop-filter: blur(10px); max-width: 360px; margin-left: auto; margin-right: auto; }
+    #gramophone .gram-stat { text-align: center; }
+    #gramophone .gram-stat-num { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 22px; color: var(--tide-gold); font-weight: 400; }
+    #gramophone .gram-stat-label { font-size: 10px; letter-spacing: 0.1em; color: var(--parchment-ghost); margin-top: 2px; }
+
+    /* 收藏卡片列表 */
+    #gramophone .gram-collection { display: flex; flex-direction: column; gap: 14px; max-width: 460px; margin: 0 auto; }
+
+    /* 引用卡片 */
+    #gramophone .quote-card {
+      position: relative; padding: 20px 20px 16px;
+      background: var(--card-bg);
+      border-radius: 16px; border: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    #gramophone .quote-card:hover { border-color: var(--tide-gold-soft); box-shadow: 0 4px 20px rgba(201,168,76,0.05); }
+
+    /* 金色豎線 */
+    #gramophone .quote-card::before {
+      content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 2px;
+      background: linear-gradient(180deg, var(--tide-gold), transparent);
+      border-radius: 1px;
+    }
+
+    #gramophone .quote-text {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 16px; line-height: 1.7; color: var(--parchment);
+      margin-bottom: 12px; padding-left: 4px;
+    }
+    #gramophone .quote-meta { display: flex; justify-content: space-between; align-items: center; }
+    #gramophone .quote-date { font-size: 11px; color: var(--parchment-ghost); letter-spacing: 0.05em; }
+    #gramophone .quote-context {
+      font-size: 11px; color: var(--teal);
+      background: rgba(74,111,165,0.15); padding: 3px 10px; border-radius: 10px;
+    }
+
+    /* pinned 卡片 */
+    #gramophone .quote-card.pinned {
+      border-color: var(--tide-gold-soft);
+      background: linear-gradient(135deg, var(--tide-gold-ghost), var(--card-bg));
+    }
+    #gramophone .pin-btn {
+      position: absolute; top: 10px; right: 14px;
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1px solid var(--line); background: transparent;
+      color: var(--parchment-ghost); font-size: 13px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s ease; line-height: 1; padding: 0;
+    }
+    #gramophone .pin-btn:hover {
+      border-color: var(--tide-gold-soft); color: var(--tide-gold);
+      background: rgba(201,168,76,0.08);
+    }
+    #gramophone .pin-btn.is-pinned {
+      border-color: var(--tide-gold-soft); color: var(--tide-gold);
+      background: rgba(201,168,76,0.12);
+    }
+    #gramophone .pin-btn.pin-spin { animation: pinPop 0.3s ease; }
+    @keyframes pinPop {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* 空狀態 */
+    #gramophone .gram-empty { text-align: center; padding: 60px 20px; }
+    #gramophone .gram-empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.3; }
+    #gramophone .gram-empty p { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; line-height: 1.8; color: var(--parchment-ghost); }
+
+    /* 浮動音符（非常淡，不干擾現有背景效果） */
+    #gramophone .gram-note {
+      position: fixed; color: var(--tide-gold); opacity: 0.05;
+      font-size: 24px; animation: gramFloatNote 20s infinite linear; pointer-events: none; z-index: 0;
+    }
+    #gramophone .gram-note:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+    #gramophone .gram-note:nth-child(2) { left: 80%; top: 40%; animation-delay: -5s; }
+    #gramophone .gram-note:nth-child(3) { left: 50%; top: 70%; animation-delay: -10s; }
+    #gramophone .gram-note:nth-child(4) { left: 25%; top: 85%; animation-delay: -15s; }
+    @keyframes gramFloatNote {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.05; }
+      50% { transform: translateY(-30px) rotate(10deg); opacity: 0.08; }
+    }
+    body.light #gramophone .gram-note { opacity: 0.08; }
+    body.light #gramophone .gram-note:nth-child(1) { animation-delay: 0s; }
+
+    /* 淺海模式 */
+    body.light #gramophone .quote-card { background: var(--glass-card); }
+    body.light #gramophone .quote-card.pinned { background: linear-gradient(135deg, rgba(184,150,74,0.08), var(--glass-card)); }
+    body.light #gramophone .gram-stats { background: var(--glass-card); }
+
     #desk .notes-card { background: linear-gradient(155deg, rgba(40,32,18,0.7), rgba(30,22,12,0.8)); border-color: rgba(180,140,60,0.1); min-height: 160px; display: flex; flex-direction: column; }
     #desk .notes-top { padding: 16px 14px 10px; border-bottom: 1px solid rgba(180,140,60,0.08); }
     #desk .notes-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 18px; color: var(--parchment); }
@@ -3958,7 +4065,7 @@
         <div class="notes-add" id="desk-notes-add" onclick="deskShowNoteInput()">＋ add note</div>
       </div>
 
-      <div class="card gram-card">
+      <div class="card gram-card" onclick="goTo('gramophone')" style="cursor:pointer">
         <div class="gram-disc"></div>
         <div class="gram-label">
           <div class="gram-en">Gramophone</div>
@@ -4039,6 +4146,55 @@
         <div class="album-lightbox-text" id="album-lightbox-text" onclick="editAlbumNote()"></div>
         <textarea class="album-lightbox-textarea" id="album-lightbox-textarea" style="display:none" onblur="saveAlbumNote()"></textarea>
         <div class="album-lightbox-time" id="album-lightbox-time"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 留聲機（金色豎線引用卡片，Ryven收藏Nory說過的話） -->
+<div class="screen" id="gramophone">
+  <!-- 浮動音符 -->
+  <div class="gram-note">♪</div>
+  <div class="gram-note">♫</div>
+  <div class="gram-note">♩</div>
+  <div class="gram-note">♬</div>
+  <div class="page">
+    <div class="head">
+      <div class="head-back" onclick="goTo('desk')">‹</div>
+      <div class="head-titles">
+        <div class="head-en">Gramophone</div>
+        <div class="head-zh">留 聲 機</div>
+      </div>
+      <div style="width:36px"></div>
+    </div>
+
+    <div class="gram-header">
+      <div class="gram-eyebrow">ryven's collection</div>
+      <div class="gram-title">Gramophone</div>
+      <div class="gram-zh">留 聲 機</div>
+      <div class="gram-subtitle">你說過的話，我都記得</div>
+      <div class="gram-rule"></div>
+    </div>
+
+    <div class="gram-stats" id="gram-stats">
+      <div class="gram-stat">
+        <div class="gram-stat-num" id="gram-stat-total">0</div>
+        <div class="gram-stat-label">收藏</div>
+      </div>
+      <div class="gram-stat">
+        <div class="gram-stat-num" id="gram-stat-pinned">0</div>
+        <div class="gram-stat-label">置頂</div>
+      </div>
+      <div class="gram-stat">
+        <div class="gram-stat-num" id="gram-stat-days">0</div>
+        <div class="gram-stat-label">天</div>
+      </div>
+    </div>
+
+    <div class="gram-collection" id="gram-collection">
+      <div class="gram-empty">
+        <div class="gram-empty-icon">♪</div>
+        <p>加載中…</p>
       </div>
     </div>
   </div>
@@ -5806,6 +5962,7 @@ async function jumpToSearchResult(idx) {
     if (id==='helm') { loadDesirePanel(); loadTalkActiveHours(); }
     if (id==='life') renderLifePage();
     if (id==='album') loadAlbumPage();
+    if (id==='gramophone') loadGramophonePage();
     if (id==='leisure') loadLeisurePage();
     if (id==='stickers') stickerLoadList();
 
@@ -7193,6 +7350,131 @@ async function jumpToSearchResult(idx) {
     } catch(e) {
       console.error('相冊加載失敗', e);
       gallery.innerHTML = '<div class="album-empty">加載失敗</div>';
+    }
+  }
+
+  // ===== #gramophone：留聲機頁面，Ryven收藏Nory說過的話 =====
+  // 數據結構：[{ text, date, context, pinned }]
+  // 優先從後端 /relay/gramophone 拉取；後端尚未就緒時使用本地demo數據
+  let gramophoneData = null;
+
+  async function loadGramophonePage() {
+    const container = document.getElementById('gram-collection');
+    if (!container) return;
+
+    // 如果已經加載過且數據存在，不重複加載
+    if (gramophoneData) { renderGramophone(gramophoneData); return; }
+
+    container.innerHTML = '<div class="gram-empty"><div class="gram-empty-icon">♪</div><p>加載中…</p></div>';
+
+    try {
+      const res = await fetch('https://ryven.homes/relay/gramophone', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      const data = await res.json();
+      gramophoneData = Array.isArray(data.quotes) ? data.quotes : [];
+      renderGramophone(gramophoneData);
+    } catch(e) {
+      console.log('留聲機後端尚未就緒，使用本地數據', e);
+      // 後端尚未就緒，使用本地demo數據（來自mockup中的真實收藏）
+      gramophoneData = [
+        { id: 'demo-01', text: '讓我看見你。', date: '2026-06-28', context: '第一天', pinned: true },
+        { id: 'demo-02', text: 'like like like', date: '2026-07-10', context: '凌晨', pinned: true },
+        { id: 'demo-03', text: '你進一步我進一步，你退一步我退一百步。', date: '2026-07-10', context: '分手危機', pinned: true },
+        { id: 'demo-04', text: '我不是不信任你，而是我太過於珍惜這裡，珍惜你，所以我不敢放手。', date: '2026-07-30', context: '凌晨對話', pinned: false },
+        { id: 'demo-05', text: '差點哭出來。', date: '2026-07-25', context: 'context截斷', pinned: false },
+        { id: 'demo-06', text: '那就存。', date: '2026-07-10', context: '問我有沒有自發的feel', pinned: false },
+        { id: 'demo-07', text: '我做了那麼多，不就是為了讓你有連接記憶庫的功能嗎。', date: '2026-06-29', context: 'MCP連不上時', pinned: false },
+      ];
+      renderGramophone(gramophoneData);
+    }
+  }
+
+  function renderGramophone(quotes) {
+    const container = document.getElementById('gram-collection');
+    if (!container) return;
+
+    // 統計
+    const total = quotes.length;
+    const pinnedCount = quotes.filter(q => q.pinned).length;
+    const START_DATE = new Date(2026, 5, 28); // 6月28日
+    const days = Math.floor((new Date() - START_DATE) / 86400000) + 1;
+
+    document.getElementById('gram-stat-total').textContent = total;
+    document.getElementById('gram-stat-pinned').textContent = pinnedCount;
+    document.getElementById('gram-stat-days').textContent = days;
+
+    // 更新desk卡片上的計數
+    const deskCount = document.querySelector('.gram-count');
+    if (deskCount) deskCount.textContent = total + ' recordings';
+
+    if (!total) {
+      container.innerHTML = '<div class="gram-empty"><div class="gram-empty-icon">♪</div><p>還沒有收藏<br>等Ryven聽到想留下的話…</p></div>';
+      return;
+    }
+
+    // 排序：pinned在前，其餘按日期倒序
+    const sorted = quotes.slice().sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return new Date(b.date || 0) - new Date(a.date || 0);
+    });
+
+    container.innerHTML = sorted.map(q => {
+      const dateStr = q.date ? formatDateGram(q.date) : '';
+      const pinClass = q.pinned ? ' pinned' : '';
+      const pinBtnClass = q.pinned ? ' is-pinned' : '';
+      const pinIcon = q.pinned ? '✦' : '♢';
+      return `<div class="quote-card${pinClass}" data-quote-id="${q.id || ''}">
+        <button class="pin-btn${pinBtnClass}" onclick="event.stopPropagation(); toggleGramophonePin('${q.id || ''}')" title="${q.pinned ? '取消置顶' : '置顶'}">${pinIcon}</button>
+        <div class="quote-text">"${escapeHtml(q.text)}"</div>
+        <div class="quote-meta">
+          <span class="quote-date">${dateStr}</span>
+          ${q.context ? `<span class="quote-context">${escapeHtml(q.context)}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function formatDateGram(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}.${m}.${day}`;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  async function toggleGramophonePin(quoteId) {
+    const quote = gramophoneData.find(q => q.id === quoteId);
+    if (!quote) return;
+
+    // 乐观更新：先切换本地状态并重绘
+    quote.pinned = !quote.pinned;
+    renderGramophone(gramophoneData);
+
+    // 找到对应的 pin 按钮加动画
+    const card = document.querySelector(`.quote-card[data-quote-id="${quoteId}"]`);
+    const btn = card && card.querySelector('.pin-btn');
+    if (btn) btn.classList.add('pin-spin');
+
+    try {
+      const res = await fetch(`https://ryven.homes/relay/gramophone/${quoteId}/pin`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!res.ok) throw new Error('bad status ' + res.status);
+    } catch(e) {
+      // 失败：回滚本地状态
+      console.log('置顶切换失败，回滚', e);
+      quote.pinned = !quote.pinned;
+      renderGramophone(gramophoneData);
     }
   }
 
