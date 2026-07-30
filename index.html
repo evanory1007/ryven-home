@@ -3342,20 +3342,10 @@
     }
     #cinema .chunk-notes-badge::before { content: '·'; color: var(--tide-gold-soft); }
 
-    /* 中栏 - Sheet + 字幕 */
+    /* 中栏 - 播放器 + 字幕 */
     #cinema .cinema-main {
       overflow-y: auto; padding: 20px 24px;
       display: flex; flex-direction: column; gap: 16px;
-    }
-    #cinema .sheet-container {
-      width: 100%; border-radius: 8px; overflow: hidden;
-      background: #000; border: 1px solid var(--line);
-    }
-    #cinema .sheet-container img { width: 100%; display: block; }
-    #cinema .sheet-placeholder {
-      width: 100%; aspect-ratio: 16/9;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--parchment-ghost); font-family: 'DM Sans', sans-serif; font-size: 13px;
     }
     #cinema .subtitle-area {
       background: var(--card-bg); border: 1px solid var(--line);
@@ -3442,42 +3432,21 @@
     }
     #cinema .note-form button:hover { background: rgba(201,168,76,0.22); }
 
-    /* 浮窗播放器 */
-    .float-player {
-      position: fixed; bottom: 24px; right: 24px; width: 320px;
-      border-radius: 14px; overflow: hidden;
-      background: rgba(15,20,40,0.88); backdrop-filter: blur(20px);
-      border: 1px solid var(--line);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 1px rgba(201,168,76,0.2);
-      z-index: 9999; display: none; /* hidden by default */
-      transition: opacity 0.3s, transform 0.3s;
+    /* 大窗播放器（嵌入中栏） */
+    #cinema .cinema-player {
+      width: 100%; border-radius: 8px; overflow: hidden;
+      background: #000; border: 1px solid var(--line);
+      position: relative;
     }
-    body.light .float-player { background: rgba(240,243,248,0.9); }
-    .float-player.visible { display: block; }
-    .float-player-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; background: rgba(201,168,76,0.06);
-      border-bottom: 1px solid var(--line);
-      cursor: grab; user-select: none;
-    }
-    .float-player-bar:active { cursor: grabbing; }
-    .float-player-title {
-      font-family: 'DM Sans', sans-serif; font-size: 11px;
-      color: var(--tide-gold); font-weight: 500;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .float-player-controls { display: flex; gap: 8px; }
-    .float-player-controls button {
-      background: none; border: none; color: var(--parchment-ghost);
-      font-size: 14px; cursor: pointer;
-      width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-      border-radius: 4px; transition: all 0.2s;
-    }
-    .float-player-controls button:hover { color: var(--parchment); background: rgba(255,255,255,0.1); }
-    .float-player-video {
-      width: 100%; aspect-ratio: 16/9; background: #000;
+    #cinema .cinema-player-placeholder {
+      width: 100%; aspect-ratio: 16/9;
       display: flex; align-items: center; justify-content: center;
-      color: var(--parchment-ghost); font-family: 'DM Sans', sans-serif; font-size: 12px;
+      color: var(--parchment-ghost); font-family: 'DM Sans', sans-serif; font-size: 13px;
+    }
+    #cinema .cinema-player video,
+    #cinema .cinema-player iframe {
+      width: 100%; aspect-ratio: 16/9; background: #000;
+      border: none; display: block;
     }
 
     @media (max-width: 768px) {
@@ -3494,7 +3463,6 @@
       }
       #cinema .chunk-item.active { border-bottom-color: var(--tide-gold); border-left: none; }
       #cinema .cinema-notes { border-left: none; border-top: 1px solid var(--line); max-height: 300px; }
-      .float-player { width: 200px; bottom: 80px; right: 12px; }
     }
 
     /* ═══ 放映室 — 片库列表（选片阶段）═══ */
@@ -4574,7 +4542,7 @@
 <div class="screen" id="cinema">
 
   <div class="cinema-header">
-    <div class="cinema-back" onclick="goTo('leisure')">‹</div>
+    <div class="cinema-back" onclick="cinemaGoBack()">‹</div>
     <div class="cinema-title">
       <span class="emoji">🎬</span>
       <span id="cinema-film-title">放映室</span>
@@ -4627,8 +4595,12 @@
     </div>
 
     <div class="cinema-main">
-      <div class="sheet-container" id="cinema-sheet">
-        <div class="sheet-placeholder">🎞 等待加载…</div>
+      <div class="cinema-player" id="cinema-player">
+        <div class="cinema-player-placeholder" id="cinema-player-placeholder">🎞 选择一部电影开始观影</div>
+        <video id="cinema-video" playsinline controls preload="metadata"
+          style="width:100%;aspect-ratio:16/9;background:#000;display:none;border-radius:8px"></video>
+        <iframe id="cinema-iframe" allowfullscreen
+          style="width:100%;aspect-ratio:16/9;background:#000;border:none;display:none;border-radius:8px"></iframe>
       </div>
       <div class="subtitle-area" id="cinema-subtitle">
         <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">——</pre>
@@ -4651,23 +4623,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- 浮窗播放器 -->
-<div class="float-player" id="float-player">
-  <div class="float-player-bar" id="float-player-bar">
-    <div class="float-player-title">
-      <span>🎬</span> <span id="float-player-label">——</span>
-    </div>
-    <div class="float-player-controls">
-      <button onclick="cinemaToggleFloatPlayer()" title="最小化">—</button>
-      <button onclick="cinemaCloseFloatPlayer()" title="关闭">×</button>
-    </div>
-  </div>
-  <video id="float-player-video" playsinline controls preload="metadata"
-    style="width:100%;aspect-ratio:16/9;background:#000;display:block"></video>
-  <iframe id="float-player-iframe" allowfullscreen
-    style="width:100%;aspect-ratio:16/9;background:#000;border:none;display:none"></iframe>
 </div>
 
 <!-- 設置室 -->
@@ -7970,6 +7925,7 @@ async function jumpToSearchResult(idx) {
   let cinemaVideoEl = null;                   // <video> 元素引用
   let cinemaIframeEl = null;                  // <iframe> 元素引用（B站等嵌入）
   let cinemaLinkedFilms = [];                 // localStorage 存储的链接片
+  let cinemaLinkDurationHandler = null;        // 链接片 loadedmetadata 回调（需清理）
 
   // ── 工具：秒 → "m:ss" ──
   function cinemaFmt(sec) {
@@ -7979,6 +7935,8 @@ async function jumpToSearchResult(idx) {
 
   // ── 入口：加载片库列表 ──
   async function loadCinemaPage() {
+    // 停止播放器
+    cinemaStopPlayer();
     // 显示片库、隐藏三栏
     document.getElementById('cinema-film-library').style.display = '';
     document.getElementById('cinema-body').style.display = 'none';
@@ -8184,7 +8142,7 @@ async function jumpToSearchResult(idx) {
     loadCinemaPage();
   }
 
-  // ── 选片：拉 meta → 切到三栏 → 打开浮窗播放器 ──
+  // ── 选片：拉 meta → 切到三栏 → 在中栏播放 ──
   async function cinemaOpenFilm(filmId, filmTitle) {
     cinemaCurrentFilm = { id: filmId, title: filmTitle };
 
@@ -8197,53 +8155,89 @@ async function jumpToSearchResult(idx) {
     document.getElementById('cinema-body').style.display = '';
     document.getElementById('cinema-film-title').textContent = filmTitle;
 
+    // 初始化播放器元素引用
+    if (!cinemaVideoEl) cinemaVideoEl = document.getElementById('cinema-video');
+    if (!cinemaIframeEl) cinemaIframeEl = document.getElementById('cinema-iframe');
+    const placeholder = document.getElementById('cinema-player-placeholder');
+
+    // 清理上一次的 loadedmetadata 监听
+    if (cinemaLinkDurationHandler) {
+      cinemaVideoEl.removeEventListener('loadedmetadata', cinemaLinkDurationHandler);
+      cinemaLinkDurationHandler = null;
+    }
+
     if (isLink) {
-      // ── 链接片：不拉 meta，用单一"全片"chunk ──
-      cinemaData = {
-        title: filmTitle,
-        chunks: [{ id: '000', startSec: 0, endSec: 0, start: '全片', end: '', subtitles: [], notes: [] }]
-      };
-      cinemaCurrentChunkIdx = -1;
-      renderCinemaChunks();
-      cinemaSelectChunk(0);
-
-      // 打开浮窗播放器
-      cinemaShowFloatPlayer(filmTitle);
-
-      const videoEl = document.getElementById('float-player-video');
-      const iframeEl = document.getElementById('float-player-iframe');
-
       if (film.type === 'bilibili' || film.type === 'iframe') {
-        // B站/网页 → iframe 嵌入
-        videoEl.style.display = 'none';
-        videoEl.pause();
-        iframeEl.src = film.url;
-        iframeEl.style.display = 'block';
+        // ── B站/网页 → iframe 嵌入，无法控制播放，单一 chunk ──
+        placeholder.style.display = 'none';
+        cinemaVideoEl.style.display = 'none';
+        cinemaVideoEl.pause();
+        cinemaIframeEl.src = film.url;
+        cinemaIframeEl.style.display = 'block';
+
+        cinemaData = {
+          title: filmTitle,
+          chunks: [{ id: '000', startSec: 0, endSec: 0, start: '全片', end: '', subtitles: [], notes: [] }]
+        };
+        cinemaCurrentChunkIdx = -1;
+        renderCinemaChunks();
+        cinemaSelectChunk(0);
       } else {
-        // 直链/m3u8 → video 播放
-        iframeEl.style.display = 'none';
-        iframeEl.src = '';
-        videoEl.style.display = 'block';
+        // ── 直链/m3u8 → video 播放，先显示再等 loadedmetadata 拿时长切 chunk ──
+        cinemaIframeEl.style.display = 'none';
+        cinemaIframeEl.src = '';
+        cinemaVideoEl.style.display = 'block';
+        placeholder.style.display = 'none';
+        cinemaVideoEl.dataset.filmId = filmId;
+
+        // 先给一个临时单 chunk，等拿到时长后重新切割
+        cinemaData = {
+          title: filmTitle,
+          chunks: [{ id: '000', startSec: 0, endSec: 0, start: '载入中…', end: '', subtitles: [], notes: [] }]
+        };
+        cinemaCurrentChunkIdx = -1;
+        renderCinemaChunks();
+
         if (film.type === 'm3u8') {
-          // 动态加载 hls.js
           if (!window.Hls) {
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
-            script.onload = () => cinemaPlayHls(videoEl, film.url);
+            script.onload = () => cinemaPlayHls(cinemaVideoEl, film.url);
             document.head.appendChild(script);
           } else {
-            cinemaPlayHls(videoEl, film.url);
+            cinemaPlayHls(cinemaVideoEl, film.url);
           }
         } else {
-          videoEl.src = film.url;
-          videoEl.play().catch(() => {});
+          cinemaVideoEl.src = film.url;
+          cinemaVideoEl.play().catch(() => {});
         }
-        videoEl.dataset.filmId = filmId;
+
+        // 等 metadata 加载后拿到时长，重新切 chunk
+        cinemaLinkDurationHandler = () => {
+          const dur = cinemaVideoEl.duration || 0;
+          if (dur && isFinite(dur) && dur > 1) {
+            cinemaCurrentFilm.duration = dur;
+            cinemaBuildChunksFromDuration(filmTitle, dur);
+            renderCinemaChunks();
+            cinemaSelectChunk(0);
+          } else {
+            // 拿不到时长，用单 chunk
+            cinemaData = {
+              title: filmTitle,
+              chunks: [{ id: '000', startSec: 0, endSec: 0, start: '全片', end: '', subtitles: [], notes: [] }]
+            };
+            renderCinemaChunks();
+            cinemaSelectChunk(0);
+          }
+          cinemaVideoEl.removeEventListener('loadedmetadata', cinemaLinkDurationHandler);
+          cinemaLinkDurationHandler = null;
+        };
+        cinemaVideoEl.addEventListener('loadedmetadata', cinemaLinkDurationHandler);
       }
       return;
     }
 
-    // ── 本地片：拉 meta → 切 chunk → 打开播放器 ──
+    // ── 本地片：拉 meta → 切 chunk → 中栏播放 ──
     let duration = 0;
     try {
       const res = await fetch(`${CINEMA_API}/${encodeURIComponent(filmId)}/meta`);
@@ -8257,7 +8251,23 @@ async function jumpToSearchResult(idx) {
     // 如果后端没给 duration，给个默认 3600 避免空列表
     if (!duration) duration = 3600;
 
-    // 按 CHUNK_SECONDS 切 chunk
+    cinemaBuildChunksFromDuration(filmTitle, duration);
+    cinemaCurrentChunkIdx = -1;
+    renderCinemaChunks();
+    cinemaSelectChunk(0);
+
+    // 中栏播放：隐藏 iframe + placeholder，显示 video
+    cinemaIframeEl.style.display = 'none';
+    cinemaIframeEl.src = '';
+    placeholder.style.display = 'none';
+    cinemaVideoEl.style.display = 'block';
+    cinemaVideoEl.src = `${CINEMA_API}/stream/${encodeURIComponent(filmId)}`;
+    cinemaVideoEl.dataset.filmId = filmId;
+    cinemaVideoEl.play().catch(() => {});
+  }
+
+  // ── 按 duration 切 chunk（本地片 + 直链片共用）──
+  function cinemaBuildChunksFromDuration(title, duration) {
     const chunkCount = Math.max(1, Math.ceil(duration / CHUNK_SECONDS));
     const chunks = [];
     for (let i = 0; i < chunkCount; i++) {
@@ -8272,22 +8282,7 @@ async function jumpToSearchResult(idx) {
         notes: []
       });
     }
-
-    cinemaData = { title: filmTitle, chunks };
-    cinemaCurrentChunkIdx = -1;
-
-    renderCinemaChunks();
-    cinemaSelectChunk(0);
-
-    // 打开浮窗播放器
-    cinemaShowFloatPlayer(filmTitle);
-    // 本地片：隐藏 iframe，显示 video
-    document.getElementById('float-player-iframe').style.display = 'none';
-    document.getElementById('float-player-iframe').src = '';
-    cinemaVideoEl.style.display = 'block';
-    cinemaVideoEl.src = `${CINEMA_API}/stream/${encodeURIComponent(filmId)}`;
-    cinemaVideoEl.dataset.filmId = filmId;
-    cinemaVideoEl.play().catch(() => {});
+    cinemaData = { title, chunks };
   }
 
   function cinemaPlayHls(videoEl, url) {
@@ -8323,7 +8318,7 @@ async function jumpToSearchResult(idx) {
     }).join('');
   }
 
-  // ── 选 chunk：拉字幕 + 联动浮窗播放器跳转 ──
+  // ── 选 chunk：拉字幕 + 联动播放器跳转 ──
   async function cinemaSelectChunk(idx) {
     cinemaCurrentChunkIdx = idx;
     const c = cinemaData.chunks[idx];
@@ -8334,22 +8329,31 @@ async function jumpToSearchResult(idx) {
       el.classList.toggle('active', i === idx);
     });
 
-    // 链接片：不拉字幕、不跳转
+    // 链接片：不拉字幕
     const film = cinemaFilmList.find(f => f.id === cinemaCurrentFilm.id);
     const isLink = film && film.source === 'link';
 
     if (isLink) {
+      const isIframe = film.type === 'bilibili' || film.type === 'iframe';
       document.getElementById('cinema-header-meta').innerHTML = `
         <span class="current">${escapeHtml(film.title)}</span>
         <span>·</span>
         <span>${(c.notes||[]).length} notes</span>
       `;
-      document.getElementById('cinema-sheet').innerHTML = `
-        <div class="sheet-placeholder">🔗 链接视频 · 用浮窗播放器观看</div>
-      `;
-      document.getElementById('cinema-subtitle').innerHTML = `
-        <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">在右下角浮窗中观看视频，在此处写下你的笔记和感想。</pre>
-      `;
+      if (isIframe) {
+        // B站/iframe：无法控制播放
+        document.getElementById('cinema-subtitle').innerHTML = `
+          <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">嵌入视频无法分段跳转，请在上方的播放器中自由观看，在此处写下你的笔记和感想。</pre>
+        `;
+      } else {
+        // 直链：跳到 chunk 起点
+        if (cinemaVideoEl && cinemaVideoEl.dataset.filmId === cinemaCurrentFilm.id && c.startSec !== undefined) {
+          cinemaVideoEl.currentTime = c.startSec;
+        }
+        document.getElementById('cinema-subtitle').innerHTML = `
+          <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">链接视频 · Chunk ${Number(c.id)+1}/${cinemaData.chunks.length} · ${c.start} — ${c.end}\n在上方的播放器中观看，在此处写下你的笔记和感想。</pre>
+        `;
+      }
       renderCinemaNotes();
       return;
     }
@@ -8359,11 +8363,6 @@ async function jumpToSearchResult(idx) {
       <span class="current">Chunk ${Number(c.id)+1}/${cinemaData.chunks.length}</span>
       <span>${c.start} - ${c.end}</span>
       <span>· ${(c.notes||[]).length} notes</span>
-    `;
-
-    // Sheet placeholder
-    document.getElementById('cinema-sheet').innerHTML = `
-      <div class="sheet-placeholder">🎞 Sheet #${c.id} · ${c.start} — ${c.end}</div>
     `;
 
     // 字幕：从后端拉这个 chunk 的时间区间
@@ -8391,7 +8390,7 @@ async function jumpToSearchResult(idx) {
       subEl.innerHTML = `<pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">字幕加载失败 (${escapeHtml(e.message)})</pre>`;
     }
 
-    // 联动浮窗播放器：跳到 chunk 起点
+    // 联动播放器：跳到 chunk 起点
     if (cinemaVideoEl && cinemaVideoEl.dataset.filmId === cinemaCurrentFilm.id) {
       cinemaVideoEl.currentTime = c.startSec;
     }
@@ -8472,48 +8471,37 @@ async function jumpToSearchResult(idx) {
     renderCinemaChunks();
   }
 
-  function cinemaShowFloatPlayer(title) {
-    const fp = document.getElementById('float-player');
-    fp.classList.add('visible');
-    document.getElementById('float-player-label').textContent = title || (cinemaData?.title || '——');
-    cinemaFloatVisible = true;
-    if (!cinemaVideoEl) cinemaVideoEl = document.getElementById('float-player-video');
-    if (!cinemaIframeEl) cinemaIframeEl = document.getElementById('float-player-iframe');
-  }
-
-  function cinemaHideFloatPlayer() {
-    document.getElementById('float-player').classList.remove('visible');
-    cinemaFloatVisible = false;
-  }
-
-  function cinemaToggleFloatPlayer() {
-    const fp = document.getElementById('float-player');
-    const video = document.getElementById('float-player-video');
-    const iframe = document.getElementById('float-player-iframe');
-    if (fp.classList.contains('minimized')) {
-      fp.classList.remove('minimized');
-      video.style.display = '';
-      iframe.style.display = iframe.src ? 'block' : 'none';
-    } else {
-      fp.classList.add('minimized');
-      video.style.display = 'none';
-      iframe.style.display = 'none';
+  // ── 停止播放器、恢复占位 ──
+  function cinemaStopPlayer() {
+    // 清理 loadedmetadata 监听
+    if (cinemaLinkDurationHandler && cinemaVideoEl) {
+      cinemaVideoEl.removeEventListener('loadedmetadata', cinemaLinkDurationHandler);
+      cinemaLinkDurationHandler = null;
     }
-  }
-
-  function cinemaCloseFloatPlayer() {
     if (cinemaVideoEl) {
       cinemaVideoEl.pause();
       cinemaVideoEl.removeAttribute('src');
       cinemaVideoEl.load();
       cinemaVideoEl.dataset.filmId = '';
-      cinemaVideoEl.style.display = 'block';
+      cinemaVideoEl.style.display = 'none';
     }
     if (cinemaIframeEl) {
       cinemaIframeEl.src = '';
       cinemaIframeEl.style.display = 'none';
     }
-    cinemaHideFloatPlayer();
+    const placeholder = document.getElementById('cinema-player-placeholder');
+    if (placeholder) placeholder.style.display = '';
+  }
+
+  // ── 返回：观影中 → 回片库；片库 → 回 leisure ──
+  function cinemaGoBack() {
+    const body = document.getElementById('cinema-body');
+    if (body.style.display !== 'none') {
+      cinemaStopPlayer();
+      loadCinemaPage();
+    } else {
+      goTo('leisure');
+    }
   }
 
   function renderAlbumGallery(photos) {
