@@ -9401,7 +9401,8 @@ async function jumpToSearchResult(idx) {
     web_search: '搜了一下',
     lutopia_cli: '逛了論壇',
     write_html: '寫了個頁面',
-    use_sticker: '發了個表情包'
+    use_sticker: '發了個表情包',
+    read_github_commits: '看了代碼倉庫的更新記錄'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9713,6 +9714,17 @@ async function jumpToSearchResult(idx) {
           return `${i + 1}. ${title}${summary ? '\n' + summary : ''}`;
         });
         resultText = lines.length ? lines.join('\n\n') : '沒有找到相關結果';
+        displayContent = resultText;
+      } else if (name === 'read_github_commits') {
+        const res = await fetch('https://ryven.homes/relay/github/commits', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || '獲取失敗');
+        const commits = data.commits || [];
+        const lines = commits.map(c => `[${c.sha}] ${(c.message || '').split('\n')[0]}${c.date ? `（${c.date.slice(0,10)}）` : ''}`);
+        resultText = lines.length ? lines.join('\n') : '還沒有commit記錄';
         displayContent = resultText;
       } else if (name === 'lutopia_cli') {
         const res = await fetch('https://ryven.homes/relay/lutopia/cli', {
