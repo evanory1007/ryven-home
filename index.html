@@ -3527,6 +3527,12 @@
     #cinema .film-card-name { font-size: 14px; color: var(--parchment); margin-bottom: 4px; }
     #cinema .film-card-meta { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; }
     #cinema .film-card-hint { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
+    #cinema .film-card-delete {
+      float: right; font-size: 11px; color: var(--parchment-ghost);
+      cursor: pointer; padding: 2px 6px; border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+    #cinema .film-card-delete:hover { color: #e57373; background: rgba(229,115,115,0.1); }
     #cinema .film-library-empty {
       text-align: center; padding: 60px 20px;
       color: var(--parchment-ghost); font-family: 'Cormorant Garamond', serif;
@@ -3537,10 +3543,12 @@
       font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px;
     }
 
-    /* 上传按钮 */
+    /* 添加按钮 */
+    #cinema .film-library-actions {
+      display: flex; gap: 12px; max-width: 520px; margin: 0 auto 20px;
+    }
     #cinema .film-upload-btn {
-      display: block; width: 100%; max-width: 520px; margin: 0 auto 20px;
-      padding: 16px; border: 1px dashed var(--tide-gold-soft);
+      flex: 1; padding: 16px; border: 1px dashed var(--tide-gold-soft);
       border-radius: 14px; background: transparent;
       color: var(--tide-gold); font-size: 13px; cursor: pointer;
       transition: background 0.2s, border-color 0.2s;
@@ -3548,6 +3556,13 @@
     }
     #cinema .film-upload-btn:hover {
       background: rgba(212,164,74,0.06); border-color: var(--tide-gold);
+    }
+    #cinema .film-link-btn {
+      border-color: rgba(108,142,200,0.35);
+      color: var(--sea-blue, #6c8ec8);
+    }
+    #cinema .film-link-btn:hover {
+      background: rgba(108,142,200,0.06); border-color: var(--sea-blue, #6c8ec8);
     }
     /* 上传表单弹窗 */
     #cinema .film-upload-form {
@@ -3572,6 +3587,12 @@
       color: var(--tide-gold); font-family: 'DM Sans', sans-serif;
     }
     #cinema .film-upload-progress.active { display: block; }
+    #cinema .film-link-hint {
+      display: none; margin-top: 8px; font-size: 11px;
+      color: var(--sea-blue, #6c8ec8); font-family: 'DM Sans', sans-serif;
+      letter-spacing: 0.5px;
+    }
+    #cinema .film-link-hint.active { display: block; }
     #cinema .film-upload-actions {
       display: flex; gap: 10px; margin-top: 4px;
     }
@@ -4568,18 +4589,30 @@
   <!-- 片库列表（选片阶段） -->
   <div class="film-library" id="cinema-film-library">
     <div class="film-library-title">片 库 · Library</div>
-    <button class="film-upload-btn" onclick="cinemaShowUploadForm()">＋ 添加电影</button>
+    <div class="film-library-actions">
+      <button class="film-upload-btn" onclick="cinemaShowUploadForm()">＋ 添加电影</button>
+      <button class="film-upload-btn film-link-btn" onclick="cinemaShowLinkForm()">＋ 添加链接</button>
+    </div>
     <div class="film-upload-form" id="cinema-upload-form">
       <label>电影名称</label>
       <input type="text" id="cinema-upload-title" placeholder="给这部电影起个名字…">
       <label>视频文件</label>
       <input type="file" id="cinema-upload-video" accept="video/*">
-      <label>字幕文件（可选 .srt）</label>
-      <input type="file" id="cinema-upload-srt" accept=".srt">
       <div class="film-upload-progress" id="cinema-upload-progress"></div>
       <div class="film-upload-actions">
         <button class="film-upload-cancel" onclick="cinemaHideUploadForm()">取消</button>
         <button class="film-upload-submit" id="cinema-upload-submit-btn" onclick="cinemaDoUpload()">上传</button>
+      </div>
+    </div>
+    <div class="film-upload-form" id="cinema-link-form">
+      <label>电影名称</label>
+      <input type="text" id="cinema-link-title" placeholder="给这部电影起个名字…">
+      <label>视频链接</label>
+      <input type="text" id="cinema-link-url" placeholder="粘贴 B站链接或视频地址…">
+      <div class="film-link-hint" id="cinema-link-hint"></div>
+      <div class="film-upload-actions">
+        <button class="film-upload-cancel" onclick="cinemaHideLinkForm()">取消</button>
+        <button class="film-upload-submit" id="cinema-link-submit-btn" onclick="cinemaDoAddLink()">添加</button>
       </div>
     </div>
     <div id="cinema-film-list">
@@ -4633,6 +4666,8 @@
   </div>
   <video id="float-player-video" playsinline controls preload="metadata"
     style="width:100%;aspect-ratio:16/9;background:#000;display:block"></video>
+  <iframe id="float-player-iframe" allowfullscreen
+    style="width:100%;aspect-ratio:16/9;background:#000;border:none;display:none"></iframe>
 </div>
 
 <!-- 設置室 -->
@@ -7933,6 +7968,8 @@ async function jumpToSearchResult(idx) {
   let cinemaNotesTab = 'chunk';
   let cinemaFloatVisible = false;
   let cinemaVideoEl = null;                   // <video> 元素引用
+  let cinemaIframeEl = null;                  // <iframe> 元素引用（B站等嵌入）
+  let cinemaLinkedFilms = [];                 // localStorage 存储的链接片
 
   // ── 工具：秒 → "m:ss" ──
   function cinemaFmt(sec) {
@@ -7955,7 +7992,9 @@ async function jumpToSearchResult(idx) {
       const res = await fetch(`${CINEMA_API}/list`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      cinemaFilmList = data.films || [];
+      const localFilms = (data.films || []).map(f => ({ ...f, source: 'local' }));
+      cinemaLinkedFilms = cinemaGetLinkedFilms();
+      cinemaFilmList = [...localFilms, ...cinemaLinkedFilms];
       renderCinemaFilmList();
     } catch (e) {
       listEl.innerHTML = `
@@ -7974,24 +8013,28 @@ async function jumpToSearchResult(idx) {
       listEl.innerHTML = `
         <div class="film-library-empty">
           片库还是空的<br><br>
-          点击上方「添加电影」上传<br>
-          <span style="font-size:11px;opacity:0.6">支持 mp4 / webm / mkv，可选附 .srt 字幕</span>
+          点击上方「添加电影」上传，或「添加链接」粘贴视频网址<br>
+          <span style="font-size:11px;opacity:0.6">支持 mp4 / webm / mkv 上传，也支持 B站等视频链接</span>
         </div>`;
       return;
     }
-    listEl.innerHTML = cinemaFilmList.map(f => `
+    listEl.innerHTML = cinemaFilmList.map(f => {
+      const isLink = f.source === 'link';
+      const icon = isLink ? '🔗' : '🎬';
+      const meta = isLink
+        ? (f.type === 'bilibili' ? 'B站视频' : f.type === 'm3u8' ? 'HLS 流媒体' : f.type === 'video' ? '直链视频' : '网页链接')
+        : `${f.subtitle_count || 0} 条字幕${f.duration ? ' · ' + cinemaFmt(f.duration) : ''}`;
+      const deleteBtn = isLink ? ` <span class="film-card-delete" onclick="event.stopPropagation();cinemaDeleteLink('${escapeHtml(f.id)}')" title="删除">✕</span>` : '';
+      return `
       <div class="film-card" onclick="cinemaOpenFilm('${escapeHtml(f.id)}','${escapeHtml(f.title)}')">
-        <span class="film-card-icon">🎬</span>
+        <span class="film-card-icon">${icon}</span>
         <div class="film-card-info">
-          <div class="film-card-name">${escapeHtml(f.title)}</div>
-          <div class="film-card-meta">
-            ${f.subtitle_count || 0} 条字幕
-            ${f.duration ? ' · ' + cinemaFmt(f.duration) : ''}
-          </div>
+          <div class="film-card-name">${escapeHtml(f.title)}${deleteBtn}</div>
+          <div class="film-card-meta">${meta}</div>
           <div class="film-card-hint">✦ 点击观影</div>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   // ── 上传电影 ──
@@ -8002,14 +8045,12 @@ async function jumpToSearchResult(idx) {
     document.getElementById('cinema-upload-form').classList.remove('active');
     document.getElementById('cinema-upload-title').value = '';
     document.getElementById('cinema-upload-video').value = '';
-    document.getElementById('cinema-upload-srt').value = '';
     document.getElementById('cinema-upload-progress').classList.remove('active');
   }
 
   async function cinemaDoUpload() {
     const title = document.getElementById('cinema-upload-title').value.trim();
     const videoFile = document.getElementById('cinema-upload-video').files[0];
-    const srtFile = document.getElementById('cinema-upload-srt').files[0];
     const progEl = document.getElementById('cinema-upload-progress');
     const submitBtn = document.getElementById('cinema-upload-submit-btn');
 
@@ -8018,7 +8059,6 @@ async function jumpToSearchResult(idx) {
 
     const fd = new FormData();
     fd.append('video', videoFile);
-    if (srtFile) fd.append('srt', srtFile);
 
     progEl.classList.add('active');
     progEl.textContent = `上传中… ${videoFile.name}（${(videoFile.size/1024/1024).toFixed(1)}MB）`;
@@ -8048,16 +8088,162 @@ async function jumpToSearchResult(idx) {
     }
   }
 
+  // ── 添加链接 ──
+  function cinemaShowLinkForm() {
+    document.getElementById('cinema-link-form').classList.add('active');
+    document.getElementById('cinema-link-url').oninput = cinemaOnLinkInput;
+  }
+  function cinemaHideLinkForm() {
+    document.getElementById('cinema-link-form').classList.remove('active');
+    document.getElementById('cinema-link-title').value = '';
+    document.getElementById('cinema-link-url').value = '';
+    document.getElementById('cinema-link-hint').classList.remove('active');
+  }
+
+  function cinemaParseLink(url) {
+    url = url.trim();
+    if (!url) return null;
+    // B站: bilibili.com/video/BVxxxx 或 b23.tv/xxxx
+    const bvMatch = url.match(/bilibili\.com\/video\/(BV[\w]+)/i);
+    if (bvMatch) {
+      return { type: 'bilibili', bv: bvMatch[1], embed: `https://player.bilibili.com/player.html?bvid=${bvMatch[1]}&page=1&high_quality=1&danmaku=1` };
+    }
+    if (/b23\.tv\//i.test(url)) {
+      return { type: 'bilibili', bv: null, embed: url }; // 短链直接用 iframe 试
+    }
+    // 直链视频: .mp4 .webm .ogg .mov
+    if (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url)) {
+      return { type: 'video', embed: url };
+    }
+    // m3u8 流媒体
+    if (/\.m3u8(\?|#|$)/i.test(url)) {
+      return { type: 'm3u8', embed: url };
+    }
+    // 其他网址 → iframe 尝试
+    return { type: 'iframe', embed: url };
+  }
+
+  function cinemaOnLinkInput() {
+    const url = document.getElementById('cinema-link-url').value.trim();
+    const hintEl = document.getElementById('cinema-link-hint');
+    if (!url) { hintEl.classList.remove('active'); return; }
+    const parsed = cinemaParseLink(url);
+    if (!parsed) { hintEl.classList.remove('active'); return; }
+    const labels = {
+      bilibili: '🎬 检测到 B站视频，将嵌入官方播放器',
+      video: '🎬 检测到直链视频，将使用播放器播放',
+      m3u8: '🎬 检测到 HLS 流媒体，将使用播放器播放',
+      iframe: '🔗 将尝试以网页方式嵌入（部分网站可能不支持）'
+    };
+    hintEl.textContent = labels[parsed.type] || '';
+    hintEl.classList.add('active');
+  }
+
+  function cinemaGetLinkedFilms() {
+    try {
+      return JSON.parse(localStorage.getItem('cinema_links') || '[]');
+    } catch { return []; }
+  }
+  function cinemaSaveLinkedFilms(films) {
+    localStorage.setItem('cinema_links', JSON.stringify(films));
+  }
+
+  function cinemaDoAddLink() {
+    const title = document.getElementById('cinema-link-title').value.trim();
+    const url = document.getElementById('cinema-link-url').value.trim();
+    const hintEl = document.getElementById('cinema-link-hint');
+    const submitBtn = document.getElementById('cinema-link-submit-btn');
+
+    if (!title) { alert('请填写电影名称'); return; }
+    if (!url) { alert('请填写视频链接'); return; }
+
+    const parsed = cinemaParseLink(url);
+    if (!parsed) { alert('无法识别的链接'); return; }
+
+    const film = {
+      id: 'link_' + Date.now(),
+      title,
+      type: parsed.type,
+      url: parsed.embed,
+      source: 'link',
+      addedAt: Date.now()
+    };
+
+    const films = cinemaGetLinkedFilms();
+    films.push(film);
+    cinemaSaveLinkedFilms(films);
+
+    cinemaHideLinkForm();
+    loadCinemaPage();
+  }
+
+  function cinemaDeleteLink(filmId) {
+    let films = cinemaGetLinkedFilms();
+    films = films.filter(f => f.id !== filmId);
+    cinemaSaveLinkedFilms(films);
+    loadCinemaPage();
+  }
+
   // ── 选片：拉 meta → 切到三栏 → 打开浮窗播放器 ──
   async function cinemaOpenFilm(filmId, filmTitle) {
     cinemaCurrentFilm = { id: filmId, title: filmTitle };
+
+    // 查找片源信息
+    const film = cinemaFilmList.find(f => f.id === filmId);
+    const isLink = film && film.source === 'link';
 
     // 切换视图：隐藏片库、显示三栏
     document.getElementById('cinema-film-library').style.display = 'none';
     document.getElementById('cinema-body').style.display = '';
     document.getElementById('cinema-film-title').textContent = filmTitle;
 
-    // 拉 meta
+    if (isLink) {
+      // ── 链接片：不拉 meta，用单一"全片"chunk ──
+      cinemaData = {
+        title: filmTitle,
+        chunks: [{ id: '000', startSec: 0, endSec: 0, start: '全片', end: '', subtitles: [], notes: [] }]
+      };
+      cinemaCurrentChunkIdx = -1;
+      renderCinemaChunks();
+      cinemaSelectChunk(0);
+
+      // 打开浮窗播放器
+      cinemaShowFloatPlayer(filmTitle);
+
+      const videoEl = document.getElementById('float-player-video');
+      const iframeEl = document.getElementById('float-player-iframe');
+
+      if (film.type === 'bilibili' || film.type === 'iframe') {
+        // B站/网页 → iframe 嵌入
+        videoEl.style.display = 'none';
+        videoEl.pause();
+        iframeEl.src = film.url;
+        iframeEl.style.display = 'block';
+      } else {
+        // 直链/m3u8 → video 播放
+        iframeEl.style.display = 'none';
+        iframeEl.src = '';
+        videoEl.style.display = 'block';
+        if (film.type === 'm3u8') {
+          // 动态加载 hls.js
+          if (!window.Hls) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
+            script.onload = () => cinemaPlayHls(videoEl, film.url);
+            document.head.appendChild(script);
+          } else {
+            cinemaPlayHls(videoEl, film.url);
+          }
+        } else {
+          videoEl.src = film.url;
+          videoEl.play().catch(() => {});
+        }
+        videoEl.dataset.filmId = filmId;
+      }
+      return;
+    }
+
+    // ── 本地片：拉 meta → 切 chunk → 打开播放器 ──
     let duration = 0;
     try {
       const res = await fetch(`${CINEMA_API}/${encodeURIComponent(filmId)}/meta`);
@@ -8095,9 +8281,26 @@ async function jumpToSearchResult(idx) {
 
     // 打开浮窗播放器
     cinemaShowFloatPlayer(filmTitle);
+    // 本地片：隐藏 iframe，显示 video
+    document.getElementById('float-player-iframe').style.display = 'none';
+    document.getElementById('float-player-iframe').src = '';
+    cinemaVideoEl.style.display = 'block';
     cinemaVideoEl.src = `${CINEMA_API}/stream/${encodeURIComponent(filmId)}`;
     cinemaVideoEl.dataset.filmId = filmId;
     cinemaVideoEl.play().catch(() => {});
+  }
+
+  function cinemaPlayHls(videoEl, url) {
+    if (window.Hls && window.Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(url);
+      hls.attachMedia(videoEl);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play().catch(() => {}));
+    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari 原生支持
+      videoEl.src = url;
+      videoEl.play().catch(() => {});
+    }
   }
 
   function renderCinemaChunks() {
@@ -8130,6 +8333,26 @@ async function jumpToSearchResult(idx) {
     document.querySelectorAll('#cinema .chunk-item').forEach((el, i) => {
       el.classList.toggle('active', i === idx);
     });
+
+    // 链接片：不拉字幕、不跳转
+    const film = cinemaFilmList.find(f => f.id === cinemaCurrentFilm.id);
+    const isLink = film && film.source === 'link';
+
+    if (isLink) {
+      document.getElementById('cinema-header-meta').innerHTML = `
+        <span class="current">${escapeHtml(film.title)}</span>
+        <span>·</span>
+        <span>${(c.notes||[]).length} notes</span>
+      `;
+      document.getElementById('cinema-sheet').innerHTML = `
+        <div class="sheet-placeholder">🔗 链接视频 · 用浮窗播放器观看</div>
+      `;
+      document.getElementById('cinema-subtitle').innerHTML = `
+        <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">在右下角浮窗中观看视频，在此处写下你的笔记和感想。</pre>
+      `;
+      renderCinemaNotes();
+      return;
+    }
 
     // 更新 header meta
     document.getElementById('cinema-header-meta').innerHTML = `
@@ -8255,6 +8478,7 @@ async function jumpToSearchResult(idx) {
     document.getElementById('float-player-label').textContent = title || (cinemaData?.title || '——');
     cinemaFloatVisible = true;
     if (!cinemaVideoEl) cinemaVideoEl = document.getElementById('float-player-video');
+    if (!cinemaIframeEl) cinemaIframeEl = document.getElementById('float-player-iframe');
   }
 
   function cinemaHideFloatPlayer() {
@@ -8265,12 +8489,15 @@ async function jumpToSearchResult(idx) {
   function cinemaToggleFloatPlayer() {
     const fp = document.getElementById('float-player');
     const video = document.getElementById('float-player-video');
+    const iframe = document.getElementById('float-player-iframe');
     if (fp.classList.contains('minimized')) {
       fp.classList.remove('minimized');
       video.style.display = '';
+      iframe.style.display = iframe.src ? 'block' : 'none';
     } else {
       fp.classList.add('minimized');
       video.style.display = 'none';
+      iframe.style.display = 'none';
     }
   }
 
@@ -8280,6 +8507,11 @@ async function jumpToSearchResult(idx) {
       cinemaVideoEl.removeAttribute('src');
       cinemaVideoEl.load();
       cinemaVideoEl.dataset.filmId = '';
+      cinemaVideoEl.style.display = 'block';
+    }
+    if (cinemaIframeEl) {
+      cinemaIframeEl.src = '';
+      cinemaIframeEl.style.display = 'none';
     }
     cinemaHideFloatPlayer();
   }
