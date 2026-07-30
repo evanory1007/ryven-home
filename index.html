@@ -1910,6 +1910,28 @@
     #leisure .sticker-desc { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; }
     #leisure .sticker-count { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
 
+    /* leisure 放映室卡片 — 跟 sticker-card 同款橫排 */
+    #leisure .cinema-card {
+      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg, rgba(20,28,55,0.55), rgba(15,20,42,0.7));
+      border: 1px solid var(--line); border-radius: 14px;
+      padding: 18px 20px; cursor: pointer; position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    body.light #leisure .cinema-card { background: var(--glass-card); border-color: var(--line); }
+    #leisure .cinema-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--tide-gold-soft), transparent);
+      transition: height 0.25s ease; z-index: 0;
+    }
+    #leisure .cinema-card:hover::after { height: 100%; }
+    #leisure .cinema-card:hover { border-color: var(--tide-gold-soft); transform: translateY(-2px); }
+    #leisure .cinema-card-icon { font-size: 36px; flex-shrink: 0; position: relative; z-index: 1; }
+    #leisure .cinema-card-info { flex: 1; position: relative; z-index: 1; }
+    #leisure .cinema-card-name { font-size: 14px; color: var(--parchment); margin-bottom: 4px; }
+    #leisure .cinema-card-desc { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; }
+    #leisure .cinema-card-hint { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
+
     #leisure .achievements { margin-top: 10px; position: relative; z-index: 1; }
     #leisure .achievements-title { font-size: 11px; color: var(--parchment-dim); opacity: 0.6; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; text-align: center; }
     #leisure .achievement-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -3057,13 +3079,6 @@
     body.light #gramophone .quote-card.pinned { background: linear-gradient(135deg, rgba(184,150,74,0.08), var(--glass-card)); }
     body.light #gramophone .gram-stats { background: var(--glass-card); }
 
-    /* desk 放映室卡片 */
-    #desk .cinema-card { grid-column: span 1; background: linear-gradient(135deg, rgba(15,20,40,0.6), rgba(10,14,31,0.8)); border-color: var(--line); display: flex; flex-direction: column; padding: 20px; gap: 10px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
-    #desk .cinema-card:hover { border-color: var(--tide-gold-soft); box-shadow: 0 4px 20px rgba(201,168,76,0.06); }
-    body.light #desk .cinema-card { background: linear-gradient(135deg, rgba(240,243,248,0.8), rgba(216,224,240,0.6)); }
-    #desk .cinema-card-en { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--parchment); }
-    #desk .cinema-card-zh { font-size: 9px; letter-spacing: 0.22em; color: var(--tide-gold-soft); }
-    #desk .cinema-card-info { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--parchment-ghost); letter-spacing: 0.08em; }
 
     #desk .notes-card { background: linear-gradient(155deg, rgba(40,32,18,0.7), rgba(30,22,12,0.8)); border-color: rgba(180,140,60,0.1); min-height: 160px; display: flex; flex-direction: column; }
     #desk .notes-top { padding: 16px 14px 10px; border-bottom: 1px solid rgba(180,140,60,0.08); }
@@ -4303,14 +4318,6 @@
         </div>
       </div>
 
-      <div class="card cinema-card" onclick="goTo('cinema')">
-        <div>
-          <div class="cinema-card-en">Cinema</div>
-          <div class="cinema-card-zh">放 映 室</div>
-        </div>
-        <div class="cinema-card-info">🎬 一起看電影</div>
-      </div>
-
       <div class="card shelf-card">
         <div class="shelf-top">
           <div>
@@ -5263,6 +5270,15 @@
         <div class="sticker-name">表情包珊瑚礁</div>
         <div class="sticker-desc">Ryven 的收藏柜 · 聊天時隨手拿</div>
         <div class="sticker-count">✦ <span id="leisure-sticker-count">0</span> 張收藏</div>
+      </div>
+    </div>
+
+    <div class="cinema-card" onclick="goTo('cinema')" style="margin-bottom:14px">
+      <span class="cinema-card-icon">🎬</span>
+      <div class="cinema-card-info">
+        <div class="cinema-card-name">放映室</div>
+        <div class="cinema-card-desc">和 Ryven 一起看電影</div>
+        <div class="cinema-card-hint">✦ 點此進入</div>
       </div>
     </div>
 
