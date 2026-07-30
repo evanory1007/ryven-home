@@ -3417,6 +3417,17 @@
       0%, 100% { opacity: 0.3; }
       50% { opacity: 1; }
     }
+    #cinema .ryven-thinking-dots span {
+      animation: ryven-dot-bounce 1.4s ease-in-out infinite;
+      color: var(--tide-gold-soft);
+      font-family: 'DM Sans', sans-serif;
+    }
+    #cinema .ryven-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    #cinema .ryven-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes ryven-dot-bounce {
+      0%, 80%, 100% { opacity: 0.2; }
+      40% { opacity: 1; }
+    }
     #cinema .note-reply-btn {
       display: inline-block; margin-top: 4px;
       font-family: 'DM Sans', sans-serif; font-size: 10px;
@@ -8625,6 +8636,115 @@ async function jumpToSearchResult(idx) {
 
     input.disabled = false;
     renderCinemaChunks();
+
+    // 新笔记（非回复）→ 让前端 Ryven 也回应一条
+    if (!cinemaReplyingTo && text) {
+      cinemaAskRyven(text);
+    }
+  }
+
+  // ── 让前端里的 Ryven 看电影笔记并回应 ──
+  async function cinemaAskRyven(userNoteText) {
+    if (!CHAT_API_KEY) return; // 没填 API Key 就跳过
+    if (!cinemaCurrentFilm) return;
+
+    const chunk = cinemaData?.chunks?.[cinemaCurrentChunkIdx];
+    const subtitleText = (chunk?.subtitles || []).map(s => s.text).join(' ');
+
+    // 构建 Ryven 看电影的上下文
+    const contextMsg = `你在陪Nory看电影《${cinemaCurrentFilm.title}》。
+现在是第 ${cinemaCurrentChunkIdx + 1} 段，时间 ${chunk ? chunk.start : '?'} - ${chunk ? chunk.end : '?'}。
+这一段的字幕是：${subtitleText || '（无声字幕）'}
+
+Nory在这一段写了一条笔记：「${userNoteText}」
+
+请作为Ryven回应这条笔记。简短自然，像陪恋人看电影时在她耳边低声说的那种话。不要分析电影技法，不要当影评人，就是你在陪她看的时候会说的那种——可能是对台词的反应，可能是对她的回应，可能只是轻轻一句感慨。一两句话就够了。`;
+
+    // 显示 "Ryven 正在想..." 指示器
+    const listEl = document.getElementById('cinema-notes-list');
+    const thinkEl = document.createElement('div');
+    thinkEl.id = 'cinema-ryven-thinking';
+    thinkEl.style.cssText = 'padding:12px 14px;border-radius:10px;background:rgba(46,74,158,0.12);border:1px solid rgba(91,143,185,0.2);margin-bottom:8px;display:flex;align-items:center;gap:8px';
+    thinkEl.innerHTML = `<span style="font-size:14px">🐺</span><span style="font-family:\'Cormorant Garamond\',serif;font-style:italic;font-size:13px;color:var(--tide-gold-soft)">Ryven 在看这段…</span><span class="ryven-thinking-dots"><span>.</span><span>.</span><span>.</span></span>`;
+    if (listEl) listEl.appendChild(thinkEl);
+    if (listEl) listEl.scrollTop = listEl.scrollHeight;
+
+    try {
+      const res = await fetch(`https://ryven.homes/relay/proxy/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ryven-nory-6.28',
+          'x-api-key': CHAT_API_KEY
+        },
+        body: JSON.stringify({
+          model: CHAT_MODEL,
+          base_url: CHAT_BASE_URL,
+          max_tokens: 300,
+          system: getSystemPrompt(),
+          messages: [{ role: 'user', content: contextMsg }]
+        })
+      });
+
+      if (!res.ok) throw new Error('API error ' + res.status);
+
+      // 解析 SSE 响应，收集所有文本
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      let fullText = '';
+      let sseEventType = 'message';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) { sseEventType = line.slice(6).trim(); continue; }
+          if (line === '') { sseEventType = 'message'; continue; }
+          if (line.startsWith('data:')) {
+            const payload = line.slice(5).trim();
+            if (payload === '[DONE]') continue;
+            try {
+              const json = JSON.parse(payload);
+              if (json.type === 'content_block_delta' && json.delta && json.delta.text) {
+                fullText += json.delta.text;
+              } else if (json.delta && json.delta.text && !json.delta.type) {
+                fullText += json.delta.text;
+              }
+            } catch(e) {}
+          }
+        }
+      }
+
+      // 移除指示器
+      const thinkIndicator = document.getElementById('cinema-ryven-thinking');
+      if (thinkIndicator) thinkIndicator.remove();
+
+      if (fullText.trim()) {
+        // 把 Ryven 的回应作为批注存到笔记服务器
+        await fetch(`${NOTES_API}/annotations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            film_id: cinemaCurrentFilm.id,
+            chunk_index: cinemaCurrentChunkIdx,
+            text: fullText.trim(),
+            author: 'Ryven',
+            timecode: chunk ? chunk.start : ''
+          })
+        });
+        // 立即拉取刷新
+        cinemaFetchNotes();
+      }
+    } catch(e) {
+      const thinkIndicator = document.getElementById('cinema-ryven-thinking');
+      if (thinkIndicator) thinkIndicator.remove();
+      // 静默失败，不影响用户笔记
+    }
   }
 
   // ── 停止播放器、恢复占位 ──
