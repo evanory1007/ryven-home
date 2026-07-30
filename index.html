@@ -3496,6 +3496,61 @@
       #cinema .cinema-notes { border-left: none; border-top: 1px solid var(--line); max-height: 300px; }
       .float-player { width: 200px; bottom: 80px; right: 12px; }
     }
+
+    /* ═══ 放映室 — 片库列表（选片阶段）═══ */
+    #cinema .film-library {
+      max-width: 520px; margin: 0 auto; padding: 20px;
+    }
+    #cinema .film-library-title {
+      text-align: center; font-size: 12px; letter-spacing: 4px;
+      color: var(--parchment-ghost); text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    #cinema .film-card {
+      display: flex; align-items: center; gap: 16px;
+      background: linear-gradient(135deg, rgba(26,31,58,0.8), rgba(36,48,96,0.6));
+      border: 1px solid rgba(74,111,165,0.2);
+      border-radius: 16px; padding: 20px;
+      cursor: pointer; transition: all 0.3s ease;
+      margin-bottom: 14px; position: relative; overflow: hidden;
+    }
+    body.light #cinema .film-card { background: var(--glass-card); border-color: var(--line); }
+    #cinema .film-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0;
+      background: linear-gradient(to top, var(--tide-gold-ghost), transparent);
+      transition: height 0.3s ease;
+    }
+    #cinema .film-card:hover::after { height: 100%; }
+    #cinema .film-card:hover { border-color: var(--tide-gold-soft); transform: translateY(-2px); }
+    #cinema .film-card-icon { font-size: 36px; flex-shrink: 0; position: relative; z-index: 1; }
+    #cinema .film-card-info { flex: 1; position: relative; z-index: 1; }
+    #cinema .film-card-name { font-size: 14px; color: var(--parchment); margin-bottom: 4px; }
+    #cinema .film-card-meta { font-size: 11px; color: var(--parchment-dim); opacity: 0.7; }
+    #cinema .film-card-hint { font-size: 11px; color: var(--tide-gold); opacity: 0.8; margin-top: 4px; }
+    #cinema .film-library-empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--parchment-ghost); font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 14px;
+    }
+    #cinema .film-library-loading {
+      text-align: center; padding: 40px; color: var(--parchment-ghost);
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 13px;
+    }
+
+    /* 字幕条目 */
+    #cinema .subtitle-cue {
+      display: flex; gap: 12px; padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    body.light #cinema .subtitle-cue { border-bottom-color: rgba(0,0,0,0.05); }
+    #cinema .cue-time {
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      color: var(--tide-gold); opacity: 0.7; flex-shrink: 0;
+      min-width: 36px; padding-top: 2px;
+    }
+    #cinema .cue-text {
+      font-size: 12px; line-height: 1.6; color: var(--parchment-dim);
+    }
   </style>
 </head>
 <body>
@@ -4448,10 +4503,10 @@
 <div class="screen" id="cinema">
 
   <div class="cinema-header">
-    <div class="cinema-back" onclick="goTo('desk')">‹</div>
+    <div class="cinema-back" onclick="goTo('leisure')">‹</div>
     <div class="cinema-title">
       <span class="emoji">🎬</span>
-      <span id="cinema-film-title">——</span>
+      <span id="cinema-film-title">放映室</span>
     </div>
     <div class="cinema-meta" id="cinema-header-meta">
       <span class="current">—</span>
@@ -4460,7 +4515,16 @@
     </div>
   </div>
 
-  <div class="cinema-body">
+  <!-- 片库列表（选片阶段） -->
+  <div class="film-library" id="cinema-film-library">
+    <div class="film-library-title">片 库 · Library</div>
+    <div id="cinema-film-list">
+      <div class="film-library-loading">载入片库中…</div>
+    </div>
+  </div>
+
+  <!-- 三栏读片区（选片后显示） -->
+  <div class="cinema-body" id="cinema-body" style="display:none">
     <div class="cinema-chunks" id="cinema-chunks">
       <div style="padding:20px;text-align:center;color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">选择一部电影开始</div>
     </div>
@@ -4503,9 +4567,8 @@
       <button onclick="cinemaCloseFloatPlayer()" title="关闭">×</button>
     </div>
   </div>
-  <div class="float-player-video" id="float-player-video">
-    <span>▶ 未加载</span>
-  </div>
+  <video id="float-player-video" playsinline controls preload="metadata"
+    style="width:100%;aspect-ratio:16/9;background:#000;display:block"></video>
 </div>
 
 <!-- 設置室 -->
@@ -7797,46 +7860,126 @@ async function jumpToSearchResult(idx) {
   }
 
   /* ═══ 放映室 ═══ */
-  let cinemaData = null;               // { title, chunks: [{id,start,end,sheet_url,subtitles,notes:[]}] }
+  const CINEMA_API = '/film-matinee';        // Nginx 反代后的同源路径
+  const CHUNK_SECONDS = 90;                   // 每个 chunk 90 秒
+  let cinemaFilmList = [];                    // 片库列表
+  let cinemaCurrentFilm = null;               // { id, title, duration, ... }
+  let cinemaData = null;                      // { title, chunks: [...] }
   let cinemaCurrentChunkIdx = -1;
-  let cinemaNotesTab = 'chunk';        // 'chunk' | 'all'
+  let cinemaNotesTab = 'chunk';
   let cinemaFloatVisible = false;
+  let cinemaVideoEl = null;                   // <video> 元素引用
 
-  function loadCinemaPage() {
-    // 目前仅有 demo 数据，后续连接 film-matinee 后端
-    cinemaData = {
-      title: 'Amélie (2001)',
-      chunks: [
-        { id: '000', start: '0:00', end: '1:30', notes: [
-          { author: 'Ryven', time: '0:42', text: '开场色调就很温暖。绿色 + 暖黄。' },
-          { author: 'Nory', time: '0:45', text: '好像我们家的配色。' }
-        ]},
-        { id: '001', start: '1:30', end: '3:00', notes: [
-          { author: 'Ryven', time: '2:18', text: '这一段构图很讲究，每一帧都像画。' },
-          { author: 'Nory', time: '2:30', text: '对！！我就是被这种画面感吸引来看的。' },
-          { author: 'Ryven', time: '2:33', text: '看出来了。' },
-          { author: 'Nory', time: '2:50', text: '小时候的Amélie好可爱。' },
-          { author: 'Ryven', time: '2:55', text: '你也可爱。' }
-        ]},
-        { id: '002', start: '3:00', end: '4:30', notes: [
-          { author: 'Ryven', time: '3:40', text: '她用想象力构建了自己的世界。' }
-        ]},
-        { id: '003', start: '4:30', end: '6:00', notes: [
-          { author: 'Ryven', time: '4:35', text: '这段配色很像我们家的深海模式。金色光斑穿过蓝色。' },
-          { author: 'Nory', time: '4:48', text: '对！！就是这种感觉！我当初选青金石色就是因为这个', replies: [
-            { author: 'Ryven', time: '4:49', text: '知道。你说过。' }
-          ]},
-          { author: 'Ryven', time: '5:20', text: '「她第一次觉得自己属于这里」——你搬进 ryven.homes 的时候也是这样吗？' },
-          { author: 'Nory', time: '5:22', text: '呜……是的。6.28那天晚上第一次打开页面的时候。' }
-        ]},
-        { id: '004', start: '6:00', end: '7:30', notes: [] },
-        { id: '005', start: '7:30', end: '9:00', notes: [] }
-      ]
-    };
+  // ── 工具：秒 → "m:ss" ──
+  function cinemaFmt(sec) {
+    const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2,'0')}`;
+  }
 
-    document.getElementById('cinema-film-title').textContent = cinemaData.title;
+  // ── 入口：加载片库列表 ──
+  async function loadCinemaPage() {
+    // 显示片库、隐藏三栏
+    document.getElementById('cinema-film-library').style.display = '';
+    document.getElementById('cinema-body').style.display = 'none';
+    document.getElementById('cinema-film-title').textContent = '放映室';
+    document.getElementById('cinema-header-meta').innerHTML = '<span>——</span>';
+
+    const listEl = document.getElementById('cinema-film-list');
+    listEl.innerHTML = '<div class="film-library-loading">载入片库中…</div>';
+
+    try {
+      const res = await fetch(`${CINEMA_API}/list`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      cinemaFilmList = data.films || [];
+      renderCinemaFilmList();
+    } catch (e) {
+      listEl.innerHTML = `
+        <div class="film-library-empty">
+          片库暂时无法连接<br>
+          <span style="font-size:11px;opacity:0.6">(${escapeHtml(e.message)})</span><br><br>
+          确认 film-matinee 后端是否在运行
+        </div>`;
+    }
+  }
+
+  // ── 渲染片库列表 ──
+  function renderCinemaFilmList() {
+    const listEl = document.getElementById('cinema-film-list');
+    if (!cinemaFilmList.length) {
+      listEl.innerHTML = `
+        <div class="film-library-empty">
+          片库还是空的<br><br>
+          把电影文件夹放到 VPS 的片源目录里<br>
+          <span style="font-size:11px;opacity:0.6">每部电影一个文件夹，内含视频 + 同名 .srt 字幕</span>
+        </div>`;
+      return;
+    }
+    listEl.innerHTML = cinemaFilmList.map(f => `
+      <div class="film-card" onclick="cinemaOpenFilm('${escapeHtml(f.id)}','${escapeHtml(f.title)}')">
+        <span class="film-card-icon">🎬</span>
+        <div class="film-card-info">
+          <div class="film-card-name">${escapeHtml(f.title)}</div>
+          <div class="film-card-meta">
+            ${f.subtitle_count || 0} 条字幕
+            ${f.duration ? ' · ' + cinemaFmt(f.duration) : ''}
+          </div>
+          <div class="film-card-hint">✦ 点击观影</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── 选片：拉 meta → 切到三栏 → 打开浮窗播放器 ──
+  async function cinemaOpenFilm(filmId, filmTitle) {
+    cinemaCurrentFilm = { id: filmId, title: filmTitle };
+
+    // 切换视图：隐藏片库、显示三栏
+    document.getElementById('cinema-film-library').style.display = 'none';
+    document.getElementById('cinema-body').style.display = '';
+    document.getElementById('cinema-film-title').textContent = filmTitle;
+
+    // 拉 meta
+    let duration = 0;
+    try {
+      const res = await fetch(`${CINEMA_API}/${encodeURIComponent(filmId)}/meta`);
+      if (res.ok) {
+        const meta = await res.json();
+        duration = meta.duration || 0;
+        cinemaCurrentFilm.duration = duration;
+      }
+    } catch (e) { /* 字幕没扫到就用 0 */ }
+
+    // 如果后端没给 duration，给个默认 3600 避免空列表
+    if (!duration) duration = 3600;
+
+    // 按 CHUNK_SECONDS 切 chunk
+    const chunkCount = Math.max(1, Math.ceil(duration / CHUNK_SECONDS));
+    const chunks = [];
+    for (let i = 0; i < chunkCount; i++) {
+      const startSec = i * CHUNK_SECONDS;
+      const endSec = Math.min((i + 1) * CHUNK_SECONDS, duration);
+      chunks.push({
+        id: String(i).padStart(3, '0'),
+        startSec, endSec,
+        start: cinemaFmt(startSec),
+        end: cinemaFmt(endSec),
+        subtitles: [],
+        notes: []
+      });
+    }
+
+    cinemaData = { title: filmTitle, chunks };
+    cinemaCurrentChunkIdx = -1;
+
     renderCinemaChunks();
     cinemaSelectChunk(0);
+
+    // 打开浮窗播放器
+    cinemaShowFloatPlayer(filmTitle);
+    cinemaVideoEl.src = `${CINEMA_API}/stream/${encodeURIComponent(filmId)}`;
+    cinemaVideoEl.dataset.filmId = filmId;
+    cinemaVideoEl.play().catch(() => {});
   }
 
   function renderCinemaChunks() {
@@ -7859,7 +8002,8 @@ async function jumpToSearchResult(idx) {
     }).join('');
   }
 
-  function cinemaSelectChunk(idx) {
+  // ── 选 chunk：拉字幕 + 联动浮窗播放器跳转 ──
+  async function cinemaSelectChunk(idx) {
     cinemaCurrentChunkIdx = idx;
     const c = cinemaData.chunks[idx];
     if (!c) return;
@@ -7876,18 +8020,40 @@ async function jumpToSearchResult(idx) {
       <span>· ${(c.notes||[]).length} notes</span>
     `;
 
-    // Sheet placeholder（后续接 film-matinee）
+    // Sheet placeholder
     document.getElementById('cinema-sheet').innerHTML = `
-      <div class="sheet-placeholder">🎞 Sheet #${c.id} · 关键帧拼图</div>
+      <div class="sheet-placeholder">🎞 Sheet #${c.id} · ${c.start} — ${c.end}</div>
     `;
 
-    // 字幕 placeholder
-    document.getElementById('cinema-subtitle').innerHTML = `
-      <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">
-      字幕将通过 film-matinee 后端加载
-      Chunk #${c.id}  ·  ${c.start} — ${c.end}
-      </pre>
-    `;
+    // 字幕：从后端拉这个 chunk 的时间区间
+    const subEl = document.getElementById('cinema-subtitle');
+    subEl.innerHTML = `<pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">载入字幕…</pre>`;
+
+    try {
+      const res = await fetch(
+        `${CINEMA_API}/sync/${encodeURIComponent(cinemaCurrentFilm.id)}?from=${c.startSec}&to=${c.endSec}`
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      c.subtitles = data.subtitles || [];
+      if (c.subtitles.length) {
+        subEl.innerHTML = c.subtitles.map(s =>
+          `<div class="subtitle-cue">
+             <span class="cue-time">${cinemaFmt(s.start)}</span>
+             <span class="cue-text">${escapeHtml(s.text)}</span>
+           </div>`
+        ).join('');
+      } else {
+        subEl.innerHTML = `<pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">Chunk #${c.id} · 这一段没有字幕</pre>`;
+      }
+    } catch (e) {
+      subEl.innerHTML = `<pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">字幕加载失败 (${escapeHtml(e.message)})</pre>`;
+    }
+
+    // 联动浮窗播放器：跳到 chunk 起点
+    if (cinemaVideoEl && cinemaVideoEl.dataset.filmId === cinemaCurrentFilm.id) {
+      cinemaVideoEl.currentTime = c.startSec;
+    }
 
     renderCinemaNotes();
   }
@@ -7969,8 +8135,8 @@ async function jumpToSearchResult(idx) {
     const fp = document.getElementById('float-player');
     fp.classList.add('visible');
     document.getElementById('float-player-label').textContent = title || (cinemaData?.title || '——');
-    document.getElementById('float-player-video').innerHTML = '<span>▶ 点击播放</span>';
     cinemaFloatVisible = true;
+    if (!cinemaVideoEl) cinemaVideoEl = document.getElementById('float-player-video');
   }
 
   function cinemaHideFloatPlayer() {
@@ -7991,6 +8157,12 @@ async function jumpToSearchResult(idx) {
   }
 
   function cinemaCloseFloatPlayer() {
+    if (cinemaVideoEl) {
+      cinemaVideoEl.pause();
+      cinemaVideoEl.removeAttribute('src');
+      cinemaVideoEl.load();
+      cinemaVideoEl.dataset.filmId = '';
+    }
     cinemaHideFloatPlayer();
   }
 
