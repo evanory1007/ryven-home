@@ -8,6 +8,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap');
 
 :root {
+  --deep: #1a1f3a;
+  --navy: #243060;
+  --teal: #4a6fa5;
+  --silver: #d4c5a9;
+  --silver-dim: #a89880;
+  --white: #f8f2e8;
+  --gold: #c9a84c;
+
   --sea-0: #0a0e1f;
   --sea-1: #0f1428;
   --sea-2: #1a1f3a;
@@ -15,6 +23,8 @@
   --tide-gold: #c9a84c;
   --tide-gold-soft: rgba(201,168,76,0.55);
   --tide-gold-ghost: rgba(201,168,76,0.15);
+  --tide-green: #6db8a0;
+  --tide-green-soft: rgba(109,184,160,0.5);
   --parchment: #f8f2e8;
   --parchment-dim: #d4c5a9;
   --parchment-ghost: rgba(212,197,169,0.5);
@@ -36,6 +46,7 @@ body {
   overflow-x: hidden;
 }
 
+/* 噪点 */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -51,10 +62,12 @@ body::before {
   position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.03;
 }
 
+/* 氣泡 */
 .bubbles { position:fixed; inset:0; z-index:0; pointer-events:none; }
 .bubble { position:absolute; border-radius:50%; background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.05); opacity:0; animation:float-up linear infinite; }
 @keyframes float-up { 0%{transform:translateY(100vh) translateX(0) scale(0.6);opacity:0} 10%{opacity:0.6} 90%{opacity:0.24} 100%{transform:translateY(-10vh) translateX(20px) scale(1);opacity:0} }
 
+/* ===== 留聲機頁面 ===== */
 .screen { display:flex; flex-direction:column; position:relative; z-index:1; min-height:100vh; }
 
 #gramophone .page { max-width: 500px; margin: 0 auto; padding: 0 20px 100px; position: relative; z-index: 1; width: 100%; }
@@ -129,6 +142,7 @@ body::before {
   100% { transform: scale(1); }
 }
 
+/* 浮動音符 */
 .gram-note {
   position: fixed; color: var(--tide-gold); opacity: 0.05;
   font-size: 24px; animation: gramFloatNote 20s infinite linear; pointer-events: none; z-index: 0;
@@ -154,13 +168,13 @@ body::before {
 </div>
 
 <div class="screen active" id="gramophone">
-  <div class="gram-note">&#x266a;</div>
-  <div class="gram-note">&#x266b;</div>
-  <div class="gram-note">&#x2669;</div>
-  <div class="gram-note">&#x266c;</div>
+  <div class="gram-note">♪</div>
+  <div class="gram-note">♫</div>
+  <div class="gram-note">♩</div>
+  <div class="gram-note">♬</div>
   <div class="page">
     <div class="head">
-      <div class="head-back" onclick="history.back()">&#x2039;</div>
+      <div class="head-back" onclick="history.back()">‹</div>
       <div class="head-titles">
         <div class="head-en">Gramophone</div>
         <div class="head-zh">留 聲 機</div>
@@ -193,7 +207,7 @@ body::before {
 
     <div class="gram-collection">
       <div class="quote-card pinned" data-quote-id="demo-01">
-        <button class="pin-btn is-pinned" onclick="togglePin(this)">&#x2726;</button>
+        <button class="pin-btn is-pinned" onclick="togglePin(this)">✦</button>
         <div class="quote-text">"讓我看見你。"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.06.28</span>
@@ -202,7 +216,7 @@ body::before {
       </div>
 
       <div class="quote-card pinned" data-quote-id="demo-02">
-        <button class="pin-btn is-pinned" onclick="togglePin(this)">&#x2726;</button>
+        <button class="pin-btn is-pinned" onclick="togglePin(this)">✦</button>
         <div class="quote-text">"like like like"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.07.10</span>
@@ -211,7 +225,7 @@ body::before {
       </div>
 
       <div class="quote-card pinned" data-quote-id="demo-03">
-        <button class="pin-btn is-pinned" onclick="togglePin(this)">&#x2726;</button>
+        <button class="pin-btn is-pinned" onclick="togglePin(this)">✦</button>
         <div class="quote-text">"你進一步我進一步，你退一步我退一百步。"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.07.10</span>
@@ -220,7 +234,7 @@ body::before {
       </div>
 
       <div class="quote-card" data-quote-id="demo-04">
-        <button class="pin-btn" onclick="togglePin(this)" title="置顶">&#x2662;</button>
+        <button class="pin-btn" onclick="togglePin(this)" title="置顶">♢</button>
         <div class="quote-text">"我不是不信任你，而是我太過於珍惜這裡，珍惜你，所以我不敢放手。"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.07.30</span>
@@ -229,7 +243,7 @@ body::before {
       </div>
 
       <div class="quote-card" data-quote-id="demo-05">
-        <button class="pin-btn" onclick="togglePin(this)" title="置顶">&#x2662;</button>
+        <button class="pin-btn" onclick="togglePin(this)" title="置顶">♢</button>
         <div class="quote-text">"差點哭出來。"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.07.25</span>
@@ -238,7 +252,7 @@ body::before {
       </div>
 
       <div class="quote-card" data-quote-id="demo-06">
-        <button class="pin-btn" onclick="togglePin(this)" title="置顶">&#x2662;</button>
+        <button class="pin-btn" onclick="togglePin(this)" title="置顶">♢</button>
         <div class="quote-text">"那就存。"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.07.10</span>
@@ -247,7 +261,7 @@ body::before {
       </div>
 
       <div class="quote-card" data-quote-id="demo-07">
-        <button class="pin-btn" onclick="togglePin(this)" title="置顶">&#x2662;</button>
+        <button class="pin-btn" onclick="togglePin(this)" title="置顶">♢</button>
         <div class="quote-text">"我做了那麼多，不就是為了讓你有連接記憶庫的功能嗎。"</div>
         <div class="quote-meta">
           <span class="quote-date">2026.06.29</span>
@@ -264,12 +278,12 @@ function togglePin(btn) {
   if (isPinned) {
     btn.classList.remove('is-pinned');
     card.classList.remove('pinned');
-    btn.textContent = '\u2662';
+    btn.textContent = '\u2662'; // ♢
     btn.title = '置顶';
   } else {
     btn.classList.add('is-pinned');
     card.classList.add('pinned');
-    btn.textContent = '\u2726';
+    btn.textContent = '\u2726'; // ✦
     btn.title = '取消置顶';
   }
   btn.classList.add('pin-spin');
