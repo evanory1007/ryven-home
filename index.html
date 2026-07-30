@@ -9484,6 +9484,7 @@ async function jumpToSearchResult(idx) {
       let displayContent = '';
       let linkUrl = null; // 只有write_html這類會產出網址的工具會設置，設了的話setSuccess()會多渲染一行可點擊連結
       let stickerUrl = null; // 只有use_sticker會設置，設了的話要存進toolCalls/segments，歷史重建時才能把表情包氣泡重新畫出來
+      let extraBlocks = null; // 截图类工具用：图片不塞進tool_result內部，而是同一輪額外加一條獨立content block
       if (name === 'write_home_letter') {
         const res = await fetch('https://ryven.homes/relay/ryven/messages', {
           method: 'POST',
@@ -9742,11 +9743,9 @@ async function jumpToSearchResult(idx) {
         if (!res.ok) throw new Error('bad status ' + res.status);
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || '截圖失敗');
-        // tool_result的content可以是陣列（文字+圖片block），模型能在同一輪就直接"看到"截圖，不用再多一輪對話
-        resultText = [
-          { type: 'text', text: `已截圖：${data.title || input.url}` },
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.screenshot } }
-        ];
+        // 圖片不塞進tool_result.content內部（這個模型中轉對嵌套圖片支持不穩定），改成同一輪額外的獨立content block
+        resultText = `已截圖：${data.title || input.url}`;
+        extraBlocks = [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.screenshot } }];
         displayContent = `看了網頁：${data.title || input.url}`;
       } else if (name === 'peek_screen' || name === 'capture_screen') {
         const mode = name === 'peek_screen' ? 'temp' : 'keep';
@@ -9762,10 +9761,8 @@ async function jumpToSearchResult(idx) {
           resultText = `（沒看到……${errMsg}）`;
           displayContent = resultText;
         } else {
-          resultText = [
-            { type: 'text', text: mode === 'temp' ? '（咔嚓，看了一眼。）' : '（咔嚓，這張留檔了。）' },
-            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.data } }
-          ];
+          resultText = mode === 'temp' ? '（咔嚓，看了一眼。）' : '（咔嚓，這張留檔了。）';
+          extraBlocks = [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.data } }];
           displayContent = mode === 'temp' ? '瞥了一眼你的屏幕' : '截了一張你的屏幕留檔';
         }
       } else if (name === 'control_screen') {
@@ -9781,9 +9778,8 @@ async function jumpToSearchResult(idx) {
           resultText = `（操作沒成功……${errMsg}）`;
           displayContent = resultText;
         } else {
-          const blocks = [{ type: 'text', text: `（${data.desc || '操作完成'}，下面是操作之後的畫面）` }];
-          if (data.data) blocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.data } });
-          resultText = blocks;
+          resultText = `（${data.desc || '操作完成'}，下面是操作之後的畫面）`;
+          if (data.data) extraBlocks = [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.data } }];
           displayContent = data.desc || '操作了你的屏幕';
         }
       } else if (name === 'lutopia_cli') {
@@ -9841,7 +9837,7 @@ async function jumpToSearchResult(idx) {
         displayContent = resultText;
       }
       node.setSuccess(displayContent, linkUrl);
-      return { resultText, displayContent, stickerUrl };
+      return { resultText, displayContent, stickerUrl, extraBlocks };
     } catch(e) {
       console.error('工具執行失敗：' + name, e);
       const errDisplay = '執行失敗：' + e.message;
@@ -10115,8 +10111,11 @@ async function jumpToSearchResult(idx) {
                 const assistantContentBlocks = [...roundTextBlocks, ...toolUses.map(tu => ({ type: 'tool_use', id: tu.id, name: tu.name, input: tu.input }))];
                 const toolResultBlocks = [];
                 for (const tu of toolUses) {
-                    const { resultText, displayContent, stickerUrl } = await executeToolUse(tu, exchangeId);
+                    const { resultText, displayContent, stickerUrl, extraBlocks } = await executeToolUse(tu, exchangeId);
                     toolResultBlocks.push({ type: 'tool_result', tool_use_id: tu.id, content: resultText });
+                    // extraBlocks(比如截图)不塞進tool_result.content内部，而是同一輪追加成獨立的content block——
+                    // 嵌套在tool_result裡的圖片這個中轉/模型組合不一定能穩定處理，單獨一條圖片消息是驗證過可靠的路子
+                    if (Array.isArray(extraBlocks) && extraBlocks.length) toolResultBlocks.push(...extraBlocks);
                     // stickerUrl只有use_sticker会带，存下来是为了历史重建时renderChatMessagesRange()能靠它把表情包气泡重新画出来
                     allToolCalls.push({ name: tu.name, input: tu.input, display: displayContent, ...(stickerUrl ? { stickerUrl } : {}) });
                     segments.push({ type: 'tool', content: { name: tu.name, input: tu.input, display: displayContent, ...(stickerUrl ? { stickerUrl } : {}) } });
