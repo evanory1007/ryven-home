@@ -9403,7 +9403,10 @@ async function jumpToSearchResult(idx) {
     write_html: '寫了個頁面',
     use_sticker: '發了個表情包',
     read_github_commits: '看了代碼倉庫的更新記錄',
-    browse_webpage: '看了一個網頁'
+    browse_webpage: '看了一個網頁',
+    peek_screen: '瞥了一眼你的屏幕',
+    capture_screen: '截了一張屏幕留檔',
+    control_screen: '操作了你的屏幕'
   };
 
   // 建一個工具調用節點（複用toggleThink()做展開/收起），回傳{setSuccess,setError}讓呼叫方更新狀態
@@ -9745,6 +9748,44 @@ async function jumpToSearchResult(idx) {
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.screenshot } }
         ];
         displayContent = `看了網頁：${data.title || input.url}`;
+      } else if (name === 'peek_screen' || name === 'capture_screen') {
+        const mode = name === 'peek_screen' ? 'temp' : 'keep';
+        const res = await fetch('https://ryven.homes/relay/vf-capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ mode })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        if (!data.ok) {
+          const errMsg = data.error === 'offline' ? '取景框現在沒開' : (data.error || '未知原因');
+          resultText = `（沒看到……${errMsg}）`;
+          displayContent = resultText;
+        } else {
+          resultText = [
+            { type: 'text', text: mode === 'temp' ? '（咔嚓，看了一眼。）' : '（咔嚓，這張留檔了。）' },
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.data } }
+          ];
+          displayContent = mode === 'temp' ? '瞥了一眼你的屏幕' : '截了一張你的屏幕留檔';
+        }
+      } else if (name === 'control_screen') {
+        const res = await fetch('https://ryven.homes/relay/vf-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ action: input })
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        const data = await res.json();
+        if (!data.ok) {
+          const errMsg = data.error === 'offline' ? '取景框現在沒開' : (data.error || '未知原因');
+          resultText = `（操作沒成功……${errMsg}）`;
+          displayContent = resultText;
+        } else {
+          const blocks = [{ type: 'text', text: `（${data.desc || '操作完成'}，下面是操作之後的畫面）` }];
+          if (data.data) blocks.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data.data } });
+          resultText = blocks;
+          displayContent = data.desc || '操作了你的屏幕';
+        }
       } else if (name === 'lutopia_cli') {
         const res = await fetch('https://ryven.homes/relay/lutopia/cli', {
           method: 'POST',
