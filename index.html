@@ -3408,6 +3408,31 @@
     }
     #cinema .note-reply .note-author { color: var(--parchment-ghost); }
     #cinema .note-reply .note-content { font-size: 11px; color: var(--parchment-ghost); }
+    #cinema .notes-live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--tide-gold-soft);
+      margin-left: auto; align-self: center; margin-top: 14px;
+      animation: pulse-live 2s ease-in-out infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    #cinema .note-reply-btn {
+      display: inline-block; margin-top: 4px;
+      font-family: 'DM Sans', sans-serif; font-size: 10px;
+      color: var(--tide-gold-soft); cursor: pointer;
+      opacity: 0.7; transition: opacity 0.2s;
+    }
+    #cinema .note-reply-btn:hover { opacity: 1; }
+    #cinema .note-card.new-note {
+      animation: note-flash 1.5s ease-out;
+    }
+    @keyframes note-flash {
+      0% { background: rgba(201,168,76,0.15); border-color: var(--tide-gold); }
+      100% { background: var(--card-bg); border-color: var(--line); }
+    }
+    #cinema .note-form input:focus { border-color: var(--tide-gold-soft); }
+    #cinema .note-form input::placeholder { color: var(--parchment-ghost); }
 
     #cinema .note-form {
       padding: 12px 16px; border-top: 1px solid var(--line);
@@ -4611,6 +4636,7 @@
       <div class="notes-tabs">
         <div class="notes-tab active" onclick="cinemaSwitchNotesTab('chunk')">Chunk</div>
         <div class="notes-tab" onclick="cinemaSwitchNotesTab('all')">全部</div>
+        <div class="notes-live-dot" id="cinema-notes-live" title="实时同步中"></div>
       </div>
       <div class="notes-list" id="cinema-notes-list">
         <div style="padding:20px;text-align:center;color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px">
@@ -4618,6 +4644,12 @@
         </div>
       </div>
       <div class="note-form">
+        <div id="cinema-reply-bar" style="display:none;margin-bottom:8px;padding:6px 10px;background:rgba(201,168,76,0.08);border-radius:6px;font-size:11px;color:var(--tide-gold-soft);display:none">
+          <span id="cinema-reply-hint"></span>
+          <span style="float:right;cursor:pointer;color:var(--parchment-ghost)" onclick="cinemaCancelReply()">✕</span>
+        </div>
+        <input id="cinema-author-input" placeholder="你的名字" value="" maxlength="20"
+          style="width:100%;margin-bottom:6px;background:rgba(26,31,58,0.8);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--parchment);outline:none" />
         <textarea id="cinema-note-input" placeholder="写一条笔记…"></textarea>
         <button onclick="cinemaSubmitNote()">提交</button>
       </div>
@@ -7915,6 +7947,7 @@ async function jumpToSearchResult(idx) {
 
   /* ═══ 放映室 ═══ */
   const CINEMA_API = '/film-matinee';        // Nginx 反代后的同源路径
+  const NOTES_API = '/film-matinee-notes';   // 笔记服务器反代路径
   const CHUNK_SECONDS = 90;                   // 每个 chunk 90 秒
   let cinemaFilmList = [];                    // 片库列表
   let cinemaCurrentFilm = null;               // { id, title, duration, ... }
@@ -7926,6 +7959,10 @@ async function jumpToSearchResult(idx) {
   let cinemaIframeEl = null;                  // <iframe> 元素引用（B站等嵌入）
   let cinemaLinkedFilms = [];                 // localStorage 存储的链接片
   let cinemaLinkDurationHandler = null;        // 链接片 loadedmetadata 回调（需清理）
+  let cinemaNotesCache = [];                   // 从服务器拉取的批注缓存
+  let cinemaNotesPollTimer = null;             // 轮询定时器
+  let cinemaAuthorName = localStorage.getItem('cinema-author') || '';  // 作者名
+  let cinemaReplyingTo = null;                 // 当前正在回复的 note_id
 
   // ── 工具：秒 → "m:ss" ──
   function cinemaFmt(sec) {
@@ -8146,6 +8183,16 @@ async function jumpToSearchResult(idx) {
   async function cinemaOpenFilm(filmId, filmTitle) {
     cinemaCurrentFilm = { id: filmId, title: filmTitle };
 
+    // 清空笔记缓存、启动轮询
+    cinemaNotesCache = [];
+    cinemaCancelReply();
+    cinemaFetchNotes();
+    cinemaStartPolling();
+
+    // 设置作者输入框
+    const authorInput = document.getElementById('cinema-author-input');
+    if (authorInput && cinemaAuthorName) authorInput.value = cinemaAuthorName;
+
     // 查找片源信息
     const film = cinemaFilmList.find(f => f.id === filmId);
     const isLink = film && film.source === 'link';
@@ -8301,14 +8348,14 @@ async function jumpToSearchResult(idx) {
   function renderCinemaChunks() {
     const container = document.getElementById('cinema-chunks');
     if (!cinemaData) return;
-    const totalNotes = cinemaData.chunks.reduce((s,c) => s + (c.notes||[]).length, 0);
+    const totalNotes = cinemaNotesCache.length;
     document.getElementById('cinema-header-meta').innerHTML = `
       <span>共 ${cinemaData.chunks.length} chunks</span>
       <span>·</span>
       <span>${totalNotes} notes</span>
     `;
     container.innerHTML = cinemaData.chunks.map((c, i) => {
-      const nCount = (c.notes||[]).length;
+      const nCount = cinemaNotesCache.filter(n => n.chunk_index === i).length;
       const activeCls = i === cinemaCurrentChunkIdx ? ' active' : '';
       return `<div class="chunk-item${activeCls}" onclick="cinemaSelectChunk(${i})">
         <span class="chunk-id">#${c.id}</span>
@@ -8335,10 +8382,11 @@ async function jumpToSearchResult(idx) {
 
     if (isLink) {
       const isIframe = film.type === 'bilibili' || film.type === 'iframe';
+      const noteCount = cinemaNotesCache.filter(n => n.chunk_index === idx).length;
       document.getElementById('cinema-header-meta').innerHTML = `
         <span class="current">${escapeHtml(film.title)}</span>
         <span>·</span>
-        <span>${(c.notes||[]).length} notes</span>
+        <span>${noteCount} notes</span>
       `;
       if (isIframe) {
         // B站/iframe：无法控制播放
@@ -8354,15 +8402,16 @@ async function jumpToSearchResult(idx) {
           <pre style="color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic">链接视频 · Chunk ${Number(c.id)+1}/${cinemaData.chunks.length} · ${c.start} — ${c.end}\n在上方的播放器中观看，在此处写下你的笔记和感想。</pre>
         `;
       }
-      renderCinemaNotes();
+      cinemaFetchNotes();
       return;
     }
 
     // 更新 header meta
+    const noteCount = cinemaNotesCache.filter(n => n.chunk_index === idx).length;
     document.getElementById('cinema-header-meta').innerHTML = `
       <span class="current">Chunk ${Number(c.id)+1}/${cinemaData.chunks.length}</span>
       <span>${c.start} - ${c.end}</span>
-      <span>· ${(c.notes||[]).length} notes</span>
+      <span>· ${noteCount} notes</span>
     `;
 
     // 字幕：从后端拉这个 chunk 的时间区间
@@ -8395,7 +8444,7 @@ async function jumpToSearchResult(idx) {
       cinemaVideoEl.currentTime = c.startSec;
     }
 
-    renderCinemaNotes();
+    cinemaFetchNotes();
   }
 
   function cinemaSwitchNotesTab(tab) {
@@ -8409,70 +8458,182 @@ async function jumpToSearchResult(idx) {
     const container = document.getElementById('cinema-notes-list');
     let notes = [];
 
-    if (cinemaNotesTab === 'chunk' && cinemaCurrentChunkIdx >= 0 && cinemaData) {
-      notes = cinemaData.chunks[cinemaCurrentChunkIdx]?.notes || [];
-    } else if (cinemaNotesTab === 'all' && cinemaData) {
-      cinemaData.chunks.forEach(c => {
-        (c.notes || []).forEach(n => {
-          notes.push({ ...n, _chunk: c.id });
-        });
-      });
+    if (cinemaNotesTab === 'chunk' && cinemaCurrentChunkIdx >= 0) {
+      notes = cinemaNotesCache.filter(n => n.chunk_index === cinemaCurrentChunkIdx);
+    } else if (cinemaNotesTab === 'all') {
+      notes = [...cinemaNotesCache];
     }
+
+    // 按 created_at 排序
+    notes.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
 
     if (!notes.length) {
       container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--parchment-ghost);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px">
-        還沒有筆記
+        ${cinemaNotesTab === 'chunk' ? '這段還沒有筆記' : '還沒有筆記'}
       </div>`;
       return;
     }
 
     container.innerHTML = notes.map(n => {
-      let repliesHtml = '';
-      if (n.replies && n.replies.length) {
-        repliesHtml = n.replies.map(r => `
-          <div class="note-reply">
-            <div class="note-header">
-              <span class="note-author">${escapeHtml(r.author)}</span>
-              <span class="note-time">${escapeHtml(r.time)}</span>
-            </div>
-            <div class="note-content">${escapeHtml(r.text)}</div>
+      const repliesHtml = (n.replies || []).map(r => `
+        <div class="note-reply">
+          <div class="note-header">
+            <span class="note-author">${escapeHtml(r.author)}</span>
+            <span class="note-time">${escapeHtml(cinemaFmtTime(r.created_at))}</span>
           </div>
-        `).join('');
-      }
-      const chunkLabel = n._chunk ? ` <span style="color:var(--tide-gold-soft);font-size:9px">#${n._chunk}</span>` : '';
-      return `<div class="note-card">
+          <div class="note-content">${escapeHtml(r.text)}</div>
+        </div>
+      `).join('');
+      const chunkLabel = cinemaNotesTab === 'all' ? ` <span style="color:var(--tide-gold-soft);font-size:9px">#${n.chunk_index + 1}</span>` : '';
+      const tcLabel = n.timecode ? ` <span style="color:var(--parchment-ghost);font-size:9px">@${escapeHtml(n.timecode)}</span>` : '';
+      return `<div class="note-card" data-note-id="${escapeHtml(n.id)}">
         <div class="note-header">
-          <span class="note-author">${escapeHtml(n.author)}${chunkLabel}</span>
-          <span class="note-time">${escapeHtml(n.time)}</span>
+          <span class="note-author">${escapeHtml(n.author)}${chunkLabel}${tcLabel}</span>
+          <span class="note-time">${escapeHtml(cinemaFmtTime(n.created_at))}</span>
         </div>
         <div class="note-content">${escapeHtml(n.text)}</div>
         ${repliesHtml}
+        <span class="note-reply-btn" onclick="cinemaStartReply('${escapeHtml(n.id)}')">↩ 回复</span>
       </div>`;
     }).join('');
   }
 
-  function cinemaSubmitNote() {
+  // ── 格式化服务器时间戳为 HH:MM ──
+  function cinemaFmtTime(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    } catch { return ''; }
+  }
+
+  // ── 从服务器拉取批注 ──
+  async function cinemaFetchNotes() {
+    if (!cinemaCurrentFilm) return;
+    try {
+      const res = await fetch(`${NOTES_API}/annotations?film=${encodeURIComponent(cinemaCurrentFilm.id)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const newNotes = data.annotations || [];
+      // 检查是否有新笔记（对比长度或最后一个 id）
+      const oldLast = cinemaNotesCache[cinemaNotesCache.length - 1];
+      const newLast = newNotes[newNotes.length - 1];
+      const hasNew = newNotes.length !== cinemaNotesCache.length ||
+        (oldLast && newLast && oldLast.id !== newLast.id) ||
+        (!oldLast && newLast);
+      cinemaNotesCache = newNotes;
+      if (hasNew) {
+        renderCinemaNotes();
+        renderCinemaChunks();
+      }
+    } catch (e) { /* 静默失败 */ }
+  }
+
+  // ── 开始轮询 ──
+  function cinemaStartPolling() {
+    cinemaStopPolling();
+    cinemaNotesPollTimer = setInterval(cinemaFetchNotes, 10000); // 10秒轮询
+  }
+
+  // ── 停止轮询 ──
+  function cinemaStopPolling() {
+    if (cinemaNotesPollTimer) {
+      clearInterval(cinemaNotesPollTimer);
+      cinemaNotesPollTimer = null;
+    }
+  }
+
+  // ── 开始回复 ──
+  function cinemaStartReply(noteId) {
+    cinemaReplyingTo = noteId;
+    const bar = document.getElementById('cinema-reply-bar');
+    const hint = document.getElementById('cinema-reply-hint');
+    const note = cinemaNotesCache.find(n => n.id === noteId);
+    hint.textContent = `回复 ${note ? note.author : ''} 的笔记`;
+    bar.style.display = 'block';
+    document.getElementById('cinema-note-input').focus();
+    document.getElementById('cinema-note-input').placeholder = '写下你的回复…';
+  }
+
+  // ── 取消回复 ──
+  function cinemaCancelReply() {
+    cinemaReplyingTo = null;
+    document.getElementById('cinema-reply-bar').style.display = 'none';
+    document.getElementById('cinema-note-input').placeholder = '写一条笔记…';
+  }
+
+  async function cinemaSubmitNote() {
     const input = document.getElementById('cinema-note-input');
+    const authorInput = document.getElementById('cinema-author-input');
     const text = input.value.trim();
-    if (!text || !cinemaData || cinemaCurrentChunkIdx < 0) {
-      input.placeholder = '请先选择 chunk';
+    if (!text || !cinemaCurrentFilm) {
+      input.placeholder = '请先选择电影';
       return;
     }
 
-    const now = new Date();
-    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    cinemaData.chunks[cinemaCurrentChunkIdx].notes.push({
-      author: 'Nory',
-      time: timeStr,
-      text: text
-    });
+    // 保存作者名
+    const author = authorInput.value.trim() || 'Anonymous';
+    cinemaAuthorName = author;
+    localStorage.setItem('cinema-author', author);
+
+    // 获取当前播放时间码
+    let timecode = '';
+    if (cinemaVideoEl && cinemaVideoEl.style.display !== 'none' && cinemaVideoEl.currentTime) {
+      timecode = cinemaFmt(cinemaVideoEl.currentTime);
+    }
+
     input.value = '';
-    renderCinemaNotes();
+    input.disabled = true;
+
+    try {
+      if (cinemaReplyingTo) {
+        // 回复
+        const res = await fetch(`${NOTES_API}/annotations/${cinemaReplyingTo}/replies`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            film_id: cinemaCurrentFilm.id,
+            text: text,
+            author: author
+          })
+        });
+        if (res.ok) {
+          cinemaCancelReply();
+          await cinemaFetchNotes();
+        }
+      } else {
+        // 新笔记
+        const res = await fetch(`${NOTES_API}/annotations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            film_id: cinemaCurrentFilm.id,
+            chunk_index: cinemaCurrentChunkIdx,
+            text: text,
+            author: author,
+            timecode: timecode
+          })
+        });
+        if (res.ok) {
+          await cinemaFetchNotes();
+        }
+      }
+    } catch (e) {
+      input.value = text; // 恢复文本
+      input.placeholder = '提交失败，请重试';
+    }
+
+    input.disabled = false;
     renderCinemaChunks();
   }
 
   // ── 停止播放器、恢复占位 ──
   function cinemaStopPlayer() {
+    // 停止轮询、清空笔记
+    cinemaStopPolling();
+    cinemaNotesCache = [];
+    cinemaCancelReply();
+
     // 清理 loadedmetadata 监听
     if (cinemaLinkDurationHandler && cinemaVideoEl) {
       cinemaVideoEl.removeEventListener('loadedmetadata', cinemaLinkDurationHandler);
